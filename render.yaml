@@ -4,7 +4,7 @@ services:
     name: fevo-event-feed-api
     runtime: node
     region: oregon
-    buildCommand: npm install && npm run build --workspace=packages/backend
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/backend
     startCommand: node packages/backend/dist/server.js
     healthCheckPath: /health
     disk:
@@ -23,7 +23,7 @@ services:
   - type: web
     name: fevo-event-feed-admin
     runtime: static
-    buildCommand: npm install && npm run build --workspace=packages/admin-ui
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/admin-ui
     staticPublishPath: packages/admin-ui/dist
     envVars:
       - key: VITE_API_URL
@@ -37,5 +37,5 @@ services:
   - type: web
     name: fevo-event-feed-widget
     runtime: static
-    buildCommand: npm install && npm run build --workspace=packages/widget
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/widget
     staticPublishPath: packages/widget/dist
