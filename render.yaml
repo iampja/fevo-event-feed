@@ -14,8 +14,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: DB_PATH
         value: /data/eventfeed.db
       - key: INTERNAL_AUTH_TOKEN
@@ -29,7 +27,7 @@ services:
     staticPublishPath: packages/admin-ui/dist
     envVars:
       - key: VITE_API_URL
-        sync: false  # Set this to your backend URL after first deploy, e.g. https://fevo-event-feed-api.onrender.com/api/v1
+        sync: false
     routes:
       - type: rewrite
         source: /*
