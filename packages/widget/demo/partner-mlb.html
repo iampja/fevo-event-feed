@@ -3,864 +3,919 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MLB Experiences - Powered by FEVO</title>
+  <title>MLB.com - Tickets & Experiences</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      color: #1a1a1a;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f7f7;
+      color: #333;
+      -webkit-font-smoothing: antialiased;
     }
+    a { text-decoration: none; color: inherit; }
 
-    /* ===== Top Nav (MLB-style) ===== */
-    .site-topbar {
+    /* ===== MLB Top Bar ===== */
+    .mlb-topbar {
       background: #041E42;
-      color: #fff;
-      font-size: 12px;
-      padding: 6px 0;
-    }
-    .site-topbar-inner {
-      max-width: 1280px;
-      margin: 0 auto;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      color: #8c9bb5;
       padding: 0 24px;
+    }
+    .mlb-topbar-inner {
+      max-width: 1304px;
+      margin: 0 auto;
+      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .site-topbar a { color: #a3b8d8; text-decoration: none; }
-    .site-topbar a:hover { color: #fff; }
-    .topbar-links { display: flex; gap: 20px; }
+    .mlb-topbar a {
+      color: #8c9bb5;
+      margin-right: 16px;
+      font-weight: 500;
+    }
+    .mlb-topbar a:hover { color: #fff; }
 
-    .site-header {
+    /* ===== MLB Main Nav ===== */
+    .mlb-nav {
       background: #002D72;
-      padding: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
       position: sticky;
       top: 0;
       z-index: 50;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
-    .site-header-inner {
-      max-width: 1280px;
+    .mlb-nav-inner {
+      max-width: 1304px;
       margin: 0 auto;
+      width: 100%;
       padding: 0 24px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      height: 64px;
+      gap: 4px;
     }
-    .site-logo {
+    .mlb-nav-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      text-decoration: none;
+      margin-right: 24px;
+    }
+    .mlb-nav-logo svg { height: 28px; width: auto; }
+    .mlb-nav a.nav-link {
+      color: #c1d0e6;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .mlb-nav a.nav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .mlb-nav a.nav-link.active { color: #fff; background: rgba(255,255,255,0.12); }
+    .nav-spacer { flex: 1; }
+    .nav-search {
+      height: 32px;
+      width: 180px;
+      padding: 0 10px 0 32px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center;
+      color: #fff;
+      font-size: 12px;
+    }
+    .nav-search::placeholder { color: #8c9bb5; }
+    .nav-search:focus { outline: none; border-color: #057AFF; }
+
+    /* ===== Main content grid (MLB 3-col layout) ===== */
+    .mlb-page {
+      max-width: 1304px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 1024px) {
+      .mlb-page {
+        grid-template-columns: 1fr 320px;
+      }
+    }
+
+    /* ===== Scores ticker ===== */
+    .scores-ticker {
+      background: #333;
+      padding: 12px 0;
+      overflow-x: auto;
+    }
+    .scores-ticker-inner {
+      max-width: 1304px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 16px;
+    }
+    .score-card {
+      flex-shrink: 0;
+      background: #444d58;
+      border-radius: 6px;
+      padding: 10px 16px;
+      min-width: 200px;
+      color: #fff;
+      font-size: 12px;
+    }
+    .score-card .teams { display: flex; flex-direction: column; gap: 4px; }
+    .score-card .team-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .score-card .team-name { font-weight: 600; }
+    .score-card .team-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .score-card .game-status {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .score-card .live { color: #ef4444; font-weight: 700; }
+
+    /* ===== Content cards ===== */
+    .mlb-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .mlb-card-header {
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mlb-card-header .see-all {
+      font-size: 12px;
+      color: #057AFF;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* ===== Featured story ===== */
+    .featured-story {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .featured-story img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+    }
+    .featured-story .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
       color: #fff;
     }
-    .site-logo .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: #fff;
-      border-radius: 50%;
+    .featured-story .overlay .tag {
+      display: inline-block;
+      background: #E31937;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+    .featured-story .overlay h2 {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .featured-story .overlay p {
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    /* ===== Story list ===== */
+    .story-list { padding: 0; }
+    .story-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .story-item:last-child { border-bottom: none; }
+    .story-item:hover { background: #fafafa; }
+    .story-item img {
+      width: 100px;
+      height: 64px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .story-item h4 {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 4px;
+    }
+    .story-item .story-meta {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    /* ===== Tickets promo (triggers FEVO modal) ===== */
+    .tickets-promo {
+      background: linear-gradient(135deg, #002D72, #041E42);
+      border-radius: 8px;
+      padding: 24px;
+      color: #fff;
+      text-align: center;
+    }
+    .tickets-promo h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .tickets-promo p {
+      font-size: 13px;
+      color: #a3b8d8;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .tickets-promo .promo-btn {
+      display: inline-block;
+      background: #057AFF;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 28px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .tickets-promo .promo-btn:hover { background: #0466d4; }
+
+    /* ===== Sidebar rail ===== */
+    .sidebar-ad {
+      background: #e2e2e2;
+      border-radius: 8px;
+      height: 250px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .site-logo .logo-icon svg { width: 24px; height: 24px; }
-    .site-logo .logo-text {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-    .site-logo .logo-text span { color: #E31937; }
-
-    .site-nav { display: flex; gap: 4px; }
-    .site-nav a {
-      color: #c5d4e8;
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.15s;
-    }
-    .site-nav a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    .site-nav a.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
-
-    /* ===== Hero ===== */
-    .hero {
-      background: linear-gradient(135deg, #002D72 0%, #041E42 50%, #1a1a2e 100%);
-      color: #fff;
-      padding: 64px 24px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(227,25,55,0.15) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -30%;
-      left: -10%;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .hero-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-    .hero h1 {
-      font-size: 42px;
-      font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 12px;
-      line-height: 1.1;
-    }
-    .hero h1 span { color: #E31937; }
-    .hero p {
-      font-size: 18px;
-      color: #a3b8d8;
-      max-width: 600px;
-      line-height: 1.6;
-    }
-    .hero-stats {
-      display: flex;
-      gap: 40px;
-      margin-top: 32px;
-    }
-    .hero-stat .stat-value {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .hero-stat .stat-label {
-      font-size: 13px;
-      color: #a3b8d8;
-      margin-top: 2px;
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    /* ===== Filter bar ===== */
-    .filter-section {
-      background: #fff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 20px 0;
-      position: sticky;
-      top: 64px;
-      z-index: 40;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    .standings-table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
     }
-    .filter-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-    .filter-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .filter-label {
-      font-size: 11px;
+    .standings-table th {
+      text-align: left;
+      padding: 8px 12px;
       font-weight: 600;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #6b7280;
     }
-    .filter-select {
-      height: 40px;
-      padding: 0 36px 0 12px;
-      border: 1px solid #d1d5db;
+    .standings-table th:not(:first-child) { text-align: center; }
+    .standings-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-variant-numeric: tabular-nums;
+    }
+    .standings-table td:not(:first-child) { text-align: center; }
+    .standings-table .team-cell { font-weight: 600; }
+
+    /* ===== Inline ticket strip (also opens modal) ===== */
+    .ticket-strip {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .ticket-strip-item {
+      flex-shrink: 0;
+      width: 220px;
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+      background: #fff;
+    }
+    .ticket-strip-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+    .ticket-strip-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+    }
+    .ticket-strip-item .tsi-body {
+      padding: 10px 12px;
+    }
+    .ticket-strip-item .tsi-title {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .ticket-strip-item .tsi-meta {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .ticket-strip-item .tsi-price {
+      font-size: 12px;
+      font-weight: 800;
+      color: #002D72;
+    }
+    .ticket-strip-item .tsi-cta {
+      display: block;
+      text-align: center;
+      background: #057AFF;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* ================================================================
+       FEVO MODAL — branded overlay containing the widget + filters
+       ================================================================ */
+    .fevo-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .fevo-modal-overlay.open { display: flex; }
+
+    .fevo-modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 920px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fevoSlideUp 0.25s ease;
+    }
+    @keyframes fevoSlideUp {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .fevo-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+    .fevo-modal-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fevo-modal-brand .fevo-logo {
+      background: #4f46e5;
+      color: #fff;
       font-size: 14px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: -0.5px;
+    }
+    .fevo-modal-brand .fevo-label {
+      font-size: 15px;
+      font-weight: 700;
       color: #1a1a1a;
-      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+    }
+    .fevo-modal-brand .fevo-sublabel {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 400;
+    }
+    .fevo-modal-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: #f3f4f6;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+      flex-shrink: 0;
+    }
+    .fevo-modal-close:hover { background: #e5e7eb; }
+    .fevo-modal-close svg { width: 18px; height: 18px; color: #6b7280; }
+
+    /* Filter bar inside modal */
+    .fevo-modal-filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .fevo-filter {
+      height: 34px;
+      padding: 0 28px 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 8px center;
       appearance: none;
       cursor: pointer;
-      min-width: 180px;
-      transition: border-color 0.15s;
     }
-    .filter-select:focus { outline: none; border-color: #002D72; box-shadow: 0 0 0 3px rgba(0,45,114,0.1); }
-
-    .filter-search {
-      height: 40px;
-      padding: 0 12px 0 36px;
+    .fevo-filter:focus { outline: none; border-color: #4f46e5; }
+    .fevo-search {
+      height: 34px;
+      padding: 0 10px 0 30px;
       border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 14px;
-      color: #1a1a1a;
-      min-width: 240px;
-      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center;
-      transition: border-color 0.15s;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #333;
+      flex: 1;
+      min-width: 160px;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center;
     }
-    .filter-search:focus { outline: none; border-color: #002D72; box-shadow: 0 0 0 3px rgba(0,45,114,0.1); }
-    .filter-search::placeholder { color: #9ca3af; }
-
-    .filter-tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-    .filter-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      color: #4b5563;
-    }
-    .filter-tag:hover { border-color: #002D72; color: #002D72; }
-    .filter-tag.active {
-      background: #002D72;
-      color: #fff;
-      border-color: #002D72;
-    }
-    .filter-tag svg { width: 14px; height: 14px; }
-
-    .filter-results {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 12px;
-      font-size: 13px;
+    .fevo-search::placeholder { color: #9ca3af; }
+    .fevo-search:focus { outline: none; border-color: #4f46e5; }
+    .fevo-filter-count {
+      font-size: 11px;
       color: #6b7280;
-    }
-    .clear-filters {
-      color: #002D72;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      background: none;
-      font-size: 13px;
-    }
-    .clear-filters:hover { text-decoration: underline; }
-
-    /* ===== Content area ===== */
-    .content {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 32px 24px 64px;
-    }
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-    .section-header h2 {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    .section-header .badge {
-      background: #002D72;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 12px;
+      white-space: nowrap;
     }
 
-    /* ===== Footer ===== */
-    .site-footer {
-      background: #041E42;
-      color: #a3b8d8;
-      padding: 48px 24px;
+    /* Widget container inside modal */
+    .fevo-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px 24px;
+      min-height: 300px;
     }
-    .footer-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      flex-wrap: wrap;
-      gap: 40px;
-    }
-    .footer-col h4 {
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-    .footer-col a {
-      display: block;
-      color: #a3b8d8;
-      text-decoration: none;
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-    .footer-col a:hover { color: #fff; }
-    .footer-bottom {
-      max-width: 1280px;
-      margin: 24px auto 0;
-      padding: 24px 24px 0;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .footer-bottom span { opacity: 0.6; }
 
-    /* ===== No results ===== */
-    .no-results {
+    .fevo-modal-empty {
       text-align: center;
-      padding: 64px 24px;
+      padding: 48px 24px;
       color: #6b7280;
+      display: none;
     }
-    .no-results h3 { font-size: 20px; color: #1a1a1a; margin-bottom: 8px; }
-    .no-results p { font-size: 15px; }
+    .fevo-modal-empty h4 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .fevo-modal-footer {
+      border-top: 1px solid #e5e7eb;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 11px;
+      color: #9ca3af;
+      flex-shrink: 0;
+      background: #fafafa;
+    }
+    .fevo-modal-footer span { font-weight: 700; color: #6b7280; }
   </style>
 </head>
 <body>
 
-  <!-- Top bar -->
-  <div class="site-topbar">
-    <div class="site-topbar-inner">
-      <div class="topbar-links">
+  <!-- ===== MLB.com Top Bar ===== -->
+  <div class="mlb-topbar">
+    <div class="mlb-topbar-inner">
+      <div>
         <a href="#">Scores</a>
         <a href="#">News</a>
+        <a href="#">Watch</a>
         <a href="#">Standings</a>
-        <a href="#">Schedule</a>
         <a href="#">Stats</a>
+        <a href="#">Schedule</a>
       </div>
-      <div class="topbar-links">
-        <a href="#">Sign In</a>
-        <a href="#">MLB.TV</a>
+      <div>
+        <a href="#">Log In</a>
       </div>
     </div>
   </div>
 
-  <!-- Main header -->
-  <header class="site-header">
-    <div class="site-header-inner">
-      <a class="site-logo" href="#">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="#002D72"><circle cx="12" cy="12" r="10" fill="#002D72"/><path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#fff" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="2" fill="#E31937"/></svg>
-        </div>
-        <div class="logo-text"><span>MLB</span> Experiences</div>
+  <!-- ===== MLB Main Nav ===== -->
+  <nav class="mlb-nav">
+    <div class="mlb-nav-inner">
+      <a class="mlb-nav-logo" href="#">
+        <svg viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="80" height="28" rx="4" fill="#002D72"/>
+          <text x="10" y="20" fill="#fff" font-family="Inter,sans-serif" font-size="16" font-weight="900" letter-spacing="-0.5">MLB</text>
+          <circle cx="62" cy="14" r="8" fill="#E31937"/>
+          <path d="M58 14c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#fff" stroke-width="1.5" fill="none"/>
+        </svg>
       </a>
-      <nav class="site-nav">
-        <a href="#" class="active">Events</a>
-        <a href="#">Ballpark Tours</a>
-        <a href="#">Group Outings</a>
-        <a href="#">Fan Fest</a>
-        <a href="#">Gift Cards</a>
-      </nav>
+      <a class="nav-link" href="#">Teams</a>
+      <a class="nav-link" href="#">Scores</a>
+      <a class="nav-link" href="#">Schedule</a>
+      <a class="nav-link" href="#">Stats</a>
+      <a class="nav-link" href="#">Standings</a>
+      <a class="nav-link active" href="#">Tickets</a>
+      <a class="nav-link" href="#">News</a>
+      <a class="nav-link" href="#">Video</a>
+      <a class="nav-link" href="#">Players</a>
+      <span class="nav-spacer"></span>
+      <input class="nav-search" type="text" placeholder="Search MLB.com" />
     </div>
-  </header>
+  </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-inner">
-      <h1>Unforgettable <span>Baseball</span><br/>Experiences</h1>
-      <p>From game day tickets to exclusive behind-the-scenes tours, find the perfect experience for you and your group. Buy together with FEVO and save.</p>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="stat-value">150+</div>
-          <div class="stat-label">Events Available</div>
+  <!-- ===== Scores Ticker ===== -->
+  <div class="scores-ticker">
+    <div class="scores-ticker-inner">
+      <div class="score-card">
+        <div class="teams">
+          <div class="team-row"><span class="team-name">NYY</span><span class="team-score">4</span></div>
+          <div class="team-row"><span class="team-name">BOS</span><span class="team-score">2</span></div>
         </div>
-        <div class="hero-stat">
-          <div class="stat-value">30</div>
-          <div class="stat-label">MLB Ballparks</div>
-        </div>
-        <div class="hero-stat">
-          <div class="stat-value">20%</div>
-          <div class="stat-label">Avg Group Savings</div>
-        </div>
+        <div class="game-status live">Top 7th</div>
       </div>
-    </div>
-  </section>
-
-  <!-- Filter bar -->
-  <div class="filter-section">
-    <div class="filter-inner">
-      <div class="filter-row">
-        <div class="filter-group">
-          <span class="filter-label">Location</span>
-          <select class="filter-select" id="filter-geo">
-            <option value="">All Cities</option>
-            <option value="new-york">New York, NY</option>
-            <option value="los-angeles">Los Angeles, CA</option>
-            <option value="chicago">Chicago, IL</option>
-            <option value="boston">Boston, MA</option>
-            <option value="houston">Houston, TX</option>
-            <option value="miami">Miami, FL</option>
-            <option value="san-francisco">San Francisco, CA</option>
-          </select>
+      <div class="score-card">
+        <div class="teams">
+          <div class="team-row"><span class="team-name">LAD</span><span class="team-score">3</span></div>
+          <div class="team-row"><span class="team-name">SF</span><span class="team-score">3</span></div>
         </div>
-        <div class="filter-group">
-          <span class="filter-label">Event Type</span>
-          <select class="filter-select" id="filter-type">
-            <option value="">All Types</option>
-            <option value="game">Game Day</option>
-            <option value="concert">Concerts</option>
-            <option value="tour">Ballpark Tours</option>
-            <option value="festival">Festivals</option>
-            <option value="family">Family Events</option>
-            <option value="vip">VIP Experiences</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Date Range</span>
-          <select class="filter-select" id="filter-date">
-            <option value="">Any Date</option>
-            <option value="this-week">This Week</option>
-            <option value="this-month">This Month</option>
-            <option value="next-month">Next Month</option>
-            <option value="summer">Summer 2026</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Search</span>
-          <input class="filter-search" type="text" id="filter-search" placeholder="Search events..." />
-        </div>
+        <div class="game-status live">Bot 5th</div>
       </div>
-
-      <div class="filter-tags" id="interest-tags">
-        <button class="filter-tag active" data-interest="">All</button>
-        <button class="filter-tag" data-interest="baseball">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93c4.08 2.38 6.2 5.88 7.07 10.07M19.07 4.93c-4.08 2.38-6.2 5.88-7.07 10.07"/></svg>
-          Baseball
-        </button>
-        <button class="filter-tag" data-interest="concerts">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          Concerts
-        </button>
-        <button class="filter-tag" data-interest="family">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Family
-        </button>
-        <button class="filter-tag" data-interest="food">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-          Food & Drink
-        </button>
-        <button class="filter-tag" data-interest="vip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          VIP
-        </button>
-        <button class="filter-tag" data-interest="tours">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Ballpark Tours
-        </button>
+      <div class="score-card">
+        <div class="teams">
+          <div class="team-row"><span class="team-name">CHC</span><span class="team-score">6</span></div>
+          <div class="team-row"><span class="team-name">STL</span><span class="team-score">1</span></div>
+        </div>
+        <div class="game-status">Final</div>
       </div>
-
-      <div class="filter-results">
-        <span id="results-count">Showing 12 events</span>
-        <button class="clear-filters" id="clear-filters" style="display:none">Clear all filters</button>
+      <div class="score-card">
+        <div class="teams">
+          <div class="team-row"><span class="team-name">HOU</span><span class="team-score">-</span></div>
+          <div class="team-row"><span class="team-name">TEX</span><span class="team-score">-</span></div>
+        </div>
+        <div class="game-status">7:10 PM ET</div>
+      </div>
+      <div class="score-card">
+        <div class="teams">
+          <div class="team-row"><span class="team-name">MIA</span><span class="team-score">-</span></div>
+          <div class="team-row"><span class="team-name">ATL</span><span class="team-score">-</span></div>
+        </div>
+        <div class="game-status">7:20 PM ET</div>
       </div>
     </div>
   </div>
 
-  <!-- Widget embed area -->
-  <div class="content">
-    <div class="section-header">
-      <h2>Upcoming Experiences</h2>
-      <span class="badge">FEVO Group Buy</span>
+  <!-- ===== Page Content ===== -->
+  <div class="mlb-page">
+    <!-- Main Column -->
+    <div>
+      <!-- Featured Story -->
+      <div class="featured-story mlb-card" style="margin-bottom:24px">
+        <img src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=900&h=500&fit=crop" alt="Spring Training" />
+        <div class="overlay">
+          <div class="tag">Spring Training 2026</div>
+          <h2>Spring Training is Here: Your Complete Guide</h2>
+          <p>Everything you need to know about Cactus and Grapefruit League</p>
+        </div>
+      </div>
+
+      <!-- Ticket Strip (opens FEVO modal) -->
+      <div class="mlb-card" style="margin-bottom:24px">
+        <div class="mlb-card-header">
+          Tickets & Experiences
+          <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
+        </div>
+        <div class="ticket-strip">
+          <div class="ticket-strip-item" onclick="openFevoModal()">
+            <img src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=440&h=240&fit=crop" alt="Yankees" />
+            <div class="tsi-body">
+              <div class="tsi-title">Yankees vs Red Sox</div>
+              <div class="tsi-meta">Mar 28 &middot; Yankee Stadium</div>
+              <div class="tsi-price">From $65</div>
+            </div>
+            <div class="tsi-cta">Get Tickets</div>
+          </div>
+          <div class="ticket-strip-item" onclick="openFevoModal()">
+            <img src="https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=440&h=240&fit=crop" alt="Family" />
+            <div class="tsi-body">
+              <div class="tsi-title">Family Sunday - Kids Run Bases</div>
+              <div class="tsi-meta">Apr 12 &middot; Citi Field</div>
+              <div class="tsi-price">From $25</div>
+            </div>
+            <div class="tsi-cta">Get Tickets</div>
+          </div>
+          <div class="ticket-strip-item" onclick="openFevoModal()">
+            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=440&h=240&fit=crop" alt="Concert" />
+            <div class="tsi-body">
+              <div class="tsi-title">Dodger Stadium Concert Night</div>
+              <div class="tsi-meta">Jun 14 &middot; Los Angeles</div>
+              <div class="tsi-price">From $55</div>
+            </div>
+            <div class="tsi-cta">Get Tickets</div>
+          </div>
+          <div class="ticket-strip-item" onclick="openFevoModal()">
+            <img src="https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=440&h=240&fit=crop" alt="VIP" />
+            <div class="tsi-body">
+              <div class="tsi-title">Red Sox VIP Dugout Experience</div>
+              <div class="tsi-meta">May 15 &middot; Fenway Park</div>
+              <div class="tsi-price">From $250</div>
+            </div>
+            <div class="tsi-cta">Get Tickets</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Stories -->
+      <div class="mlb-card" style="margin-bottom:24px">
+        <div class="mlb-card-header">Top Stories</div>
+        <div class="story-list">
+          <div class="story-item">
+            <img src="https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=200&h=130&fit=crop" alt="" />
+            <div>
+              <h4>Pitchers and catchers report: Key storylines to watch across all 30 teams</h4>
+              <div class="story-meta">12 minutes ago &middot; MLB.com</div>
+            </div>
+          </div>
+          <div class="story-item">
+            <img src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=200&h=130&fit=crop" alt="" />
+            <div>
+              <h4>Top 100 prospects for 2026: New names crack the list after breakout Fall League</h4>
+              <div class="story-meta">1 hour ago &middot; MLB Pipeline</div>
+            </div>
+          </div>
+          <div class="story-item">
+            <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=200&h=130&fit=crop" alt="" />
+            <div>
+              <h4>Free-agent tracker: Latest signings, remaining top players, and rumor roundup</h4>
+              <div class="story-meta">3 hours ago &middot; MLB Trade Rumors</div>
+            </div>
+          </div>
+          <div class="story-item">
+            <img src="https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=200&h=130&fit=crop" alt="" />
+            <div>
+              <h4>2026 rule changes: What's new this season and how it impacts the game</h4>
+              <div class="story-meta">5 hours ago &middot; MLB.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEVO promo banner -->
+      <div class="tickets-promo" style="margin-bottom:24px">
+        <h3>Buy Together & Save with FEVO</h3>
+        <p>Group tickets, VIP experiences, and exclusive events — all in one place.<br/>Invite friends and unlock group pricing.</p>
+        <button class="promo-btn" onclick="openFevoModal()">Browse Experiences</button>
+      </div>
     </div>
 
-    <!-- FEVO Widget embedded here -->
-    <div id="fevo-event-feed"
-         data-theme="light"
-         data-columns="3">
-    </div>
+    <!-- Sidebar -->
+    <div>
+      <div class="sidebar-ad" style="margin-bottom:24px">Advertisement</div>
 
-    <div class="no-results" id="no-results" style="display:none">
-      <h3>No events match your filters</h3>
-      <p>Try adjusting your filters or search to find events.</p>
+      <!-- Standings -->
+      <div class="mlb-card" style="margin-bottom:24px">
+        <div class="mlb-card-header">AL East Standings</div>
+        <table class="standings-table">
+          <thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th></tr></thead>
+          <tbody>
+            <tr><td class="team-cell">NYY</td><td>0</td><td>0</td><td>.000</td></tr>
+            <tr><td class="team-cell">BOS</td><td>0</td><td>0</td><td>.000</td></tr>
+            <tr><td class="team-cell">BAL</td><td>0</td><td>0</td><td>.000</td></tr>
+            <tr><td class="team-cell">TB</td><td>0</td><td>0</td><td>.000</td></tr>
+            <tr><td class="team-cell">TOR</td><td>0</td><td>0</td><td>.000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Quick links promo for FEVO -->
+      <div class="mlb-card" style="margin-bottom:24px">
+        <div class="mlb-card-header">Group Experiences</div>
+        <div style="padding:16px">
+          <div style="font-size:13px; color:#6b7280; margin-bottom:12px; line-height:1.5">Get tickets for your group — birthday parties, corporate outings, and more.</div>
+          <button onclick="openFevoModal()" style="width:100%;height:40px;background:#057AFF;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">Browse Group Tickets</button>
+        </div>
+      </div>
+
+      <div class="sidebar-ad">Advertisement</div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-col">
-        <h4>MLB Experiences</h4>
-        <a href="#">About</a>
-        <a href="#">Careers</a>
-        <a href="#">Press</a>
+  <!-- ================================================================
+       FEVO MODAL OVERLAY
+       ================================================================ -->
+  <div class="fevo-modal-overlay" id="fevo-overlay">
+    <div class="fevo-modal">
+      <!-- Header -->
+      <div class="fevo-modal-header">
+        <div class="fevo-modal-brand">
+          <div class="fevo-logo">FEVO</div>
+          <div>
+            <div class="fevo-label">Tickets & Experiences</div>
+            <div class="fevo-sublabel">Buy together, save together</div>
+          </div>
+        </div>
+        <button class="fevo-modal-close" id="fevo-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-      <div class="footer-col">
-        <h4>Support</h4>
-        <a href="#">Help Center</a>
-        <a href="#">Contact Us</a>
-        <a href="#">Accessibility</a>
-      </div>
-      <div class="footer-col">
-        <h4>Policies</h4>
-        <a href="#">Terms of Service</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Refund Policy</a>
-      </div>
-      <div class="footer-col">
-        <h4>Connect</h4>
-        <a href="#">Twitter</a>
-        <a href="#">Instagram</a>
-        <a href="#">Facebook</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>&copy; 2026 MLB Experiences. Ticketing powered by FEVO.</span>
-      <span>All trademarks are property of their respective owners.</span>
-    </div>
-  </footer>
 
-  <!-- Mock API with filtering support -->
+      <!-- Filters -->
+      <div class="fevo-modal-filters">
+        <select class="fevo-filter" id="m-filter-geo">
+          <option value="">All Cities</option>
+          <option value="new-york">New York</option>
+          <option value="los-angeles">Los Angeles</option>
+          <option value="chicago">Chicago</option>
+          <option value="boston">Boston</option>
+          <option value="houston">Houston</option>
+          <option value="miami">Miami</option>
+          <option value="san-francisco">San Francisco</option>
+        </select>
+        <select class="fevo-filter" id="m-filter-type">
+          <option value="">All Types</option>
+          <option value="game">Game Day</option>
+          <option value="concert">Concerts</option>
+          <option value="tour">Ballpark Tours</option>
+          <option value="festival">Festivals</option>
+          <option value="family">Family</option>
+          <option value="vip">VIP</option>
+        </select>
+        <select class="fevo-filter" id="m-filter-interest">
+          <option value="">All Interests</option>
+          <option value="baseball">Baseball</option>
+          <option value="concerts">Live Music</option>
+          <option value="food">Food & Drink</option>
+          <option value="family">Family Friendly</option>
+          <option value="vip">VIP / Premium</option>
+          <option value="tours">Stadium Tours</option>
+        </select>
+        <input class="fevo-search" type="text" id="m-filter-search" placeholder="Search events..." />
+        <span class="fevo-filter-count" id="m-filter-count">12 events</span>
+      </div>
+
+      <!-- Widget renders here -->
+      <div class="fevo-modal-body">
+        <div id="fevo-event-feed" data-theme="light" data-columns="2"></div>
+        <div class="fevo-modal-empty" id="m-no-results">
+          <h4>No events match your filters</h4>
+          <p>Try broadening your search or selecting a different city.</p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="fevo-modal-footer">
+        Powered by <span>FEVO</span> &middot; Group buying for live events
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Mock data & filtering logic ===== -->
   <script>
-    // Full offer dataset
     const ALL_OFFERS = [
-      {
-        offer_id: 'mlb-001',
-        title: 'Yankees vs Red Sox - Opening Day',
-        description: 'The rivalry continues on Opening Day at Yankee Stadium.',
-        image_url: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop',
-        price: { min: 65, max: 350, currency: 'USD' },
-        date: '2026-03-28T13:05:00Z',
-        venue: { name: 'Yankee Stadium', city: 'New York', state: 'NY' },
-        availability: 'limited',
-        organization: { id: 'org-nyy', name: 'New York Yankees' },
-        checkout_url: '/demo/checkout.html?offer=offer-001',
-        tags: ['baseball', 'game'],
-        city_key: 'new-york',
-        type_key: 'game',
-        created_at: '2026-01-01T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-002',
-        title: 'Mets Family Sunday - Kids Run the Bases',
-        description: 'After the game, kids 12 and under get to run the bases at Citi Field.',
-        image_url: 'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop',
-        price: { min: 25, max: 75, currency: 'USD' },
-        date: '2026-04-12T13:00:00Z',
-        venue: { name: 'Citi Field', city: 'New York', state: 'NY' },
-        availability: 'available',
-        organization: { id: 'org-nym', name: 'New York Mets' },
-        checkout_url: '/demo/checkout.html?offer=offer-002',
-        tags: ['baseball', 'family'],
-        city_key: 'new-york',
-        type_key: 'family',
-        created_at: '2026-01-05T00:00:00Z',
-        updated_at: '2026-02-10T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-003',
-        title: 'Dodger Stadium Concert: Summer Nights Live',
-        description: 'Live music at Dodger Stadium featuring top artists after the game.',
-        image_url: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop',
-        price: { min: 55, max: 180, currency: 'USD' },
-        date: '2026-06-14T19:00:00Z',
-        venue: { name: 'Dodger Stadium', city: 'Los Angeles', state: 'CA' },
-        availability: 'available',
-        organization: { id: 'org-lad', name: 'Los Angeles Dodgers' },
-        checkout_url: '/demo/checkout.html?offer=offer-003',
-        tags: ['concerts', 'baseball'],
-        city_key: 'los-angeles',
-        type_key: 'concert',
-        created_at: '2026-02-01T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-004',
-        title: 'Wrigley Field Behind-the-Scenes Tour',
-        description: 'Explore the historic Wrigley Field including the press box, dugout, and clubhouse.',
-        image_url: 'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop',
-        price: { min: 40, max: 40, currency: 'USD' },
-        date: '2026-05-20T10:00:00Z',
-        venue: { name: 'Wrigley Field', city: 'Chicago', state: 'IL' },
-        availability: 'available',
-        organization: { id: 'org-chc', name: 'Chicago Cubs' },
-        checkout_url: '/demo/checkout.html?offer=offer-004',
-        tags: ['tours', 'baseball'],
-        city_key: 'chicago',
-        type_key: 'tour',
-        created_at: '2026-01-20T00:00:00Z',
-        updated_at: '2026-02-12T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-005',
-        title: 'Red Sox VIP Dugout Experience',
-        description: 'Watch batting practice from the dugout and meet players at Fenway Park.',
-        image_url: 'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop',
-        price: { min: 250, max: 500, currency: 'USD' },
-        date: '2026-05-15T16:00:00Z',
-        venue: { name: 'Fenway Park', city: 'Boston', state: 'MA' },
-        availability: 'limited',
-        organization: { id: 'org-bos', name: 'Boston Red Sox' },
-        checkout_url: '/demo/checkout.html?offer=offer-005',
-        tags: ['vip', 'baseball'],
-        city_key: 'boston',
-        type_key: 'vip',
-        created_at: '2026-02-05T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-006',
-        title: 'Astros Craft Beer & BBQ Festival',
-        description: 'Enjoy local craft beers and BBQ inside Minute Maid Park.',
-        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop',
-        price: { min: 45, max: 95, currency: 'USD' },
-        date: '2026-07-04T12:00:00Z',
-        venue: { name: 'Minute Maid Park', city: 'Houston', state: 'TX' },
-        availability: 'available',
-        organization: { id: 'org-hou', name: 'Houston Astros' },
-        checkout_url: '/demo/checkout.html?offer=offer-005',
-        tags: ['food', 'festival'],
-        city_key: 'houston',
-        type_key: 'festival',
-        created_at: '2026-02-10T00:00:00Z',
-        updated_at: '2026-02-14T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-007',
-        title: 'Giants vs Dodgers - Rivalry Weekend',
-        description: 'Classic NL West showdown at Oracle Park with fireworks after the game.',
-        image_url: 'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop',
-        price: { min: 55, max: 200, currency: 'USD' },
-        date: '2026-06-20T19:15:00Z',
-        venue: { name: 'Oracle Park', city: 'San Francisco', state: 'CA' },
-        availability: 'available',
-        organization: { id: 'org-sfg', name: 'San Francisco Giants' },
-        checkout_url: '/demo/checkout.html?offer=offer-003',
-        tags: ['baseball', 'game'],
-        city_key: 'san-francisco',
-        type_key: 'game',
-        created_at: '2026-01-15T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-008',
-        title: 'Marlins Park Family Fun Zone',
-        description: 'Inflatables, face painting, and catch on the field for the whole family.',
-        image_url: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop',
-        price: { min: 20, max: 55, currency: 'USD' },
-        date: '2026-04-25T11:00:00Z',
-        venue: { name: 'loanDepot park', city: 'Miami', state: 'FL' },
-        availability: 'available',
-        organization: { id: 'org-mia', name: 'Miami Marlins' },
-        checkout_url: '/demo/checkout.html?offer=offer-002',
-        tags: ['family', 'baseball'],
-        city_key: 'miami',
-        type_key: 'family',
-        created_at: '2026-02-08T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-009',
-        title: 'Yankee Stadium Legends Tour',
-        description: 'Walk in the footsteps of legends — visit Monument Park and the press box.',
-        image_url: 'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop',
-        price: { min: 35, max: 35, currency: 'USD' },
-        date: '2026-04-10T09:30:00Z',
-        venue: { name: 'Yankee Stadium', city: 'New York', state: 'NY' },
-        availability: 'available',
-        organization: { id: 'org-nyy', name: 'New York Yankees' },
-        checkout_url: '/demo/checkout.html?offer=offer-004',
-        tags: ['tours', 'baseball'],
-        city_key: 'new-york',
-        type_key: 'tour',
-        created_at: '2026-01-12T00:00:00Z',
-        updated_at: '2026-02-14T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-010',
-        title: 'Cubs Rooftop Party - All-Inclusive',
-        description: 'Watch the Cubs from a Wrigleyville rooftop with food, drinks, and a DJ.',
-        image_url: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop',
-        price: { min: 120, max: 200, currency: 'USD' },
-        date: '2026-08-01T18:00:00Z',
-        venue: { name: 'Wrigley Rooftops', city: 'Chicago', state: 'IL' },
-        availability: 'available',
-        organization: { id: 'org-chc', name: 'Chicago Cubs' },
-        checkout_url: '/demo/checkout.html?offer=offer-005',
-        tags: ['vip', 'food', 'baseball'],
-        city_key: 'chicago',
-        type_key: 'vip',
-        created_at: '2026-02-12T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-011',
-        title: 'Fenway Park Concert: Country Night',
-        description: 'Top country artists perform live at America\'s most beloved ballpark.',
-        image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop',
-        price: { min: 75, max: 175, currency: 'USD' },
-        date: '2026-07-18T19:00:00Z',
-        venue: { name: 'Fenway Park', city: 'Boston', state: 'MA' },
-        availability: 'available',
-        organization: { id: 'org-bos', name: 'Boston Red Sox' },
-        checkout_url: '/demo/checkout.html?offer=offer-003',
-        tags: ['concerts'],
-        city_key: 'boston',
-        type_key: 'concert',
-        created_at: '2026-02-06T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
-      {
-        offer_id: 'mlb-012',
-        title: 'All-Star Week Fan Fest 2026',
-        description: 'Interactive exhibits, autograph sessions, and HR Derby viewing party.',
-        image_url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop',
-        price: { min: 30, max: 85, currency: 'USD' },
-        date: '2026-07-13T10:00:00Z',
-        venue: { name: 'Convention Center', city: 'Houston', state: 'TX' },
-        availability: 'available',
-        organization: { id: 'org-mlb', name: 'MLB' },
-        checkout_url: '/demo/checkout.html?offer=offer-001',
-        tags: ['family', 'festival', 'baseball'],
-        city_key: 'houston',
-        type_key: 'festival',
-        created_at: '2026-02-14T00:00:00Z',
-        updated_at: '2026-02-15T00:00:00Z',
-      },
+      { offer_id:'mlb-001', title:'Yankees vs Red Sox - Opening Day', description:'The rivalry continues.', image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop', price:{min:65,max:350,currency:'USD'}, date:'2026-03-28T13:05:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=offer-001', tags:['baseball','game'], city_key:'new-york', type_key:'game', created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-002', title:'Mets Family Sunday - Kids Run the Bases', description:'Kids run the bases after the game.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:75,currency:'USD'}, date:'2026-04-12T13:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'Mets'}, checkout_url:'/demo/checkout.html?offer=offer-002', tags:['baseball','family'], city_key:'new-york', type_key:'family', created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-10T00:00:00Z' },
+      { offer_id:'mlb-003', title:'Dodger Stadium Concert: Summer Nights', description:'Live music after the game.', image_url:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop', price:{min:55,max:180,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['concerts','baseball'], city_key:'los-angeles', type_key:'concert', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-004', title:'Wrigley Field Behind-the-Scenes Tour', description:'Explore the historic Wrigley Field.', image_url:'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop', price:{min:40,max:40,currency:'USD'}, date:'2026-05-20T10:00:00Z', venue:{name:'Wrigley Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=offer-004', tags:['tours','baseball'], city_key:'chicago', type_key:'tour', created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-12T00:00:00Z' },
+      { offer_id:'mlb-005', title:'Red Sox VIP Dugout Experience', description:'Watch batting practice from the dugout.', image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop', price:{min:250,max:500,currency:'USD'}, date:'2026-05-15T16:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['vip','baseball'], city_key:'boston', type_key:'vip', created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-006', title:'Astros Craft Beer & BBQ Festival', description:'Local craft beers and BBQ at Minute Maid.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-07-04T12:00:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['food','festival'], city_key:'houston', type_key:'festival', created_at:'2026-02-10T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-007', title:'Giants vs Dodgers - Rivalry Weekend', description:'NL West showdown with fireworks.', image_url:'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop', price:{min:55,max:200,currency:'USD'}, date:'2026-06-20T19:15:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['baseball','game'], city_key:'san-francisco', type_key:'game', created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-008', title:'Marlins Park Family Fun Zone', description:'Inflatables and catch on the field.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:20,max:55,currency:'USD'}, date:'2026-04-25T11:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=offer-002', tags:['family','baseball'], city_key:'miami', type_key:'family', created_at:'2026-02-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-009', title:'Yankee Stadium Legends Tour', description:'Visit Monument Park and the press box.', image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop', price:{min:35,max:35,currency:'USD'}, date:'2026-04-10T09:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=offer-004', tags:['tours','baseball'], city_key:'new-york', type_key:'tour', created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-010', title:'Cubs Rooftop Party - All-Inclusive', description:'Wrigleyville rooftop with food, drinks, DJ.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:120,max:200,currency:'USD'}, date:'2026-08-01T18:00:00Z', venue:{name:'Wrigley Rooftops',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['vip','food','baseball'], city_key:'chicago', type_key:'vip', created_at:'2026-02-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-011', title:'Fenway Concert: Country Night', description:'Top country artists at Fenway Park.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:75,max:175,currency:'USD'}, date:'2026-07-18T19:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['concerts'], city_key:'boston', type_key:'concert', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-012', title:'All-Star Week Fan Fest 2026', description:'Exhibits, autographs, HR Derby viewing.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:30,max:85,currency:'USD'}, date:'2026-07-13T10:00:00Z', venue:{name:'Convention Center',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-mlb',name:'MLB'}, checkout_url:'/demo/checkout.html?offer=offer-001', tags:['family','festival','baseball'], city_key:'houston', type_key:'festival', created_at:'2026-02-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
     ];
 
-    // Current filter state
-    let filters = { geo: '', type: '', date: '', search: '', interest: '' };
+    let mFilters = { geo:'', type:'', interest:'', search:'' };
 
-    function getFilteredOffers() {
+    function getFiltered() {
       return ALL_OFFERS.filter(o => {
-        if (filters.geo && o.city_key !== filters.geo) return false;
-        if (filters.type && o.type_key !== filters.type) return false;
-        if (filters.interest && !o.tags.includes(filters.interest)) return false;
-        if (filters.search) {
-          const q = filters.search.toLowerCase();
-          const haystack = (o.title + ' ' + o.venue.name + ' ' + o.venue.city + ' ' + o.organization.name + ' ' + o.tags.join(' ')).toLowerCase();
-          if (!haystack.includes(q)) return false;
+        if (mFilters.geo && o.city_key !== mFilters.geo) return false;
+        if (mFilters.type && o.type_key !== mFilters.type) return false;
+        if (mFilters.interest && !o.tags.includes(mFilters.interest)) return false;
+        if (mFilters.search) {
+          const q = mFilters.search.toLowerCase();
+          if (!(o.title + ' ' + o.venue.name + ' ' + o.venue.city + ' ' + o.tags.join(' ')).toLowerCase().includes(q)) return false;
         }
         return true;
       });
     }
 
-    // Intercept fetch for the widget
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options) {
-      const urlStr = typeof url === 'string' ? url : url.toString();
-      if (urlStr.includes('/api/v1/feed') || urlStr.includes('/feed')) {
-        const filtered = getFilteredOffers();
-        const response = {
-          data: filtered,
-          meta: { page: 1, per_page: 20, total: filtered.length, total_pages: 1 },
-          feed_updated_at: new Date().toISOString(),
-        };
-        return Promise.resolve(new Response(JSON.stringify(response), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }));
+    // Mock fetch
+    const _fetch = window.fetch;
+    window.fetch = function(url, opts) {
+      const u = typeof url === 'string' ? url : url.toString();
+      if (u.includes('/feed')) {
+        const d = getFiltered();
+        return Promise.resolve(new Response(JSON.stringify({
+          data: d, meta: { page:1, per_page:20, total:d.length, total_pages:1 }, feed_updated_at: new Date().toISOString()
+        }), { status:200, headers:{'Content-Type':'application/json'} }));
       }
-      return originalFetch.apply(this, arguments);
+      return _fetch.apply(this, arguments);
     };
 
-    // Re-render widget by destroying and re-initializing
-    function refreshWidget() {
-      const el = document.getElementById('fevo-event-feed');
-      const filtered = getFilteredOffers();
-      const noResults = document.getElementById('no-results');
+    // Modal open/close
+    function openFevoModal() {
+      document.getElementById('fevo-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      // Init widget if not yet
+      setTimeout(() => {
+        if (window.FevoEventFeed) {
+          window.FevoEventFeed.destroy('#fevo-event-feed');
+          window.FevoEventFeed.init({ theme:'light', columns:2 }, '#fevo-event-feed');
+        }
+      }, 50);
+    }
+    function closeFevoModal() {
+      document.getElementById('fevo-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
 
-      // Update count
-      document.getElementById('results-count').textContent =
-        `Showing ${filtered.length} event${filtered.length !== 1 ? 's' : ''}`;
+    document.getElementById('fevo-close').onclick = closeFevoModal;
+    document.getElementById('fevo-overlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('fevo-overlay')) closeFevoModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeFevoModal();
+    });
+    document.getElementById('open-fevo-seeall').addEventListener('click', (e) => {
+      e.preventDefault();
+      openFevoModal();
+    });
 
-      // Show/hide clear button
-      const hasFilters = filters.geo || filters.type || filters.date || filters.search || filters.interest;
-      document.getElementById('clear-filters').style.display = hasFilters ? 'inline' : 'none';
-
+    // Filter handlers
+    function refreshModal() {
+      const filtered = getFiltered();
+      document.getElementById('m-filter-count').textContent = filtered.length + ' event' + (filtered.length !== 1 ? 's' : '');
+      const feedEl = document.getElementById('fevo-event-feed');
+      const emptyEl = document.getElementById('m-no-results');
       if (filtered.length === 0) {
-        el.style.display = 'none';
-        noResults.style.display = 'block';
+        feedEl.style.display = 'none';
+        emptyEl.style.display = 'block';
       } else {
-        el.style.display = 'block';
-        noResults.style.display = 'none';
+        feedEl.style.display = 'block';
+        emptyEl.style.display = 'none';
       }
-
-      // Re-init widget
       if (window.FevoEventFeed) {
         window.FevoEventFeed.destroy('#fevo-event-feed');
-        window.FevoEventFeed.init({ theme: 'light', columns: 3 }, '#fevo-event-feed');
+        window.FevoEventFeed.init({ theme:'light', columns:2 }, '#fevo-event-feed');
       }
     }
 
-    // Wait for widget to load, then capture reference
-    let widgetReadyInterval = setInterval(() => {
-      if (window.FevoEventFeed) {
-        clearInterval(widgetReadyInterval);
-        // Initial render happens via auto-init
-        document.getElementById('results-count').textContent =
-          `Showing ${ALL_OFFERS.length} events`;
-      }
-    }, 100);
-
-    // Bind filter controls
-    document.getElementById('filter-geo').addEventListener('change', (e) => {
-      filters.geo = e.target.value;
-      refreshWidget();
-    });
-
-    document.getElementById('filter-type').addEventListener('change', (e) => {
-      filters.type = e.target.value;
-      refreshWidget();
-    });
-
-    document.getElementById('filter-date').addEventListener('change', (e) => {
-      filters.date = e.target.value;
-      refreshWidget();
-    });
-
-    let searchTimer;
-    document.getElementById('filter-search').addEventListener('input', (e) => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => {
-        filters.search = e.target.value;
-        refreshWidget();
-      }, 300);
-    });
-
-    // Interest tags
-    document.querySelectorAll('.filter-tag').forEach(tag => {
-      tag.addEventListener('click', () => {
-        document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-        tag.classList.add('active');
-        filters.interest = tag.dataset.interest;
-        refreshWidget();
-      });
-    });
-
-    // Clear all
-    document.getElementById('clear-filters').addEventListener('click', () => {
-      filters = { geo: '', type: '', date: '', search: '', interest: '' };
-      document.getElementById('filter-geo').value = '';
-      document.getElementById('filter-type').value = '';
-      document.getElementById('filter-date').value = '';
-      document.getElementById('filter-search').value = '';
-      document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-      document.querySelector('.filter-tag[data-interest=""]').classList.add('active');
-      refreshWidget();
-    });
-
-    // Analytics logging
-    window.addEventListener('fevo:analytics', function(e) {
-      console.log('[FEVO Analytics]', e.detail);
-    });
+    document.getElementById('m-filter-geo').onchange = (e) => { mFilters.geo = e.target.value; refreshModal(); };
+    document.getElementById('m-filter-type').onchange = (e) => { mFilters.type = e.target.value; refreshModal(); };
+    document.getElementById('m-filter-interest').onchange = (e) => { mFilters.interest = e.target.value; refreshModal(); };
+    let st;
+    document.getElementById('m-filter-search').oninput = (e) => {
+      clearTimeout(st);
+      st = setTimeout(() => { mFilters.search = e.target.value; refreshModal(); }, 250);
+    };
   </script>
 
   <script src="/src/index.ts" type="module"></script>
