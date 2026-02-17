@@ -18,11 +18,11 @@ const config: Knex.Config = {
   useNullAsDefault: true,
   migrations: {
     directory: path.resolve(__dirname, 'migrations'),
-    extension: 'ts',
+    loadExtensions: ['.js'],
   },
   seeds: {
     directory: path.resolve(__dirname, 'seeds'),
-    extension: 'ts',
+    loadExtensions: ['.js'],
   },
 };
 
