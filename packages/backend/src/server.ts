@@ -1,0 +1,114 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import routes from './routes';
+import db from './db/connection';
+import { startFeedRefreshJob, stopFeedRefreshJob } from './jobs/feedRefresh';
+import { buildFeedIndex } from './services/feedService';
+
+const app = express();
+const PORT = parseInt(process.env.PORT || '3001', 10);
+
+// ── Global middleware ────────────────────────────────────────────────────────
+
+app.use(cors());
+app.use(helmet());
+app.use(express.json());
+
+// ── Request logging ──────────────────────────────────────────────────────────
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const log = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`;
+    if (res.statusCode >= 400) {
+      console.error(log);
+    } else if (req.originalUrl !== '/health') {
+      // Skip health check spam in logs
+      console.log(log);
+    }
+  });
+  next();
+});
+
+// ── Health check ─────────────────────────────────────────────────────────────
+
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── Mount API routes ─────────────────────────────────────────────────────────
+
+app.use('/api/v1/event-feed', routes);
+
+// ── Global error handler ─────────────────────────────────────────────────────
+
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Unhandled error:', err.message);
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(err.stack);
+  }
+  res.status(500).json({
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+  });
+});
+
+// ── Bootstrap ────────────────────────────────────────────────────────────────
+
+async function bootstrap(): Promise<void> {
+  try {
+    // Run migrations
+    await db.migrate.latest();
+    console.log('Database migrations complete');
+
+    // Run seeds if tables are empty (first boot)
+    const offerCount = await db('offers').count('id as count').first();
+    if (offerCount && Number(offerCount.count) === 0) {
+      await db.seed.run();
+      console.log('Database seeded with sample data');
+    }
+
+    // Build initial feed index
+    const feedCount = await buildFeedIndex();
+    console.log(`Initial feed index built with ${feedCount} offers`);
+
+    // Start cron job
+    startFeedRefreshJob();
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Event Feed API listening on http://localhost:${PORT}`);
+      console.log(`  Feed endpoint: http://localhost:${PORT}/api/v1/event-feed`);
+      console.log(`  Admin endpoint: http://localhost:${PORT}/api/v1/event-feed/admin`);
+    });
+  } catch (err) {
+    console.error('Failed to bootstrap server:', err);
+    process.exit(1);
+  }
+}
+
+// Only auto-start when this file is the entry point (not when imported for tests)
+if (require.main === module) {
+  bootstrap().then(() => {
+    // Graceful shutdown handlers
+    const shutdown = async (signal: string) => {
+      console.log(`\n${signal} received. Shutting down gracefully...`);
+      try {
+        stopFeedRefreshJob();
+        await db.destroy();
+        console.log('Database connection closed. Goodbye.');
+      } catch (err) {
+        console.error('Error during shutdown:', err);
+      }
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+  });
+}
+
+export { app, bootstrap };
+export default app;

@@ -1,0 +1,22 @@
+{
+  "name": "eventfeedexploration",
+  "version": "1.0.0",
+  "description": "FEVO Event Feed - publishable feed of offers for external distribution",
+  "private": true,
+  "workspaces": [
+    "packages/backend",
+    "packages/admin-ui",
+    "packages/widget"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=packages/backend",
+    "dev:admin": "npm run dev --workspace=packages/admin-ui",
+    "dev:widget": "npm run dev --workspace=packages/widget",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

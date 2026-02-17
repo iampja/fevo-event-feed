@@ -1,0 +1,152 @@
+import { render, h } from 'preact';
+import { WidgetContainer } from './components/WidgetContainer';
+import type { WidgetConfig } from './types';
+
+/**
+ * Parse data-* attributes from an HTML element into a WidgetConfig.
+ */
+function parseConfigFromElement(el: Element): WidgetConfig {
+  const config: WidgetConfig = {};
+
+  const segment = el.getAttribute('data-segment');
+  if (segment) config.segment = segment;
+
+  const theme = el.getAttribute('data-theme') as 'light' | 'dark' | null;
+  if (theme === 'light' || theme === 'dark') config.theme = theme;
+
+  const columns = el.getAttribute('data-columns');
+  if (columns) {
+    const parsed = parseInt(columns, 10);
+    if (parsed >= 1 && parsed <= 4) config.columns = parsed as 1 | 2 | 3 | 4;
+  }
+
+  const maxCards = el.getAttribute('data-max-cards');
+  if (maxCards) {
+    const parsed = parseInt(maxCards, 10);
+    if (parsed > 0) config.maxCards = parsed;
+  }
+
+  const apiUrl = el.getAttribute('data-api-url');
+  if (apiUrl) config.apiUrl = apiUrl;
+
+  const apiKey = el.getAttribute('data-api-key');
+  if (apiKey) config.apiKey = apiKey;
+
+  const partnerId = el.getAttribute('data-partner-id');
+  if (partnerId) config.partnerId = partnerId;
+
+  return config;
+}
+
+/**
+ * Render a widget instance into a target element.
+ */
+function renderWidget(el: Element, config: WidgetConfig): void {
+  render(h(WidgetContainer, { config }), el);
+}
+
+/**
+ * Auto-detect and initialize widgets from DOM elements.
+ * Looks for:
+ *   - Elements with id="fevo-event-feed"
+ *   - Elements with class="fevo-event-feed"
+ */
+function autoInit(): void {
+  const targets = new Set<Element>();
+
+  // By ID
+  const byId = document.getElementById('fevo-event-feed');
+  if (byId) targets.add(byId);
+
+  // By class
+  const byClass = document.querySelectorAll('.fevo-event-feed');
+  byClass.forEach((el) => targets.add(el));
+
+  targets.forEach((el) => {
+    const config = parseConfigFromElement(el);
+    renderWidget(el, config);
+  });
+}
+
+/**
+ * Programmatic initialization.
+ * Usage:
+ *   FevoEventFeed.init({
+ *     segment: 'hello-kitty-nights',
+ *     theme: 'dark',
+ *     columns: 2,
+ *     apiUrl: 'https://api.example.com/v1/feed',
+ *     apiKey: 'key_abc123',
+ *   });
+ *
+ * Or target a specific element:
+ *   FevoEventFeed.init({ segment: 'events' }, document.getElementById('my-feed'));
+ */
+function init(config: WidgetConfig, target?: Element | string): void {
+  let el: Element | null = null;
+
+  if (target) {
+    if (typeof target === 'string') {
+      el = document.querySelector(target);
+    } else {
+      el = target;
+    }
+  }
+
+  if (el) {
+    // Merge data-* attributes with programmatic config (programmatic takes precedence)
+    const dataConfig = parseConfigFromElement(el);
+    const merged: WidgetConfig = { ...dataConfig, ...config };
+    renderWidget(el, merged);
+  } else {
+    // If no target specified, find all matching elements and render with provided config
+    const targets = new Set<Element>();
+    const byId = document.getElementById('fevo-event-feed');
+    if (byId) targets.add(byId);
+    document
+      .querySelectorAll('.fevo-event-feed')
+      .forEach((node) => targets.add(node));
+
+    targets.forEach((node) => {
+      const dataConfig = parseConfigFromElement(node);
+      const merged: WidgetConfig = { ...dataConfig, ...config };
+      renderWidget(node, merged);
+    });
+  }
+}
+
+/**
+ * Destroy a widget instance from a target element.
+ */
+function destroy(target: Element | string): void {
+  let el: Element | null = null;
+  if (typeof target === 'string') {
+    el = document.querySelector(target);
+  } else {
+    el = target;
+  }
+  if (el) {
+    render(null, el);
+  }
+}
+
+// Public API exposed as a global
+const FevoEventFeed = {
+  init,
+  destroy,
+  version: '1.0.0',
+};
+
+// Auto-init when DOM is ready
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInit);
+  } else {
+    // DOM already ready, defer to next microtask so host page can configure
+    Promise.resolve().then(autoInit);
+  }
+}
+
+export default FevoEventFeed;
+export { init, destroy };
+export type { WidgetConfig, Offer, FeedResponse, AnalyticsEvent } from './types';
