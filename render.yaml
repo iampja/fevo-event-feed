@@ -1,0 +1,43 @@
+services:
+  # ── Backend API (Node.js Web Service) ─────────────────────────────────────
+  - type: web
+    name: fevo-event-feed-api
+    runtime: node
+    region: oregon
+    buildCommand: npm install && npm run build --workspace=packages/backend
+    startCommand: node packages/backend/dist/server.js
+    healthCheckPath: /health
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /data/eventfeed.db
+      - key: INTERNAL_AUTH_TOKEN
+        generateValue: true
+
+  # ── Admin UI (Static Site) ─────────────────────────────────────────────────
+  - type: web
+    name: fevo-event-feed-admin
+    runtime: static
+    buildCommand: npm install && npm run build --workspace=packages/admin-ui
+    staticPublishPath: packages/admin-ui/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false  # Set this to your backend URL after first deploy, e.g. https://fevo-event-feed-api.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Widget (Static Site) ───────────────────────────────────────────────────
+  - type: web
+    name: fevo-event-feed-widget
+    runtime: static
+    buildCommand: npm install && npm run build --workspace=packages/widget
+    staticPublishPath: packages/widget/dist
