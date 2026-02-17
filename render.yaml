@@ -37,5 +37,5 @@ services:
   - type: web
     name: fevo-event-feed-widget
     runtime: static
-    buildCommand: npm install --include=dev && npm run build --workspace=packages/widget
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/widget && cp packages/widget/demo/partner-mlb.html packages/widget/dist/index.html && cp packages/widget/demo/checkout.html packages/widget/dist/checkout.html && sed -i 's|/src/index.ts" type="module"|/event-feed-widget.js"|g' packages/widget/dist/index.html && sed -i 's|/demo/checkout.html|/checkout.html|g' packages/widget/dist/index.html
     staticPublishPath: packages/widget/dist
