@@ -549,6 +549,294 @@
       background: #FFFDF0;
     }
     .fevo-modal-footer span { font-weight: 700; color: #1a1a1a; }
+
+    /* ================================================================
+       CHECKOUT DRAWER — slides from right
+       ================================================================ */
+    .co-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 2000;
+    }
+    .co-overlay.open { display: block; }
+
+    .co-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 480px;
+      max-width: 100vw;
+      height: 100vh;
+      background: #f9fafb;
+      z-index: 2001;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 3px solid #FFCC00;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+    }
+    .co-drawer.open { transform: translateX(0); }
+
+    .co-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: #FFFDF0;
+      border-bottom: 3px solid #FFCC00;
+      flex-shrink: 0;
+    }
+    .co-header-brand { display: flex; align-items: center; gap: 10px; }
+    .co-header-brand .fevo-logo {
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: 1px solid #e6b800;
+    }
+    .co-header-title { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .co-header-secure {
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .co-header-secure svg { width: 12px; height: 12px; }
+    .co-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f3f4f6;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .co-close:hover { background: #e5e7eb; }
+    .co-close svg { width: 16px; height: 16px; color: #6b7280; }
+
+    .co-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+    }
+
+    .co-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .co-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+
+    .co-event { display: flex; gap: 14px; align-items: center; }
+    .co-event img {
+      width: 90px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .co-event-title { font-size: 14px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
+    .co-event-meta { font-size: 12px; color: #6b7280; line-height: 1.4; }
+
+    .co-ticket {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.12s;
+      font-size: 13px;
+    }
+    .co-ticket:hover { border-color: #c7d2fe; }
+    .co-ticket.selected { border-color: #FFCC00; background: #FFFDF0; }
+    .co-ticket-name { font-weight: 600; }
+    .co-ticket-desc { font-size: 11px; color: #6b7280; margin-top: 1px; }
+    .co-ticket-price { font-weight: 800; font-size: 15px; white-space: nowrap; }
+    .co-ticket-price span { font-size: 11px; font-weight: 400; color: #6b7280; }
+
+    .co-qty {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .co-qty-label { font-size: 13px; font-weight: 600; }
+    .co-qty-controls { display: flex; align-items: center; gap: 10px; }
+    .co-qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .co-qty-btn:hover { background: #f3f4f6; }
+    .co-qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .co-qty-val { font-size: 16px; font-weight: 700; min-width: 24px; text-align: center; }
+
+    .co-summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .co-summary-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid #1a1a1a;
+    }
+
+    .co-promo { display: flex; gap: 6px; margin-top: 12px; }
+    .co-promo input {
+      flex: 1;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .co-promo button {
+      height: 34px;
+      padding: 0 14px;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .co-group {
+      background: #FFFDF0;
+      border: 1px solid #FFCC00;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .co-group h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .co-group h4 svg { width: 14px; height: 14px; color: #b8960a; }
+    .co-group p { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+    .co-group-row { display: flex; gap: 6px; }
+    .co-group-row input {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .co-group-row input:focus { outline: none; border-color: #FFCC00; }
+    .co-group-row button {
+      height: 32px;
+      padding: 0 12px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .co-checkout-btn {
+      width: 100%;
+      height: 46px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.12s;
+      margin-top: 16px;
+    }
+    .co-checkout-btn:hover { background: #e6b800; }
+
+    .co-powered {
+      text-align: center;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 12px;
+    }
+    .co-powered span { font-weight: 600; color: #6b7280; }
+
+    .co-confirmation {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .co-confirmation.visible { display: block; }
+    .co-conf-check {
+      width: 56px;
+      height: 56px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .co-confirmation h2 { font-size: 20px; margin-bottom: 8px; }
+    .co-confirmation p { color: #6b7280; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .co-conf-num {
+      background: #f3f4f6;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-family: 'SF Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .co-done-btn {
+      display: inline-block;
+      padding: 10px 28px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -664,7 +952,7 @@
               <div class="tsi-meta">Mar 28 &middot; Yankee Stadium</div>
               <div class="tsi-price">From $65</div>
             </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=offer-001&source=mlb">Get Tickets</a>
+            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-001">Get Tickets</a>
           </div>
           <div class="ticket-strip-item">
             <img src="https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=440&h=240&fit=crop" alt="Family" />
@@ -673,7 +961,7 @@
               <div class="tsi-meta">Apr 12 &middot; Citi Field</div>
               <div class="tsi-price">From $25</div>
             </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=offer-002&source=mlb">Get Tickets</a>
+            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-002">Get Tickets</a>
           </div>
           <div class="ticket-strip-item">
             <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=440&h=240&fit=crop" alt="Concert" />
@@ -682,7 +970,7 @@
               <div class="tsi-meta">Jun 14 &middot; Los Angeles</div>
               <div class="tsi-price">From $55</div>
             </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=offer-003&source=mlb">Get Tickets</a>
+            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-003">Get Tickets</a>
           </div>
           <div class="ticket-strip-item">
             <img src="https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=440&h=240&fit=crop" alt="VIP" />
@@ -691,7 +979,7 @@
               <div class="tsi-meta">May 15 &middot; Fenway Park</div>
               <div class="tsi-price">From $250</div>
             </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=offer-005&source=mlb">Get Tickets</a>
+            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-005">Get Tickets</a>
           </div>
         </div>
       </div>
@@ -840,23 +1128,187 @@
     </div>
   </div>
 
+  <!-- ================================================================
+       CHECKOUT DRAWER (slides from right)
+       ================================================================ -->
+  <div class="co-overlay" id="co-overlay"></div>
+  <div class="co-drawer" id="co-drawer">
+    <div class="co-header">
+      <div class="co-header-brand">
+        <div class="fevo-logo">FEVO</div>
+        <div>
+          <div class="co-header-title">Checkout</div>
+          <div class="co-header-secure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Secure Checkout
+          </div>
+        </div>
+      </div>
+      <button class="co-close" id="co-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="co-body" id="co-body">
+      <!-- Event info -->
+      <div class="co-card" id="co-card-event">
+        <div class="co-event">
+          <img id="co-img" src="" alt="" />
+          <div>
+            <div class="co-event-title" id="co-title"></div>
+            <div class="co-event-meta" id="co-meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticket selection -->
+      <div class="co-card" id="co-card-tickets">
+        <h3>Select Tickets</h3>
+        <div id="co-tickets"></div>
+        <div class="co-qty">
+          <span class="co-qty-label">Quantity</span>
+          <div class="co-qty-controls">
+            <button class="co-qty-btn" id="co-qty-minus" disabled>&minus;</button>
+            <span class="co-qty-val" id="co-qty-val">1</span>
+            <button class="co-qty-btn" id="co-qty-plus">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order summary -->
+      <div class="co-card" id="co-card-summary">
+        <h3>Order Summary</h3>
+        <div class="co-summary-line">
+          <span id="co-sum-label">General Admission &times; 1</span>
+          <span id="co-sum-price">$0.00</span>
+        </div>
+        <div class="co-summary-line">
+          <span>Service Fee</span>
+          <span id="co-sum-fee">$0.00</span>
+        </div>
+        <div class="co-summary-line">
+          <span>Facility Fee</span>
+          <span id="co-sum-facility">$0.00</span>
+        </div>
+        <div class="co-promo">
+          <input type="text" placeholder="Promo code" />
+          <button>Apply</button>
+        </div>
+        <div class="co-summary-total">
+          <span>Total</span>
+          <span id="co-sum-total">$0.00</span>
+        </div>
+        <button class="co-checkout-btn" id="co-pay-btn">Proceed to Payment</button>
+        <div class="co-powered">Powered by <span>FEVO</span></div>
+      </div>
+
+      <!-- Group invite -->
+      <div class="co-card" id="co-card-group">
+        <div class="co-group">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Invite Friends &amp; Save Together
+          </h4>
+          <p>Buy together with FEVO — invite friends and everyone gets the group rate!</p>
+          <div class="co-group-row">
+            <input type="email" placeholder="friend@email.com" />
+            <button>Invite</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation (hidden initially) -->
+      <div class="co-confirmation" id="co-confirmation">
+        <div class="co-conf-check">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>You're Going!</h2>
+        <p id="co-conf-msg">Your tickets have been reserved.</p>
+        <div class="co-conf-num" id="co-conf-num">FEVO-000000</div>
+        <br/><br/>
+        <button class="co-done-btn" id="co-done-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== Mock data & filtering logic ===== -->
   <script>
+    // ===== OFFER DATA (used for both widget feed and checkout) =====
     const ALL_OFFERS = [
-      { offer_id:'mlb-001', title:'Yankees vs Red Sox - Opening Day', description:'The rivalry continues.', image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop', price:{min:65,max:350,currency:'USD'}, date:'2026-03-28T13:05:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=offer-001', tags:['baseball','game'], city_key:'new-york', type_key:'game', created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-002', title:'Mets Family Sunday - Kids Run the Bases', description:'Kids run the bases after the game.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:75,currency:'USD'}, date:'2026-04-12T13:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'Mets'}, checkout_url:'/demo/checkout.html?offer=offer-002', tags:['baseball','family'], city_key:'new-york', type_key:'family', created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-10T00:00:00Z' },
-      { offer_id:'mlb-003', title:'Dodger Stadium Concert: Summer Nights', description:'Live music after the game.', image_url:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop', price:{min:55,max:180,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['concerts','baseball'], city_key:'los-angeles', type_key:'concert', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-004', title:'Wrigley Field Behind-the-Scenes Tour', description:'Explore the historic Wrigley Field.', image_url:'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop', price:{min:40,max:40,currency:'USD'}, date:'2026-05-20T10:00:00Z', venue:{name:'Wrigley Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=offer-004', tags:['tours','baseball'], city_key:'chicago', type_key:'tour', created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-12T00:00:00Z' },
-      { offer_id:'mlb-005', title:'Red Sox VIP Dugout Experience', description:'Watch batting practice from the dugout.', image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop', price:{min:250,max:500,currency:'USD'}, date:'2026-05-15T16:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['vip','baseball'], city_key:'boston', type_key:'vip', created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-006', title:'Astros Craft Beer & BBQ Festival', description:'Local craft beers and BBQ at Minute Maid.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-07-04T12:00:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['food','festival'], city_key:'houston', type_key:'festival', created_at:'2026-02-10T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
-      { offer_id:'mlb-007', title:'Giants vs Dodgers - Rivalry Weekend', description:'NL West showdown with fireworks.', image_url:'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop', price:{min:55,max:200,currency:'USD'}, date:'2026-06-20T19:15:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['baseball','game'], city_key:'san-francisco', type_key:'game', created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-008', title:'Marlins Park Family Fun Zone', description:'Inflatables and catch on the field.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:20,max:55,currency:'USD'}, date:'2026-04-25T11:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=offer-002', tags:['family','baseball'], city_key:'miami', type_key:'family', created_at:'2026-02-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-009', title:'Yankee Stadium Legends Tour', description:'Visit Monument Park and the press box.', image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop', price:{min:35,max:35,currency:'USD'}, date:'2026-04-10T09:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=offer-004', tags:['tours','baseball'], city_key:'new-york', type_key:'tour', created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
-      { offer_id:'mlb-010', title:'Cubs Rooftop Party - All-Inclusive', description:'Wrigleyville rooftop with food, drinks, DJ.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:120,max:200,currency:'USD'}, date:'2026-08-01T18:00:00Z', venue:{name:'Wrigley Rooftops',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=offer-005', tags:['vip','food','baseball'], city_key:'chicago', type_key:'vip', created_at:'2026-02-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-011', title:'Fenway Concert: Country Night', description:'Top country artists at Fenway Park.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:75,max:175,currency:'USD'}, date:'2026-07-18T19:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=offer-003', tags:['concerts'], city_key:'boston', type_key:'concert', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
-      { offer_id:'mlb-012', title:'All-Star Week Fan Fest 2026', description:'Exhibits, autographs, HR Derby viewing.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:30,max:85,currency:'USD'}, date:'2026-07-13T10:00:00Z', venue:{name:'Convention Center',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-mlb',name:'MLB'}, checkout_url:'/demo/checkout.html?offer=offer-001', tags:['family','festival','baseball'], city_key:'houston', type_key:'festival', created_at:'2026-02-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-001', title:'Yankees vs Red Sox - Opening Day', description:'The rivalry continues.', image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop', price:{min:65,max:350,currency:'USD'}, date:'2026-03-28T13:05:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-001', tags:['baseball','game'], city_key:'new-york', type_key:'game', created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-002', title:'Mets Family Sunday - Kids Run the Bases', description:'Kids run the bases after the game.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:75,currency:'USD'}, date:'2026-04-12T13:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'Mets'}, checkout_url:'/demo/checkout.html?offer=mlb-002', tags:['baseball','family'], city_key:'new-york', type_key:'family', created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-10T00:00:00Z' },
+      { offer_id:'mlb-003', title:'Dodger Stadium Concert: Summer Nights', description:'Live music after the game.', image_url:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop', price:{min:55,max:180,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-003', tags:['concerts','baseball'], city_key:'los-angeles', type_key:'concert', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-004', title:'Wrigley Field Behind-the-Scenes Tour', description:'Explore the historic Wrigley Field.', image_url:'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop', price:{min:40,max:40,currency:'USD'}, date:'2026-05-20T10:00:00Z', venue:{name:'Wrigley Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-004', tags:['tours','baseball'], city_key:'chicago', type_key:'tour', created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-12T00:00:00Z' },
+      { offer_id:'mlb-005', title:'Red Sox VIP Dugout Experience', description:'Watch batting practice from the dugout.', image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop', price:{min:250,max:500,currency:'USD'}, date:'2026-05-15T16:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-005', tags:['vip','baseball'], city_key:'boston', type_key:'vip', created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-006', title:'Astros Craft Beer & BBQ Festival', description:'Local craft beers and BBQ at Minute Maid.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-07-04T12:00:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=mlb-006', tags:['food','festival'], city_key:'houston', type_key:'festival', created_at:'2026-02-10T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-007', title:'Giants vs Dodgers - Rivalry Weekend', description:'NL West showdown with fireworks.', image_url:'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop', price:{min:55,max:200,currency:'USD'}, date:'2026-06-20T19:15:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-007', tags:['baseball','game'], city_key:'san-francisco', type_key:'game', created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-008', title:'Marlins Park Family Fun Zone', description:'Inflatables and catch on the field.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:20,max:55,currency:'USD'}, date:'2026-04-25T11:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-008', tags:['family','baseball'], city_key:'miami', type_key:'family', created_at:'2026-02-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-009', title:'Yankee Stadium Legends Tour', description:'Visit Monument Park and the press box.', image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop', price:{min:35,max:35,currency:'USD'}, date:'2026-04-10T09:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-009', tags:['tours','baseball'], city_key:'new-york', type_key:'tour', created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-010', title:'Cubs Rooftop Party - All-Inclusive', description:'Wrigleyville rooftop with food, drinks, DJ.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:120,max:200,currency:'USD'}, date:'2026-08-01T18:00:00Z', venue:{name:'Wrigley Rooftops',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-010', tags:['vip','food','baseball'], city_key:'chicago', type_key:'vip', created_at:'2026-02-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-011', title:'Fenway Concert: Country Night', description:'Top country artists at Fenway Park.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:75,max:175,currency:'USD'}, date:'2026-07-18T19:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-011', tags:['concerts'], city_key:'boston', type_key:'concert', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-012', title:'All-Star Week Fan Fest 2026', description:'Exhibits, autographs, HR Derby viewing.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:30,max:85,currency:'USD'}, date:'2026-07-13T10:00:00Z', venue:{name:'Convention Center',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-mlb',name:'MLB'}, checkout_url:'/demo/checkout.html?offer=mlb-012', tags:['family','festival','baseball'], city_key:'houston', type_key:'festival', created_at:'2026-02-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
     ];
 
+    // ===== CHECKOUT DATA (ticket tiers per offer) =====
+    const CHECKOUT_DATA = {
+      'mlb-001': { tickets: [
+        { name: 'Bleacher Seats', price: 65, desc: 'Outfield bleachers, general admission' },
+        { name: 'Mezzanine', price: 150, desc: 'Sections 200-230' },
+        { name: 'Field Level', price: 350, desc: 'Sections 100-130, rows 1-15' },
+      ]},
+      'mlb-002': { tickets: [
+        { name: 'Upper Deck', price: 25, desc: 'Sections 500+, family friendly' },
+        { name: 'Field Level', price: 50, desc: 'Sections 100-130' },
+        { name: 'Premium', price: 75, desc: 'Delta Club seats + kids run bases' },
+      ]},
+      'mlb-003': { tickets: [
+        { name: 'General Admission', price: 55, desc: 'Lawn and outfield standing' },
+        { name: 'Reserved Seating', price: 120, desc: 'Assigned seat, sections 1-10' },
+        { name: 'VIP Concert', price: 180, desc: 'Front rows + artist meet & greet' },
+      ]},
+      'mlb-004': { tickets: [
+        { name: 'Standard Tour', price: 40, desc: 'Behind-the-scenes access, 90 min' },
+      ]},
+      'mlb-005': { tickets: [
+        { name: 'Dugout Experience', price: 250, desc: 'Watch BP from the dugout' },
+        { name: 'Premium Dugout', price: 400, desc: 'Dugout + on-field access' },
+        { name: 'Ultimate VIP', price: 500, desc: 'Full day: BP, dugout, press box' },
+      ]},
+      'mlb-006': { tickets: [
+        { name: 'General Admission', price: 45, desc: 'Entry + 3 tasting tokens' },
+        { name: 'All-Inclusive', price: 75, desc: 'Unlimited tastings' },
+        { name: 'VIP All-Inclusive', price: 95, desc: 'Early entry + premium pours' },
+      ]},
+      'mlb-007': { tickets: [
+        { name: 'Upper Deck', price: 55, desc: 'Sections 300+' },
+        { name: 'Club Level', price: 120, desc: 'Club access + in-seat service' },
+        { name: 'Field Level', price: 200, desc: 'Sections 100-130' },
+      ]},
+      'mlb-008': { tickets: [
+        { name: 'Kids Pack', price: 20, desc: 'Child ticket + Fun Zone wristband' },
+        { name: 'Family 4-Pack', price: 40, desc: '4 tickets + snack voucher' },
+        { name: 'Premium Family', price: 55, desc: '4 tickets + field access' },
+      ]},
+      'mlb-009': { tickets: [
+        { name: 'Standard Tour', price: 35, desc: 'Monument Park + press box tour' },
+      ]},
+      'mlb-010': { tickets: [
+        { name: 'Rooftop General', price: 120, desc: 'Rooftop access, BYOB' },
+        { name: 'Rooftop VIP', price: 175, desc: 'Open bar + buffet' },
+        { name: 'Premium Rooftop', price: 200, desc: 'Open bar + buffet + DJ lounge' },
+      ]},
+      'mlb-011': { tickets: [
+        { name: 'General Admission', price: 75, desc: 'Lawn and grandstand' },
+        { name: 'Reserved', price: 125, desc: 'Assigned seating, field view' },
+        { name: 'VIP', price: 175, desc: 'Front pit + backstage' },
+      ]},
+      'mlb-012': { tickets: [
+        { name: 'Single Day', price: 30, desc: 'One-day general access' },
+        { name: 'Weekend Pass', price: 55, desc: 'Fri-Sun full access' },
+        { name: 'VIP Pass', price: 85, desc: 'Skip-the-line + autograph sessions' },
+      ]},
+    };
+
+    // ===== FILTERS & MOCK FETCH =====
     let mFilters = { geo:'', type:'', interest:'', search:'' };
 
     function getFiltered() {
@@ -872,7 +1324,6 @@
       });
     }
 
-    // Mock fetch
     const _fetch = window.fetch;
     window.fetch = function(url, opts) {
       const u = typeof url === 'string' ? url : url.toString();
@@ -885,11 +1336,10 @@
       return _fetch.apply(this, arguments);
     };
 
-    // Modal open/close
+    // ===== FEVO MODAL (Browse All Events) =====
     function openFevoModal() {
       document.getElementById('fevo-overlay').classList.add('open');
       document.body.style.overflow = 'hidden';
-      // Init widget if not yet
       setTimeout(() => {
         if (window.FevoEventFeed) {
           window.FevoEventFeed.destroy('#fevo-event-feed');
@@ -907,7 +1357,13 @@
       if (e.target === document.getElementById('fevo-overlay')) closeFevoModal();
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeFevoModal();
+      if (e.key === 'Escape') {
+        if (document.getElementById('co-drawer').classList.contains('open')) {
+          closeCheckout();
+        } else if (document.getElementById('fevo-overlay').classList.contains('open')) {
+          closeFevoModal();
+        }
+      }
     });
     document.getElementById('open-fevo-seeall').addEventListener('click', (e) => {
       e.preventDefault();
@@ -941,6 +1397,147 @@
       clearTimeout(st);
       st = setTimeout(() => { mFilters.search = e.target.value; refreshModal(); }, 250);
     };
+
+    // ===== CHECKOUT DRAWER =====
+    let coState = { offerId: null, ticketIdx: 0, qty: 1 };
+
+    function findOffer(id) {
+      return ALL_OFFERS.find(o => o.offer_id === id);
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+        + ' \u00b7 ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    }
+
+    function openCheckout(offerId) {
+      const offer = findOffer(offerId);
+      const checkout = CHECKOUT_DATA[offerId];
+      if (!offer || !checkout) return;
+
+      coState = { offerId, ticketIdx: 0, qty: 1 };
+
+      // Populate event info
+      document.getElementById('co-img').src = offer.image_url;
+      document.getElementById('co-title').textContent = offer.title;
+      document.getElementById('co-meta').innerHTML = formatDate(offer.date) + '<br/>' + offer.venue.name + ', ' + offer.venue.city + ', ' + offer.venue.state;
+
+      coRenderTickets();
+      coUpdateSummary();
+
+      // Show cards, hide confirmation
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = '');
+      document.getElementById('co-confirmation').classList.remove('visible');
+      document.getElementById('co-body').scrollTop = 0;
+
+      // Open drawer
+      document.getElementById('co-overlay').classList.add('open');
+      // Small delay for CSS transition
+      requestAnimationFrame(() => {
+        document.getElementById('co-drawer').classList.add('open');
+      });
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCheckout() {
+      document.getElementById('co-drawer').classList.remove('open');
+      setTimeout(() => {
+        document.getElementById('co-overlay').classList.remove('open');
+      }, 350);
+      // Only restore body scroll if the FEVO modal isn't open
+      if (!document.getElementById('fevo-overlay').classList.contains('open')) {
+        document.body.style.overflow = '';
+      }
+    }
+
+    function coRenderTickets() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const container = document.getElementById('co-tickets');
+      container.innerHTML = '';
+      checkout.tickets.forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'co-ticket' + (i === coState.ticketIdx ? ' selected' : '');
+        div.innerHTML =
+          '<div><div class="co-ticket-name">' + t.name + '</div><div class="co-ticket-desc">' + t.desc + '</div></div>' +
+          '<div class="co-ticket-price">$' + t.price + '<span>/ea</span></div>';
+        div.onclick = function() { coState.ticketIdx = i; coRenderTickets(); coUpdateSummary(); };
+        container.appendChild(div);
+      });
+    }
+
+    function coUpdateSummary() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const ticket = checkout.tickets[coState.ticketIdx];
+      const subtotal = ticket.price * coState.qty;
+      const fee = Math.round(subtotal * 0.08 * 100) / 100;
+      const facility = coState.qty * 3.50;
+      const total = subtotal + fee + facility;
+
+      document.getElementById('co-sum-label').textContent = ticket.name + ' \u00d7 ' + coState.qty;
+      document.getElementById('co-sum-price').textContent = '$' + subtotal.toFixed(2);
+      document.getElementById('co-sum-fee').textContent = '$' + fee.toFixed(2);
+      document.getElementById('co-sum-facility').textContent = '$' + facility.toFixed(2);
+      document.getElementById('co-sum-total').textContent = '$' + total.toFixed(2);
+
+      document.getElementById('co-qty-val').textContent = coState.qty;
+      document.getElementById('co-qty-minus').disabled = coState.qty <= 1;
+    }
+
+    // Quantity controls
+    document.getElementById('co-qty-minus').onclick = function() {
+      if (coState.qty > 1) { coState.qty--; coUpdateSummary(); }
+    };
+    document.getElementById('co-qty-plus').onclick = function() {
+      if (coState.qty < 10) { coState.qty++; coUpdateSummary(); }
+    };
+
+    // Proceed to Payment
+    document.getElementById('co-pay-btn').onclick = function() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const offer = findOffer(coState.offerId);
+      const ticket = checkout.tickets[coState.ticketIdx];
+      const subtotal = ticket.price * coState.qty;
+      const total = subtotal + Math.round(subtotal * 0.08 * 100) / 100 + coState.qty * 3.50;
+      const confNum = 'FEVO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      document.getElementById('co-conf-num').textContent = confNum;
+      document.getElementById('co-conf-msg').innerHTML =
+        '<strong>' + coState.qty + '\u00d7 ' + ticket.name + '</strong> for<br/>' +
+        offer.title + '<br/><br/>Total charged: <strong>$' + total.toFixed(2) + '</strong>';
+
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = 'none');
+      document.getElementById('co-confirmation').classList.add('visible');
+      document.getElementById('co-body').scrollTop = 0;
+    };
+
+    // Done button (after confirmation)
+    document.getElementById('co-done-btn').onclick = function() {
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = '');
+      document.getElementById('co-confirmation').classList.remove('visible');
+      closeCheckout();
+    };
+
+    // Close handlers
+    document.getElementById('co-close').onclick = closeCheckout;
+    document.getElementById('co-overlay').onclick = closeCheckout;
+
+    // ===== INTERCEPT ALL CHECKOUT LINKS =====
+    // Catches clicks on widget card CTAs and ticket strip items
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('a[href*="checkout"]');
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          var url = new URL(link.href, window.location.origin);
+          var offerId = url.searchParams.get('offer');
+          if (offerId && CHECKOUT_DATA[offerId]) {
+            openCheckout(offerId);
+          }
+        } catch (err) { /* ignore */ }
+      }
+    }, true);
   </script>
 
   <script src="/src/index.ts" type="module"></script>
