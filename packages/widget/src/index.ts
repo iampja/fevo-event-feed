@@ -137,6 +137,12 @@ const FevoEventFeed = {
   version: '1.0.0',
 };
 
+// Expose as global for programmatic access (needed in dev mode where module
+// exports aren't available on window, and matches the IIFE build behaviour)
+if (typeof window !== 'undefined') {
+  (window as any).FevoEventFeed = FevoEventFeed;
+}
+
 // Auto-init when DOM is ready
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
