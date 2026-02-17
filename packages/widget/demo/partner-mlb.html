@@ -364,12 +364,33 @@
     .ticket-strip-item .tsi-cta {
       display: block;
       text-align: center;
-      background: #057AFF;
-      color: #fff;
+      background: #FFCC00;
+      color: #1a1a1a;
       font-size: 11px;
       font-weight: 700;
       padding: 7px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 2px solid #e6b800;
+    }
+
+    /* FEVO branding on the ticket strip card */
+    .mlb-card.fevo-strip {
+      border: 2px solid #FFCC00;
+      position: relative;
+    }
+    .mlb-card.fevo-strip .mlb-card-header {
+      background: #FFFDF0;
+    }
+    .fevo-strip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
     }
 
     /* ================================================================
@@ -397,6 +418,8 @@
       flex-direction: column;
       overflow: hidden;
       animation: fevoSlideUp 0.25s ease;
+      border: 3px solid #FFCC00;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 24px 64px rgba(0,0,0,0.3);
     }
     @keyframes fevoSlideUp {
       from { opacity: 0; transform: translateY(24px) scale(0.97); }
@@ -408,8 +431,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 24px;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 3px solid #FFCC00;
       flex-shrink: 0;
+      background: #FFFDF0;
     }
     .fevo-modal-brand {
       display: flex;
@@ -417,13 +441,14 @@
       gap: 10px;
     }
     .fevo-modal-brand .fevo-logo {
-      background: #4f46e5;
-      color: #fff;
+      background: #FFCC00;
+      color: #1a1a1a;
       font-size: 14px;
       font-weight: 800;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 6px;
       letter-spacing: -0.5px;
+      border: 1px solid #e6b800;
     }
     .fevo-modal-brand .fevo-label {
       font-size: 15px;
@@ -474,7 +499,7 @@
       appearance: none;
       cursor: pointer;
     }
-    .fevo-filter:focus { outline: none; border-color: #4f46e5; }
+    .fevo-filter:focus { outline: none; border-color: #FFCC00; box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
     .fevo-search {
       height: 34px;
       padding: 0 10px 0 30px;
@@ -487,7 +512,7 @@
       background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center;
     }
     .fevo-search::placeholder { color: #9ca3af; }
-    .fevo-search:focus { outline: none; border-color: #4f46e5; }
+    .fevo-search:focus { outline: none; border-color: #FFCC00; box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
     .fevo-filter-count {
       font-size: 11px;
       color: #6b7280;
@@ -515,15 +540,15 @@
     }
 
     .fevo-modal-footer {
-      border-top: 1px solid #e5e7eb;
+      border-top: 3px solid #FFCC00;
       padding: 12px 24px;
       text-align: center;
       font-size: 11px;
-      color: #9ca3af;
+      color: #7a6d00;
       flex-shrink: 0;
-      background: #fafafa;
+      background: #FFFDF0;
     }
-    .fevo-modal-footer span { font-weight: 700; color: #6b7280; }
+    .fevo-modal-footer span { font-weight: 700; color: #1a1a1a; }
   </style>
 </head>
 <body>
@@ -626,9 +651,9 @@
       </div>
 
       <!-- Ticket Strip (opens FEVO modal) -->
-      <div class="mlb-card" style="margin-bottom:24px">
+      <div class="mlb-card fevo-strip" style="margin-bottom:24px">
         <div class="mlb-card-header">
-          Tickets & Experiences
+          <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences <span class="fevo-strip-badge">FEVO</span></span>
           <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
         </div>
         <div class="ticket-strip">
