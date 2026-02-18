@@ -50,63 +50,59 @@ export async function up(knex: Knex): Promise<void> {
   });
 
   // ── add new columns to offers (additive only) ─────────────────────────────
-  await knex.schema.alterTable('offers', (t) => {
-    t.text('fevo_offer_id');
-    t.text('fevo_url_code');
-    t.text('event_id').references('id').inTable('events');
-    t.text('venue_id').references('id').inTable('venues');
-    t.text('video_url');
-    t.integer('tickets_available');
-    t.boolean('is_sold_out').defaultTo(false);
-    t.text('source').defaultTo('manual'); // 'manual' | 'fevo_sync' | 'fevo_webhook'
-    t.text('fevo_synced_at');
-  });
+  // Use raw ALTER TABLE ADD COLUMN for SQLite — Knex's alterTable recreates
+  // the table internally which fails when other tables have FK references to it.
+  await knex.raw(`ALTER TABLE offers ADD COLUMN fevo_offer_id TEXT`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN fevo_url_code TEXT`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN event_id TEXT REFERENCES events(id)`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN venue_id TEXT REFERENCES venues(id)`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN video_url TEXT`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN tickets_available INTEGER`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN is_sold_out INTEGER DEFAULT 0`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN source TEXT DEFAULT 'manual'`);
+  await knex.raw(`ALTER TABLE offers ADD COLUMN fevo_synced_at TEXT`);
 
   // ── indexes for new tables ─────────────────────────────────────────────────
-  await knex.schema.alterTable('organizations', (t) => {
-    t.index(['fevo_org_id'], 'idx_organizations_fevo_org_id');
-  });
-
-  await knex.schema.alterTable('events', (t) => {
-    t.index(['fevo_event_id'], 'idx_events_fevo_event_id');
-    t.index(['organization_id'], 'idx_events_org_id');
-    t.index(['venue_id'], 'idx_events_venue_id');
-  });
-
-  await knex.schema.alterTable('offers', (t) => {
-    t.index(['fevo_offer_id'], 'idx_offers_fevo_offer_id');
-    t.index(['event_id'], 'idx_offers_event_id');
-    t.index(['venue_id'], 'idx_offers_venue_id');
-    t.index(['source'], 'idx_offers_source');
-  });
-
-  await knex.schema.alterTable('sync_log', (t) => {
-    t.index(['organization_id'], 'idx_sync_log_org_id');
-    t.index(['status'], 'idx_sync_log_status');
-  });
+  await knex.raw(`CREATE INDEX idx_organizations_fevo_org_id ON organizations(fevo_org_id)`);
+  await knex.raw(`CREATE INDEX idx_events_fevo_event_id ON events(fevo_event_id)`);
+  await knex.raw(`CREATE INDEX idx_events_org_id ON events(organization_id)`);
+  await knex.raw(`CREATE INDEX idx_events_venue_id ON events(venue_id)`);
+  await knex.raw(`CREATE INDEX idx_offers_fevo_offer_id ON offers(fevo_offer_id)`);
+  await knex.raw(`CREATE INDEX idx_offers_event_id ON offers(event_id)`);
+  await knex.raw(`CREATE INDEX idx_offers_venue_id ON offers(venue_id)`);
+  await knex.raw(`CREATE INDEX idx_offers_source ON offers(source)`);
+  await knex.raw(`CREATE INDEX idx_sync_log_org_id ON sync_log(organization_id)`);
+  await knex.raw(`CREATE INDEX idx_sync_log_status ON sync_log(status)`);
 }
 
 export async function down(knex: Knex): Promise<void> {
-  // Drop indexes on offers
-  await knex.schema.alterTable('offers', (t) => {
-    t.dropIndex([], 'idx_offers_fevo_offer_id');
-    t.dropIndex([], 'idx_offers_event_id');
-    t.dropIndex([], 'idx_offers_venue_id');
-    t.dropIndex([], 'idx_offers_source');
-  });
+  // Drop indexes
+  await knex.raw(`DROP INDEX IF EXISTS idx_offers_fevo_offer_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_offers_event_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_offers_venue_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_offers_source`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_organizations_fevo_org_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_events_fevo_event_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_events_org_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_events_venue_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_sync_log_org_id`);
+  await knex.raw(`DROP INDEX IF EXISTS idx_sync_log_status`);
 
-  // Remove new columns from offers
-  await knex.schema.alterTable('offers', (t) => {
-    t.dropColumn('fevo_offer_id');
-    t.dropColumn('fevo_url_code');
-    t.dropColumn('event_id');
-    t.dropColumn('venue_id');
-    t.dropColumn('video_url');
-    t.dropColumn('tickets_available');
-    t.dropColumn('is_sold_out');
-    t.dropColumn('source');
-    t.dropColumn('fevo_synced_at');
-  });
+  // Remove new columns from offers — SQLite requires table recreation
+  // Disable FK checks to avoid constraint errors during recreation
+  await knex.raw(`PRAGMA foreign_keys = OFF`);
+  await knex.raw(`
+    CREATE TABLE offers_backup AS SELECT
+      id, title, description, image_url, price_min, price_max, currency,
+      date, venue_name, venue_city, venue_state, availability,
+      organization_id, organization_name, checkout_url, tags, status,
+      distribution_enabled, distribution_enabled_at, distribution_disabled_at,
+      created_at, updated_at
+    FROM offers
+  `);
+  await knex.raw(`DROP TABLE offers`);
+  await knex.raw(`ALTER TABLE offers_backup RENAME TO offers`);
+  await knex.raw(`PRAGMA foreign_keys = ON`);
 
   // Drop new tables in reverse dependency order
   await knex.schema.dropTableIfExists('sync_log');
