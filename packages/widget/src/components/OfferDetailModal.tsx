@@ -1,6 +1,7 @@
 /** @jsxImportSource preact */
 
-import { useEffect, useCallback } from 'preact/hooks';
+import { useEffect, useCallback, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import type { Offer, WidgetConfig } from '../types';
 import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { trackOfferClicked } from '../analytics';
@@ -20,6 +21,23 @@ type OfferDetailModalProps = {
 };
 
 export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalProps) {
+  // Create a portal container on document.body so the modal escapes any
+  // parent overflow/transform that would break position:fixed.
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  if (!portalRef.current) {
+    portalRef.current = document.createElement('div');
+    portalRef.current.className = 'fevo-ef-root';
+    portalRef.current.setAttribute('data-theme', config.theme || 'light');
+  }
+
+  useEffect(() => {
+    const el = portalRef.current!;
+    document.body.appendChild(el);
+    return () => {
+      document.body.removeChild(el);
+    };
+  }, []);
+
   // Lock body scroll while open
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -46,7 +64,8 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
     e.stopPropagation();
   }, []);
 
-  const handleCtaClick = useCallback(() => {
+  const handleCtaClick = useCallback((e: Event) => {
+    e.stopPropagation();
     trackOfferClicked(offer.offer_id, config.segment, config.partnerId);
   }, [offer.offer_id, config.segment, config.partnerId]);
 
@@ -54,7 +73,7 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
   const videoUrl = offer.media?.video_url;
   const imageUrl = offer.media?.image_url || offer.image_url;
 
-  return (
+  return createPortal(
     <div class="fevo-ef-modal-backdrop" onClick={handleBackdropClick}>
       <div
         class="fevo-ef-modal"
@@ -147,6 +166,7 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    portalRef.current!,
   );
 }
