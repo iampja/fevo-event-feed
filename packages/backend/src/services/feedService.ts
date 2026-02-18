@@ -2,12 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../db/connection';
 import {
   Offer,
+  FeedOffer,
   FeedResponse,
   FeedMeta,
   PaginationParams,
   FilterParams,
   FeedExclusion,
 } from '../models/types';
+import { transformOffers } from './feedTransformer';
 
 const CACHE_KEY = 'event_feed_main';
 
@@ -123,6 +125,9 @@ export async function getFeed(
   const start = (page - 1) * per_page;
   const paged = filtered.slice(start, start + per_page);
 
+  // Transform flat DB rows into nested FEVO-shaped response
+  const transformed: FeedOffer[] = await transformOffers(paged);
+
   const meta: FeedMeta = {
     total,
     page,
@@ -131,7 +136,7 @@ export async function getFeed(
     built_at: builtAt,
   };
 
-  return { data: paged, meta };
+  return { data: transformed, meta };
 }
 
 /**

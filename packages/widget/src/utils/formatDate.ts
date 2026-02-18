@@ -1,13 +1,34 @@
+import type { DateValue } from '../types';
+
 const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
 /**
- * Formats an ISO date string into a human-readable format.
+ * Formats a date value into a human-readable format.
+ * Accepts either an ISO date string or a { utc, timezone, display } object.
  * Example: "2026-04-15T19:00:00Z" -> "Apr 15, 2026 \u00b7 7:00 PM"
  */
-export function formatDate(isoString: string): string {
+export function formatDate(value: DateValue): string {
+  // Handle date object from transformer
+  if (typeof value === 'object' && value !== null) {
+    // If a display string is provided, use it directly
+    if (value.display) {
+      return value.display;
+    }
+    // Fall back to formatting the UTC value
+    if (value.utc) {
+      return formatIsoString(value.utc);
+    }
+    return '';
+  }
+
+  // Handle plain ISO string (backward compat)
+  return formatIsoString(value);
+}
+
+function formatIsoString(isoString: string): string {
   try {
     const date = new Date(isoString);
 

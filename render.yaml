@@ -18,6 +18,15 @@ services:
         value: /data/eventfeed.db
       - key: INTERNAL_AUTH_TOKEN
         generateValue: true
+      # FEVO API integration (optional — uses mock client when not set)
+      - key: FEVO_API_BASE_URL
+        sync: false
+      - key: FEVO_API_USER_ID
+        sync: false
+      - key: FEVO_API_ACCESS_KEY
+        sync: false
+      - key: FEVO_WEBHOOK_SECRET
+        sync: false
 
   # ── Admin UI (Static Site) ─────────────────────────────────────────────────
   - type: web

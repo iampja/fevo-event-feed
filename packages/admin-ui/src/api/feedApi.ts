@@ -306,3 +306,120 @@ export async function updateApiKeyRateLimit(
     rate_limit: rateLimit,
   });
 }
+
+// ========================
+// OFFER UPDATE
+// ========================
+
+export async function updateOffer(
+  offerId: string,
+  payload: Partial<Offer>,
+): Promise<Offer> {
+  const response = await apiClient.put<{ data: Offer }>(
+    `/admin/offers/${offerId}`,
+    payload,
+  );
+  return response.data.data;
+}
+
+// ========================
+// ORGANIZATION TYPES & METHODS
+// ========================
+
+export interface Organization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  fevo_org_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateOrganizationPayload {
+  name: string;
+  logo_url?: string | null;
+  fevo_org_id?: string | null;
+}
+
+export interface UpdateOrganizationPayload {
+  name?: string;
+  logo_url?: string | null;
+  fevo_org_id?: string | null;
+}
+
+export async function getOrganizations(): Promise<Organization[]> {
+  const response = await apiClient.get<{ data: Organization[] }>(
+    '/admin/organizations',
+  );
+  return response.data.data;
+}
+
+export async function getOrganization(orgId: string): Promise<Organization> {
+  const response = await apiClient.get<{ data: Organization }>(
+    `/admin/organizations/${orgId}`,
+  );
+  return response.data.data;
+}
+
+export async function createOrganization(
+  payload: CreateOrganizationPayload,
+): Promise<Organization> {
+  const response = await apiClient.post<{ data: Organization }>(
+    '/admin/organizations',
+    payload,
+  );
+  return response.data.data;
+}
+
+export async function updateOrganization(
+  orgId: string,
+  payload: UpdateOrganizationPayload,
+): Promise<Organization> {
+  const response = await apiClient.put<{ data: Organization }>(
+    `/admin/organizations/${orgId}`,
+    payload,
+  );
+  return response.data.data;
+}
+
+export async function deleteOrganization(orgId: string): Promise<void> {
+  await apiClient.delete(`/admin/organizations/${orgId}`);
+}
+
+// ========================
+// SYNC TYPES & METHODS
+// ========================
+
+export interface SyncLogEntry {
+  id: string;
+  sync_type: string;
+  organization_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  offers_created: number;
+  offers_updated: number;
+  errors: string | null;
+  status: string;
+}
+
+export async function syncOrganization(orgId: string): Promise<SyncLogEntry> {
+  const response = await apiClient.post<{ data: SyncLogEntry }>(
+    `/admin/sync/organization/${orgId}`,
+  );
+  return response.data.data;
+}
+
+export async function syncAll(): Promise<{
+  data: SyncLogEntry[];
+  meta: { organizations_synced: number; total_created: number; total_updated: number };
+}> {
+  const response = await apiClient.post('/admin/sync/all');
+  return response.data;
+}
+
+export async function getSyncLogs(): Promise<SyncLogEntry[]> {
+  const response = await apiClient.get<{ data: SyncLogEntry[] }>(
+    '/admin/sync/log',
+  );
+  return response.data.data;
+}

@@ -1,7 +1,46 @@
+// ── Organization ─────────────────────────────────────────────────────────────
+
+export interface Organization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  fevo_org_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Venue ────────────────────────────────────────────────────────────────────
+
+export interface Venue {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  country: string;
+  timezone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Event ────────────────────────────────────────────────────────────────────
+
+export interface Event {
+  id: string;
+  title: string;
+  fevo_event_id: string | null;
+  organization_id: string | null;
+  venue_id: string | null;
+  date_utc: string | null;
+  date_timezone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Offer ────────────────────────────────────────────────────────────────────
 
 export type OfferAvailability = 'available' | 'limited' | 'sold_out';
 export type OfferStatus = 'active' | 'inactive' | 'sold_out' | 'deleted';
+export type OfferSource = 'manual' | 'fevo_sync' | 'fevo_webhook';
 
 export interface Offer {
   id: string;
@@ -24,6 +63,52 @@ export interface Offer {
   distribution_enabled: boolean;
   distribution_enabled_at: string | null;
   distribution_disabled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // New FEVO integration fields
+  fevo_offer_id: string | null;
+  fevo_url_code: string | null;
+  event_id: string | null;
+  venue_id: string | null;
+  video_url: string | null;
+  tickets_available: number | null;
+  is_sold_out: boolean;
+  source: OfferSource;
+  fevo_synced_at: string | null;
+}
+
+// ── Sync Log ─────────────────────────────────────────────────────────────────
+
+export type SyncStatus = 'running' | 'completed' | 'failed';
+
+export interface SyncLog {
+  id: string;
+  sync_type: string;
+  organization_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  offers_created: number;
+  offers_updated: number;
+  errors: string | null; // JSON array of error strings
+  status: SyncStatus;
+}
+
+// ── Feed Offer (nested FEVO-shaped response) ─────────────────────────────────
+
+export interface FeedOffer {
+  offer_id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  price: { min: number | null; max: number | null; currency: string };
+  date: { utc: string | null; timezone: string | null; display: string | null };
+  venue: { name: string | null; city: string | null; state: string | null };
+  organization: { id: string | null; name: string | null; logo_url: string | null };
+  availability: OfferAvailability;
+  checkout_url: string | null;
+  tags: string[];
+  media: { image_url: string | null; video_url: string | null };
+  source: OfferSource;
   created_at: string;
   updated_at: string;
 }
@@ -108,7 +193,7 @@ export interface FeedMeta {
 }
 
 export interface FeedResponse {
-  data: Offer[];
+  data: FeedOffer[];
   meta: FeedMeta;
 }
 

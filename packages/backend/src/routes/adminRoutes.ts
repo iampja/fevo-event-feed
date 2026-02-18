@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 import { internalAuth } from '../middleware/auth';
 import { adminRateLimiter } from '../middleware/rateLimit';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../services/segmentService';
 import { listOffers, getOfferById, getOfferStats } from '../services/offerService';
 import { triggerFeedRefresh } from '../jobs/feedRefresh';
+import db from '../db/connection';
 
 const router = Router();
 
@@ -517,6 +519,194 @@ router.post('/feed/refresh', async (_req: Request, res: Response) => {
   } catch (err) {
     console.error('POST /feed/refresh error:', err);
     res.status(500).json({ error: 'Failed to rebuild feed cache' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OFFER UPDATE ROUTE (enrichment for synced offers)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const updateOfferSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(5000).nullable().optional(),
+  image_url: z.string().url().nullable().optional(),
+  price_min: z.number().min(0).nullable().optional(),
+  price_max: z.number().min(0).nullable().optional(),
+  currency: z.string().min(1).max(10).optional(),
+  date: z.string().nullable().optional(),
+  venue_name: z.string().max(255).nullable().optional(),
+  venue_city: z.string().max(255).nullable().optional(),
+  venue_state: z.string().max(50).nullable().optional(),
+  availability: z.enum(['available', 'limited', 'sold_out']).optional(),
+  checkout_url: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
+  video_url: z.string().url().nullable().optional(),
+  tickets_available: z.number().int().min(0).nullable().optional(),
+});
+
+router.put('/offers/:offerId', async (req: Request, res: Response) => {
+  try {
+    const parsed = updateOfferSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const offer = await getOfferById(req.params.offerId);
+    if (!offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+
+    const updates: Record<string, any> = { ...parsed.data, updated_at: new Date().toISOString() };
+
+    // Serialize tags array to JSON string if provided
+    if (updates.tags !== undefined) {
+      updates.tags = updates.tags ? JSON.stringify(updates.tags) : null;
+    }
+
+    // Update is_sold_out based on availability
+    if (updates.availability === 'sold_out') {
+      updates.is_sold_out = true;
+    } else if (updates.availability) {
+      updates.is_sold_out = false;
+    }
+
+    await db('offers').where('id', req.params.offerId).update(updates);
+    const updated = await getOfferById(req.params.offerId);
+
+    res.json({ data: updated });
+  } catch (err) {
+    console.error('PUT /offers/:offerId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORGANIZATION CRUD ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── GET /organizations ──────────────────────────────────────────────────────
+
+router.get('/organizations', async (_req: Request, res: Response) => {
+  try {
+    const orgs = await db('organizations').orderBy('name', 'asc');
+    res.json({ data: orgs });
+  } catch (err) {
+    console.error('GET /organizations error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /organizations/:orgId ───────────────────────────────────────────────
+
+router.get('/organizations/:orgId', async (req: Request, res: Response) => {
+  try {
+    const org = await db('organizations').where('id', req.params.orgId).first();
+    if (!org) {
+      res.status(404).json({ error: 'Organization not found' });
+      return;
+    }
+    res.json({ data: org });
+  } catch (err) {
+    console.error('GET /organizations/:orgId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── POST /organizations ─────────────────────────────────────────────────────
+
+const createOrgSchema = z.object({
+  name: z.string().min(1).max(255),
+  logo_url: z.string().url().nullable().optional(),
+  fevo_org_id: z.string().nullable().optional(),
+});
+
+router.post('/organizations', async (req: Request, res: Response) => {
+  try {
+    const parsed = createOrgSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const org = {
+      id: uuidv4(),
+      name: parsed.data.name,
+      logo_url: parsed.data.logo_url || null,
+      fevo_org_id: parsed.data.fevo_org_id || null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    await db('organizations').insert(org);
+    res.status(201).json({ data: org });
+  } catch (err) {
+    console.error('POST /organizations error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── PUT /organizations/:orgId ───────────────────────────────────────────────
+
+const updateOrgSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  logo_url: z.string().url().nullable().optional(),
+  fevo_org_id: z.string().nullable().optional(),
+});
+
+router.put('/organizations/:orgId', async (req: Request, res: Response) => {
+  try {
+    const parsed = updateOrgSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const existing = await db('organizations').where('id', req.params.orgId).first();
+    if (!existing) {
+      res.status(404).json({ error: 'Organization not found' });
+      return;
+    }
+
+    await db('organizations').where('id', req.params.orgId).update({
+      ...parsed.data,
+      updated_at: new Date().toISOString(),
+    });
+
+    const updated = await db('organizations').where('id', req.params.orgId).first();
+    res.json({ data: updated });
+  } catch (err) {
+    console.error('PUT /organizations/:orgId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── DELETE /organizations/:orgId ────────────────────────────────────────────
+
+router.delete('/organizations/:orgId', async (req: Request, res: Response) => {
+  try {
+    const existing = await db('organizations').where('id', req.params.orgId).first();
+    if (!existing) {
+      res.status(404).json({ error: 'Organization not found' });
+      return;
+    }
+
+    await db('organizations').where('id', req.params.orgId).del();
+    res.json({ data: { message: 'Organization deleted successfully' } });
+  } catch (err) {
+    console.error('DELETE /organizations/:orgId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

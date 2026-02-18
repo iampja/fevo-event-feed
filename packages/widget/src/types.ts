@@ -1,15 +1,19 @@
+export type DateValue = string | { utc: string | null; timezone: string | null; display: string | null };
+
 export type Offer = {
   offer_id: string;
   title: string;
   description: string;
   image_url: string;
   price: { min: number; max: number; currency: string };
-  date: string;
+  date: DateValue;
   venue: { name: string; city: string; state: string };
   availability: 'available' | 'limited' | 'sold_out';
-  organization: { id: string; name: string };
+  organization: { id: string; name: string; logo_url?: string | null };
   checkout_url: string;
   tags: string[];
+  media?: { image_url: string | null; video_url: string | null };
+  source?: string;
   created_at: string;
   updated_at: string;
 };

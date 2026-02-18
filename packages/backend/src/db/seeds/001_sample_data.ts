@@ -504,6 +504,42 @@ const sampleOffers = [
   },
 ];
 
+// ── Organizations ──────────────────────────────────────────────────────────
+
+const sampleOrganizations = [
+  { id: 'org-msg-001', name: 'MSG Entertainment', logo_url: 'https://images.example.com/logos/msg.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-bsc-001', name: 'BSE Global', logo_url: 'https://images.example.com/logos/bse.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-hot97-001', name: 'HOT 97', logo_url: 'https://images.example.com/logos/hot97.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-nyy-001', name: 'New York Yankees', logo_url: 'https://images.example.com/logos/yankees.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-mets-001', name: 'New York Mets', logo_url: 'https://images.example.com/logos/mets.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-nycfc-001', name: 'NYCFC', logo_url: 'https://images.example.com/logos/nycfc.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-livenation-001', name: 'Live Nation', logo_url: 'https://images.example.com/logos/livenation.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-lakers-001', name: 'Los Angeles Lakers', logo_url: 'https://images.example.com/logos/lakers.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-bulls-001', name: 'Chicago Bulls', logo_url: 'https://images.example.com/logos/bulls.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-warriors-001', name: 'Golden State Warriors', logo_url: 'https://images.example.com/logos/warriors.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-heat-001', name: 'Miami Heat', logo_url: 'https://images.example.com/logos/heat.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-sanrio-001', name: 'Sanrio Events', logo_url: 'https://images.example.com/logos/sanrio.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-celtics-001', name: 'Boston Celtics', logo_url: 'https://images.example.com/logos/celtics.png', fevo_org_id: null, created_at: now, updated_at: now },
+  { id: 'org-test-001', name: 'Test Org', logo_url: null, fevo_org_id: null, created_at: now, updated_at: now },
+];
+
+// ── Venues ──────────────────────────────────────────────────────────────────
+
+const sampleVenues = [
+  { id: 'venue-msg-001', name: 'Madison Square Garden', city: 'New York', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-barclays-001', name: 'Barclays Center', city: 'Brooklyn', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-metlife-001', name: 'MetLife Stadium', city: 'East Rutherford', state: 'NJ', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-yankee-001', name: 'Yankee Stadium', city: 'Bronx', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-citi-001', name: 'Citi Field', city: 'Queens', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-crypto-001', name: 'Crypto.com Arena', city: 'Los Angeles', state: 'CA', country: 'US', timezone: 'America/Los_Angeles', created_at: now, updated_at: now },
+  { id: 'venue-united-001', name: 'United Center', city: 'Chicago', state: 'IL', country: 'US', timezone: 'America/Chicago', created_at: now, updated_at: now },
+  { id: 'venue-chase-001', name: 'Chase Center', city: 'San Francisco', state: 'CA', country: 'US', timezone: 'America/Los_Angeles', created_at: now, updated_at: now },
+  { id: 'venue-rcmh-001', name: 'Radio City Music Hall', city: 'New York', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-kaseya-001', name: 'Kaseya Center', city: 'Miami', state: 'FL', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-hudson-001', name: 'Hudson Yards', city: 'New York', state: 'NY', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+  { id: 'venue-td-001', name: 'TD Garden', city: 'Boston', state: 'MA', country: 'US', timezone: 'America/New_York', created_at: now, updated_at: now },
+];
+
 export async function seed(knex: Knex): Promise<void> {
   // Clean tables in dependency order
   await knex('event_feed_segment_offers').del();
@@ -512,7 +548,17 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('event_feed_kills').del();
   await knex('feed_cache').del();
   await knex('api_keys').del();
+  await knex('sync_log').del();
   await knex('offers').del();
+  await knex('events').del();
+  await knex('venues').del();
+  await knex('organizations').del();
+
+  // Insert organizations
+  await knex('organizations').insert(sampleOrganizations);
+
+  // Insert venues
+  await knex('venues').insert(sampleVenues);
 
   // Insert offers
   await knex('offers').insert(sampleOffers);

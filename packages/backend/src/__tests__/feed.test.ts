@@ -170,14 +170,16 @@ describe('GET /api/v1/event-feed', () => {
     // Should have exactly 5 enabled offers (no disabled, no inactive)
     expect(res.body.meta.total).toBe(5);
 
-    // Every returned offer should be enabled and active
+    // Every returned offer should have the nested FEVO shape
     for (const offer of res.body.data) {
-      expect(offer.distribution_enabled).toBeTruthy();
-      expect(offer.status).toBe('active');
+      expect(offer.offer_id).toBeDefined();
+      expect(offer.venue).toBeDefined();
+      expect(offer.price).toBeDefined();
+      expect(offer.organization).toBeDefined();
     }
 
     // Should NOT include disabled offers
-    const ids = res.body.data.map((o: any) => o.id);
+    const ids = res.body.data.map((o: any) => o.offer_id);
     expect(ids).not.toContain('test-offer-disabled-1');
     expect(ids).not.toContain('test-offer-inactive-1');
   });
@@ -198,7 +200,7 @@ describe('GET /api/v1/event-feed', () => {
       .set('x-api-key', API_KEY)
       .expect(200);
 
-    const ids = feedRes.body.data.map((o: any) => o.id);
+    const ids = feedRes.body.data.map((o: any) => o.offer_id);
     expect(ids).not.toContain('test-offer-enabled-1');
     expect(feedRes.body.meta.total).toBe(4);
   });
@@ -216,7 +218,7 @@ describe('GET /api/v1/event-feed', () => {
       .set('x-api-key', API_KEY)
       .expect(200);
 
-    const ids = feedRes.body.data.map((o: any) => o.id);
+    const ids = feedRes.body.data.map((o: any) => o.offer_id);
     expect(ids).not.toContain('test-offer-enabled-4');
     expect(ids).not.toContain('test-offer-enabled-5');
     // Only offers 2 and 3 remain (1 was killed individually, 4 & 5 org killed)
@@ -247,7 +249,7 @@ describe('GET /api/v1/event-feed', () => {
       .set('x-api-key', API_KEY)
       .expect(200);
 
-    const ids = feedRes.body.data.map((o: any) => o.id);
+    const ids = feedRes.body.data.map((o: any) => o.offer_id);
     expect(ids).toContain('test-offer-enabled-1');
     expect(feedRes.body.meta.total).toBe(3); // 1, 2, 3 (4 & 5 still org-killed)
   });
@@ -310,7 +312,7 @@ describe('GET /api/v1/event-feed', () => {
     // Both linked offers are enabled-1 and enabled-2
     expect(res.body.meta.total).toBeLessThanOrEqual(2);
     for (const offer of res.body.data) {
-      expect(['test-offer-enabled-1', 'test-offer-enabled-2']).toContain(offer.id);
+      expect(['test-offer-enabled-1', 'test-offer-enabled-2']).toContain(offer.offer_id);
     }
   });
 });
