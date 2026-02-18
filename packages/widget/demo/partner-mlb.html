@@ -944,43 +944,8 @@
           <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences <span class="fevo-strip-badge">FEVO</span></span>
           <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
         </div>
-        <div class="ticket-strip">
-          <div class="ticket-strip-item">
-            <img src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=440&h=240&fit=crop" alt="Yankees" />
-            <div class="tsi-body">
-              <div class="tsi-title">Yankees vs Red Sox</div>
-              <div class="tsi-meta">Mar 28 &middot; Yankee Stadium</div>
-              <div class="tsi-price">From $65</div>
-            </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-001">Get Tickets</a>
-          </div>
-          <div class="ticket-strip-item">
-            <img src="https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=440&h=240&fit=crop" alt="Family" />
-            <div class="tsi-body">
-              <div class="tsi-title">Family Sunday - Kids Run Bases</div>
-              <div class="tsi-meta">Apr 12 &middot; Citi Field</div>
-              <div class="tsi-price">From $25</div>
-            </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-002">Get Tickets</a>
-          </div>
-          <div class="ticket-strip-item">
-            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=440&h=240&fit=crop" alt="Concert" />
-            <div class="tsi-body">
-              <div class="tsi-title">Dodger Stadium Concert Night</div>
-              <div class="tsi-meta">Jun 14 &middot; Los Angeles</div>
-              <div class="tsi-price">From $55</div>
-            </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-003">Get Tickets</a>
-          </div>
-          <div class="ticket-strip-item">
-            <img src="https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=440&h=240&fit=crop" alt="VIP" />
-            <div class="tsi-body">
-              <div class="tsi-title">Red Sox VIP Dugout Experience</div>
-              <div class="tsi-meta">May 15 &middot; Fenway Park</div>
-              <div class="tsi-price">From $250</div>
-            </div>
-            <a class="tsi-cta" href="/demo/checkout.html?offer=mlb-005">Get Tickets</a>
-          </div>
+        <div style="padding: 16px;">
+          <div class="fevo-event-feed" data-theme="light" data-columns="4" data-max-cards="4"></div>
         </div>
       </div>
 
@@ -1329,8 +1294,11 @@
       const u = typeof url === 'string' ? url : url.toString();
       if (u.includes('/feed')) {
         const d = getFiltered();
+        const params = new URL(u, window.location.origin).searchParams;
+        const perPage = parseInt(params.get('per_page')) || d.length;
+        const sliced = d.slice(0, perPage);
         return Promise.resolve(new Response(JSON.stringify({
-          data: d, meta: { page:1, per_page:20, total:d.length, total_pages:1 }, feed_updated_at: new Date().toISOString()
+          data: sliced, meta: { page:1, per_page:perPage, total:d.length, total_pages:Math.ceil(d.length/perPage) }, feed_updated_at: new Date().toISOString()
         }), { status:200, headers:{'Content-Type':'application/json'} }));
       }
       return _fetch.apply(this, arguments);
