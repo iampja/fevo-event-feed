@@ -79,6 +79,16 @@ export function trackWidgetError(
   });
 }
 
+export function trackOfferDetailOpened(offerId: string): void {
+  trackEvent({
+    type: 'offer_detail_opened',
+    data: {
+      offer_id: offerId,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
 export function trackWidgetRefreshed(added: number, removed: number): void {
   trackEvent({
     type: 'widget_refreshed',

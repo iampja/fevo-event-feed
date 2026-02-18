@@ -4,12 +4,14 @@ import { useRef, useCallback } from 'preact/hooks';
 import type { Offer, WidgetConfig } from '../types';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { trackOfferViewed, trackOfferClicked } from '../analytics';
+import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { formatDate } from '../utils/formatDate';
 import { formatPrice } from '../utils/formatPrice';
 
 type OfferCardProps = {
   offer: Offer;
   config: WidgetConfig;
+  onCardClick: (offer: Offer) => void;
 };
 
 const AVAILABILITY_LABELS: Record<string, string> = {
@@ -18,7 +20,7 @@ const AVAILABILITY_LABELS: Record<string, string> = {
   sold_out: 'Sold Out',
 };
 
-export function OfferCard({ offer, config }: OfferCardProps) {
+export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
   const viewedRef = useRef(false);
 
   const cardRef = useIntersectionObserver<HTMLDivElement>((isVisible) => {
@@ -31,41 +33,45 @@ export function OfferCard({ offer, config }: OfferCardProps) {
   const handleImageError = useCallback(
     (e: Event) => {
       const img = e.target as HTMLImageElement;
-      // Hide broken image, fallback gradient is already on the wrapper
       img.style.display = 'none';
     },
     [],
   );
 
-  const buildCheckoutUrl = (): string => {
-    try {
-      const url = new URL(offer.checkout_url);
-      url.searchParams.set('source', 'widget');
-      if (config.segment) {
-        url.searchParams.set('segment', config.segment);
-      }
-      if (config.partnerId) {
-        url.searchParams.set('partner', config.partnerId);
-      }
-      return url.toString();
-    } catch {
-      // If checkout_url is a relative path or malformed, return as-is with query params
-      const separator = offer.checkout_url.includes('?') ? '&' : '?';
-      let params = `source=widget`;
-      if (config.segment) params += `&segment=${encodeURIComponent(config.segment)}`;
-      if (config.partnerId) params += `&partner=${encodeURIComponent(config.partnerId)}`;
-      return `${offer.checkout_url}${separator}${params}`;
-    }
-  };
+  const handleCardClick = useCallback(() => {
+    onCardClick(offer);
+  }, [onCardClick, offer]);
 
-  const handleCtaClick = () => {
-    trackOfferClicked(offer.offer_id, config.segment, config.partnerId);
-  };
+  const handleCardKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onCardClick(offer);
+      }
+    },
+    [onCardClick, offer],
+  );
+
+  const handleCtaClick = useCallback(
+    (e: Event) => {
+      e.stopPropagation();
+      trackOfferClicked(offer.offer_id, config.segment, config.partnerId);
+    },
+    [offer.offer_id, config.segment, config.partnerId],
+  );
 
   const isSoldOut = offer.availability === 'sold_out';
 
   return (
-    <div class="fevo-ef-card" ref={cardRef}>
+    <div
+      class="fevo-ef-card"
+      ref={cardRef}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role="button"
+      tabIndex={0}
+      style={{ cursor: 'pointer' }}
+    >
       <div class="fevo-ef-card-image-wrap">
         {offer.image_url && (
           <img
@@ -114,7 +120,7 @@ export function OfferCard({ offer, config }: OfferCardProps) {
 
           <a
             class="fevo-ef-cta"
-            href={isSoldOut ? undefined : buildCheckoutUrl()}
+            href={isSoldOut ? undefined : buildCheckoutUrl(offer, config)}
             target="_blank"
             rel="noopener noreferrer"
             data-status={offer.availability}

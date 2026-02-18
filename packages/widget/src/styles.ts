@@ -395,6 +395,220 @@ export const WIDGET_STYLES = `
   50% { width: 60%; margin-left: 20%; }
   100% { width: 0%; margin-left: 100%; }
 }
+
+/* ===== Offer Detail Modal ===== */
+.fevo-ef-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fevo-ef-backdrop-in 0.2s ease-out;
+  padding: 24px;
+}
+
+@keyframes fevo-ef-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fevo-ef-modal {
+  position: relative;
+  background: var(--fevo-ef-card-bg);
+  border-radius: var(--fevo-ef-radius);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fevo-ef-modal-in 0.25s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fevo-ef-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.fevo-ef-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-modal-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.fevo-ef-modal-hero {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  flex-shrink: 0;
+}
+
+.fevo-ef-modal-hero img,
+.fevo-ef-modal-hero video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fevo-ef-modal-body {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.fevo-ef-modal-org {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.fevo-ef-modal-org-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.fevo-ef-modal-org-name {
+  font-size: 13px;
+  color: var(--fevo-ef-text-secondary);
+  font-weight: 500;
+}
+
+.fevo-ef-modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.fevo-ef-modal-meta {
+  font-size: 14px;
+  color: var(--fevo-ef-text-secondary);
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fevo-ef-modal-meta-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+
+.fevo-ef-modal-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 12px 0;
+}
+
+.fevo-ef-modal-description {
+  font-size: 14px;
+  color: var(--fevo-ef-text-secondary);
+  line-height: 1.6;
+  margin: 16px 0;
+  white-space: pre-line;
+}
+
+.fevo-ef-modal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fevo-ef-modal-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fevo-ef-accent);
+  background: color-mix(in srgb, var(--fevo-ef-accent) 10%, transparent);
+  border-radius: 999px;
+}
+
+.fevo-ef-modal-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--fevo-ef-border);
+  background: var(--fevo-ef-card-bg);
+  flex-shrink: 0;
+}
+
+.fevo-ef-modal-footer .fevo-ef-cta {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* ===== Modal Mobile Bottom Sheet ===== */
+@media (max-width: 640px) {
+  .fevo-ef-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .fevo-ef-modal {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: var(--fevo-ef-radius) var(--fevo-ef-radius) 0 0;
+    animation: fevo-ef-sheet-up 0.3s ease-out;
+  }
+
+  .fevo-ef-modal-hero {
+    height: 220px;
+  }
+}
+
+@keyframes fevo-ef-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 `;
 
 let injected = false;

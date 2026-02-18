@@ -42,6 +42,7 @@ export type AnalyticsEvent = {
     | 'offer_card_viewed'
     | 'offer_card_clicked'
     | 'widget_error'
-    | 'widget_refreshed';
+    | 'widget_refreshed'
+    | 'offer_detail_opened';
   data: Record<string, unknown>;
 };

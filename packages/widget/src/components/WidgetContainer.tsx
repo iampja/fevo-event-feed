@@ -1,15 +1,17 @@
 /** @jsxImportSource preact */
 
 import { useEffect } from 'preact/hooks';
-import type { WidgetConfig, WidgetState } from '../types';
+import { useState, useCallback } from 'preact/hooks';
+import type { Offer, WidgetConfig, WidgetState } from '../types';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
-import { trackWidgetLoaded } from '../analytics';
+import { trackWidgetLoaded, trackOfferDetailOpened } from '../analytics';
 import { injectStyles } from '../styles';
 import { OfferCard } from './OfferCard';
 import { SkeletonCard } from './SkeletonCard';
 import { ErrorState } from './ErrorState';
 import { EmptyState } from './EmptyState';
 import { PoweredByFevo } from './PoweredByFevo';
+import { OfferDetailModal } from './OfferDetailModal';
 
 type WidgetContainerProps = {
   config: WidgetConfig;
@@ -21,6 +23,17 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
 
   const { offers, isRefreshing, error, lastUpdated, retry } =
     useAutoRefresh(config);
+
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+
+  const handleCardClick = useCallback((offer: Offer) => {
+    setSelectedOffer(offer);
+    trackOfferDetailOpened(offer.offer_id);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setSelectedOffer(null);
+  }, []);
 
   // Determine widget state
   const hasOffers = offers.length > 0;
@@ -71,12 +84,26 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
       {state === 'ready' && (
         <div class="fevo-ef-grid" data-columns={columns}>
           {offers.map((offer) => (
-            <OfferCard key={offer.offer_id} offer={offer} config={config} />
+            <OfferCard
+              key={offer.offer_id}
+              offer={offer}
+              config={config}
+              onCardClick={handleCardClick}
+            />
           ))}
         </div>
       )}
 
       <PoweredByFevo />
+
+      {/* Offer detail modal */}
+      {selectedOffer && (
+        <OfferDetailModal
+          offer={selectedOffer}
+          config={config}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 }
