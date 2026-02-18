@@ -10,6 +10,10 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
+// Detect whether we're running compiled JS or source TS (via ts-node-dev)
+const isCompiled = __filename.endsWith('.js');
+const loadExtensions = isCompiled ? ['.js'] : ['.ts'];
+
 const config: Knex.Config = {
   client: 'better-sqlite3',
   connection: {
@@ -18,11 +22,11 @@ const config: Knex.Config = {
   useNullAsDefault: true,
   migrations: {
     directory: path.resolve(__dirname, 'migrations'),
-    loadExtensions: ['.js'],
+    loadExtensions,
   },
   seeds: {
     directory: path.resolve(__dirname, 'seeds'),
-    loadExtensions: ['.js'],
+    loadExtensions,
   },
 };
 
