@@ -34,6 +34,20 @@ app.use((req, res, next) => {
 
 // ── Health check ─────────────────────────────────────────────────────────────
 
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'FEVO Event Feed API',
+    status: 'ok',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      event_feed: '/api/v1/event-feed',
+      segments: '/api/v1/event-feed/segments',
+      docs: 'https://github.com/iampja/fevo-event-feed',
+    },
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
