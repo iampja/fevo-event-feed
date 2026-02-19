@@ -1,0 +1,1807 @@
+openapi: 3.0.3
+info:
+  title: FEVO Event Feed API
+  version: 1.0.0
+  description: |
+    REST API for the FEVO Event Feed system. Provides a public feed of events/offers
+    for embeddable widgets, plus admin endpoints for managing offers, organizations,
+    segments, API keys, and FEVO integration.
+
+    ## Authentication
+
+    **Public endpoints** require an API key via the `x-api-key` header.
+    Keys are issued through the admin API and hashed (SHA-256) before storage.
+
+    **Admin endpoints** require an internal auth token via the `x-internal-auth` header.
+
+    **Webhook endpoints** require the FEVO webhook secret via `x-fevo-webhook-secret`.
+
+    ## Rate Limiting
+
+    - Public feed: **100 req/min** per API key (configurable per key)
+    - Admin endpoints: **30 req/min**
+    - Rate limit headers are included in all responses
+
+  contact:
+    name: FEVO Engineering
+  license:
+    name: MIT
+
+servers:
+  - url: https://fevo-event-feed-api.onrender.com
+    description: Production (Render)
+  - url: http://localhost:3001
+    description: Local development
+
+tags:
+  - name: Health
+    description: Service health and info
+  - name: Feed
+    description: Public event feed (requires API key)
+  - name: Admin - Offers
+    description: Offer management and enrichment
+  - name: Admin - Organizations
+    description: Organization CRUD
+  - name: Admin - Segments
+    description: Curated segment management
+  - name: Admin - Kill Switch
+    description: Emergency offer/org removal
+  - name: Admin - Distribution
+    description: Control which offers appear in feed
+  - name: Admin - API Keys
+    description: Partner API key management
+  - name: Admin - Sync
+    description: FEVO data synchronization
+  - name: Admin - Feed
+    description: Feed cache management
+  - name: Webhooks
+    description: FEVO webhook receivers
+
+paths:
+  /:
+    get:
+      tags: [Health]
+      summary: Service info
+      description: Returns service name, version, and available endpoint paths.
+      responses:
+        "200":
+          description: Service info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: FEVO Event Feed API
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: 1.0.0
+                  endpoints:
+                    type: object
+                    properties:
+                      health:
+                        type: string
+                      event_feed:
+                        type: string
+                      segments:
+                        type: string
+                      docs:
+                        type: string
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # PUBLIC FEED
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed:
+    get:
+      tags: [Feed]
+      summary: Get event feed
+      description: |
+        Returns a paginated, filtered list of offers that are active and
+        distribution-enabled. Supports filtering by segment, geography,
+        organization, event type, theme, and creator.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: segment
+          in: query
+          description: Filter by segment slug
+          schema:
+            type: string
+        - name: theme
+          in: query
+          description: Filter by tag
+          schema:
+            type: string
+        - name: geography
+          in: query
+          description: Filter by city or state
+          schema:
+            type: string
+        - name: organization
+          in: query
+          description: Filter by organization ID
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          description: Filter by event type tag
+          schema:
+            type: string
+        - name: creator
+          in: query
+          description: Filter by organization name
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/v1/event-feed/segments:
+    get:
+      tags: [Feed]
+      summary: List all segments
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Segment list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Segment"
+
+  /api/v1/event-feed/segments/{slug}:
+    get:
+      tags: [Feed]
+      summary: Get segment by slug
+      description: Returns segment details including linked offer IDs.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Segment with offers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/Segment"
+                      - type: object
+                        properties:
+                          offers:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                offer_id:
+                                  type: string
+                                added_at:
+                                  type: string
+                                  format: date-time
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — OFFERS
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/offers/stats:
+    get:
+      tags: [Admin - Offers]
+      summary: Get offer statistics
+      description: Counts by status, distribution state, and organization.
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: Offer stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      active:
+                        type: integer
+                      inactive:
+                        type: integer
+                      sold_out:
+                        type: integer
+                      deleted:
+                        type: integer
+                      distribution_enabled:
+                        type: integer
+                      distribution_disabled:
+                        type: integer
+                      by_organization:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            organization_id:
+                              type: string
+                              nullable: true
+                            organization_name:
+                              type: string
+                              nullable: true
+                            count:
+                              type: integer
+
+  /api/v1/event-feed/admin/offers:
+    get:
+      tags: [Admin - Offers]
+      summary: List offers (admin)
+      description: Paginated list with search, sort, and status filters.
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, sold_out, deleted]
+        - name: distribution_enabled
+          in: query
+          schema:
+            type: boolean
+        - name: organization_id
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Searches title, venue name, venue city, org name
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, date, title, price_min, status]
+            default: created_at
+        - name: sort_dir
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Paginated offers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Offer"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api/v1/event-feed/admin/offers/{offerId}:
+    get:
+      tags: [Admin - Offers]
+      summary: Get single offer
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Offer detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Offer"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Offers]
+      summary: Update offer (enrichment)
+      description: |
+        Enrich or edit offer fields. Only provided fields are updated.
+        Useful for adding editorial content, correcting data, or overriding
+        synced values.
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferUpdate"
+      responses:
+        "200":
+          description: Updated offer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Offer"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — DISTRIBUTION
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/offers/{offerId}/distribution:
+    get:
+      tags: [Admin - Distribution]
+      summary: Get distribution status
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Distribution status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DistributionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Distribution]
+      summary: Toggle distribution
+      description: |
+        Enable or disable an offer in the public feed. Only active offers
+        can be distribution-enabled.
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated distribution status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DistributionStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Cannot enable distribution for inactive offer
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — KILL SWITCH
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/kills:
+    get:
+      tags: [Admin - Kill Switch]
+      summary: List active kills
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: Active kill records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Kill"
+
+  /api/v1/event-feed/admin/kills/offer:
+    post:
+      tags: [Admin - Kill Switch]
+      summary: Kill a single offer
+      description: Immediately removes an offer from the public feed.
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [offerId]
+              properties:
+                offerId:
+                  type: string
+                  minLength: 1
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Kill created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Kill"
+
+  /api/v1/event-feed/admin/kills/organization:
+    post:
+      tags: [Admin - Kill Switch]
+      summary: Kill all offers for an organization
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orgId, reason]
+              properties:
+                orgId:
+                  type: string
+                  minLength: 1
+                reason:
+                  type: string
+                  minLength: 1
+      responses:
+        "201":
+          description: Kill created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Kill"
+
+  /api/v1/event-feed/admin/kills/{killId}/restore:
+    post:
+      tags: [Admin - Kill Switch]
+      summary: Restore a kill
+      description: Re-enables the killed offer/organization in the feed.
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: killId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Kill restored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Kill"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — ORGANIZATIONS
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/organizations:
+    get:
+      tags: [Admin - Organizations]
+      summary: List organizations
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: Organization list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Organization"
+
+    post:
+      tags: [Admin - Organizations]
+      summary: Create organization
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                logo_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                fevo_org_id:
+                  type: string
+                  nullable: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Organization"
+
+  /api/v1/event-feed/admin/organizations/{orgId}:
+    get:
+      tags: [Admin - Organizations]
+      summary: Get organization
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Organization detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Organizations]
+      summary: Update organization
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                logo_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                fevo_org_id:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Admin - Organizations]
+      summary: Delete organization
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Organization deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — SEGMENTS
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/segments:
+    post:
+      tags: [Admin - Segments]
+      summary: Create segment
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug, type]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                slug:
+                  type: string
+                  pattern: "^[a-z0-9-]+$"
+                  minLength: 1
+                  maxLength: 255
+                type:
+                  type: string
+                  enum: [theme, geography, partner, custom]
+                rules:
+                  type: object
+                  additionalProperties: true
+                is_curated:
+                  type: boolean
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Segment"
+        "409":
+          description: Slug already exists
+
+  /api/v1/event-feed/admin/segments/{segmentId}:
+    put:
+      tags: [Admin - Segments]
+      summary: Update segment
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                  pattern: "^[a-z0-9-]+$"
+                type:
+                  type: string
+                  enum: [theme, geography, partner, custom]
+                rules:
+                  type: object
+                  additionalProperties: true
+                is_curated:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Segment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Admin - Segments]
+      summary: Delete segment
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/event-feed/admin/segments/{segmentId}/offers:
+    post:
+      tags: [Admin - Segments]
+      summary: Add offer to segment
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [offerId]
+              properties:
+                offerId:
+                  type: string
+                  minLength: 1
+      responses:
+        "201":
+          description: Offer added to segment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      segment_id:
+                        type: string
+                      offer_id:
+                        type: string
+                      added_at:
+                        type: string
+                        format: date-time
+
+  /api/v1/event-feed/admin/segments/{segmentId}/offers/{offerId}:
+    delete:
+      tags: [Admin - Segments]
+      summary: Remove offer from segment
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Offer removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — API KEYS
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/api-keys:
+    get:
+      tags: [Admin - API Keys]
+      summary: List API keys
+      description: Returns all API keys (hashes are not exposed).
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: API key list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKeyInfo"
+
+    post:
+      tags: [Admin - API Keys]
+      summary: Create API key
+      description: |
+        Generates a new API key for a partner. The raw key is returned **only once**
+        in the response — store it securely.
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partner_name]
+              properties:
+                partner_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                rate_limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+                  default: 100
+      responses:
+        "201":
+          description: Key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ApiKeyInfo"
+                  key:
+                    type: string
+                    description: "Raw API key (format: efeed_XXXX). Shown only once."
+                    example: efeed_a1b2c3d4e5f6
+                  warning:
+                    type: string
+                    example: Store this API key securely. It will not be shown again.
+
+  /api/v1/event-feed/admin/api-keys/{keyId}/revoke:
+    post:
+      tags: [Admin - API Keys]
+      summary: Revoke API key
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ApiKeyInfo"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/event-feed/admin/api-keys/{keyId}/rate-limit:
+    put:
+      tags: [Admin - API Keys]
+      summary: Update key rate limit
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rate_limit]
+              properties:
+                rate_limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+      responses:
+        "200":
+          description: Rate limit updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ApiKeyInfo"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — SYNC
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/sync/organization/{orgId}:
+    post:
+      tags: [Admin - Sync]
+      summary: Sync single organization from FEVO
+      description: |
+        Pulls latest offers from the FEVO API for the specified organization.
+        Creates new offers and updates existing ones.
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SyncLog"
+
+  /api/v1/event-feed/admin/sync/all:
+    post:
+      tags: [Admin - Sync]
+      summary: Sync all organizations from FEVO
+      description: Syncs offers for every organization that has a `fevo_org_id`.
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: Sync results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SyncLog"
+                  meta:
+                    type: object
+                    properties:
+                      organizations_synced:
+                        type: integer
+                      total_created:
+                        type: integer
+                      total_updated:
+                        type: integer
+
+  /api/v1/event-feed/admin/sync/log:
+    get:
+      tags: [Admin - Sync]
+      summary: Get sync history
+      security:
+        - InternalAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: Sync log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SyncLog"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN — FEED
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/admin/feed/refresh:
+    post:
+      tags: [Admin - Feed]
+      summary: Manually rebuild feed cache
+      description: Forces a rebuild of the pre-computed feed index.
+      security:
+        - InternalAuth: []
+      responses:
+        "200":
+          description: Feed rebuilt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Feed index rebuilt
+                  count:
+                    type: integer
+                    description: Number of offers in rebuilt feed
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # WEBHOOKS
+  # ──────────────────────────────────────────────────────────────────────────
+
+  /api/v1/event-feed/webhooks/fevo/offer-created:
+    post:
+      tags: [Webhooks]
+      summary: FEVO offer created webhook
+      description: |
+        Receives a new offer notification from FEVO.
+        Validated via `x-fevo-webhook-secret` header.
+      security:
+        - WebhookSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookOfferCreated"
+      responses:
+        "200":
+          description: Received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+                  offer_id:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/event-feed/webhooks/fevo/offer-updated:
+    post:
+      tags: [Webhooks]
+      summary: FEVO offer updated webhook
+      description: Receives an updated offer notification from FEVO.
+      security:
+        - WebhookSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookOfferUpdated"
+      responses:
+        "200":
+          description: Received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+                  offer_id:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+# ════════════════════════════════════════════════════════════════════════════
+# COMPONENTS
+# ════════════════════════════════════════════════════════════════════════════
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Partner API key (format `efeed_XXXX`)
+    InternalAuth:
+      type: apiKey
+      in: header
+      name: x-internal-auth
+      description: Internal admin auth token
+    WebhookSecret:
+      type: apiKey
+      in: header
+      name: x-fevo-webhook-secret
+      description: FEVO webhook shared secret
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Not found
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Too many requests
+
+  schemas:
+    # ── Feed response ────────────────────────────────────────────────────
+    FeedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedOffer"
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            page:
+              type: integer
+            per_page:
+              type: integer
+            total_pages:
+              type: integer
+            built_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    FeedOffer:
+      type: object
+      properties:
+        offer_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        price:
+          type: object
+          properties:
+            min:
+              type: number
+              nullable: true
+            max:
+              type: number
+              nullable: true
+            currency:
+              type: string
+              example: USD
+        date:
+          type: object
+          properties:
+            utc:
+              type: string
+              format: date-time
+              nullable: true
+            timezone:
+              type: string
+              nullable: true
+            display:
+              type: string
+              nullable: true
+        venue:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+            city:
+              type: string
+              nullable: true
+            state:
+              type: string
+              nullable: true
+        organization:
+          type: object
+          properties:
+            id:
+              type: string
+              nullable: true
+            name:
+              type: string
+              nullable: true
+            logo_url:
+              type: string
+              nullable: true
+        availability:
+          type: string
+          enum: [available, limited, sold_out]
+        checkout_url:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        media:
+          type: object
+          properties:
+            image_url:
+              type: string
+              nullable: true
+            video_url:
+              type: string
+              nullable: true
+        source:
+          type: string
+          enum: [manual, fevo_sync, fevo_webhook]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Offer (admin detail) ─────────────────────────────────────────────
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        price_min:
+          type: number
+          nullable: true
+        price_max:
+          type: number
+          nullable: true
+        currency:
+          type: string
+        date:
+          type: string
+          format: date-time
+          nullable: true
+        venue_name:
+          type: string
+          nullable: true
+        venue_city:
+          type: string
+          nullable: true
+        venue_state:
+          type: string
+          nullable: true
+        availability:
+          type: string
+          enum: [available, limited, sold_out]
+        organization_id:
+          type: string
+          nullable: true
+        organization_name:
+          type: string
+          nullable: true
+        checkout_url:
+          type: string
+          nullable: true
+        tags:
+          type: string
+          nullable: true
+          description: JSON array stored as string
+        status:
+          type: string
+          enum: [active, inactive, sold_out, deleted]
+        distribution_enabled:
+          type: boolean
+        distribution_enabled_at:
+          type: string
+          format: date-time
+          nullable: true
+        distribution_disabled_at:
+          type: string
+          format: date-time
+          nullable: true
+        fevo_offer_id:
+          type: string
+          nullable: true
+        fevo_url_code:
+          type: string
+          nullable: true
+        event_id:
+          type: string
+          nullable: true
+        venue_id:
+          type: string
+          nullable: true
+        video_url:
+          type: string
+          nullable: true
+        tickets_available:
+          type: integer
+          nullable: true
+        is_sold_out:
+          type: boolean
+        source:
+          type: string
+          enum: [manual, fevo_sync, fevo_webhook]
+        fevo_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OfferUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 5000
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        price_min:
+          type: number
+          minimum: 0
+          nullable: true
+        price_max:
+          type: number
+          minimum: 0
+          nullable: true
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 10
+        date:
+          type: string
+          nullable: true
+        venue_name:
+          type: string
+          maxLength: 255
+          nullable: true
+        venue_city:
+          type: string
+          maxLength: 255
+          nullable: true
+        venue_state:
+          type: string
+          maxLength: 50
+          nullable: true
+        availability:
+          type: string
+          enum: [available, limited, sold_out]
+        checkout_url:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        video_url:
+          type: string
+          format: uri
+          nullable: true
+        tickets_available:
+          type: integer
+          minimum: 0
+          nullable: true
+
+    # ── Distribution ─────────────────────────────────────────────────────
+    DistributionStatus:
+      type: object
+      properties:
+        offer_id:
+          type: string
+        offer_title:
+          type: string
+        offer_status:
+          type: string
+        distribution_enabled:
+          type: boolean
+        distribution_enabled_at:
+          type: string
+          format: date-time
+          nullable: true
+        distribution_disabled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── Kill ─────────────────────────────────────────────────────────────
+    Kill:
+      type: object
+      properties:
+        id:
+          type: string
+        target_type:
+          type: string
+          enum: [offer, organization]
+        target_id:
+          type: string
+        killed_by:
+          type: string
+        killed_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        restored_by:
+          type: string
+          nullable: true
+        restored_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── Organization ─────────────────────────────────────────────────────
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        logo_url:
+          type: string
+          nullable: true
+        fevo_org_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Segment ──────────────────────────────────────────────────────────
+    Segment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        type:
+          type: string
+          enum: [theme, geography, organization, event_type, creator, partner, custom]
+        rules:
+          type: string
+          nullable: true
+          description: JSON rules object stored as string
+        is_curated:
+          type: boolean
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── API Key ──────────────────────────────────────────────────────────
+    ApiKeyInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        partner_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        rate_limit:
+          type: integer
+
+    # ── Sync Log ─────────────────────────────────────────────────────────
+    SyncLog:
+      type: object
+      properties:
+        id:
+          type: string
+        sync_type:
+          type: string
+          enum: [organization, all]
+        organization_id:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        offers_created:
+          type: integer
+        offers_updated:
+          type: integer
+        errors:
+          type: string
+          nullable: true
+          description: JSON array of error strings
+        status:
+          type: string
+          enum: [running, completed, failed]
+
+    # ── Pagination meta ──────────────────────────────────────────────────
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+
+    # ── Webhook payloads ─────────────────────────────────────────────────
+    WebhookOfferCreated:
+      type: object
+      required: [offer_id, offer_title]
+      properties:
+        offer_id:
+          type: string
+        offer_title:
+          type: string
+        offer_url_code:
+          type: string
+        event_id:
+          type: string
+        event_title:
+          type: string
+        event_date_utc:
+          type: string
+        organization_id:
+          type: string
+        organization_name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+        video_url:
+          type: string
+        price_min:
+          type: number
+        price_max:
+          type: number
+        currency:
+          type: string
+        venue_name:
+          type: string
+        venue_city:
+          type: string
+        venue_state:
+          type: string
+        availability:
+          type: string
+          enum: [available, limited, sold_out]
+        tickets_available:
+          type: integer
+
+    WebhookOfferUpdated:
+      type: object
+      required: [offer_id]
+      properties:
+        offer_id:
+          type: string
+        offer_title:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+        video_url:
+          type: string
+        price_min:
+          type: number
+        price_max:
+          type: number
+        currency:
+          type: string
+        event_date_utc:
+          type: string
+        venue_name:
+          type: string
+        venue_city:
+          type: string
+        venue_state:
+          type: string
+        availability:
+          type: string
+        tickets_available:
+          type: integer
+        offer_url_code:
+          type: string

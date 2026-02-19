@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'js-yaml';
+import fs from 'fs';
+import path from 'path';
 import routes from './routes';
 import db from './db/connection';
 import { startFeedRefreshJob, stopFeedRefreshJob } from './jobs/feedRefresh';
@@ -43,7 +47,7 @@ app.get('/', (_req, res) => {
       health: '/health',
       event_feed: '/api/v1/event-feed',
       segments: '/api/v1/event-feed/segments',
-      docs: 'https://github.com/iampja/fevo-event-feed',
+      docs: '/docs',
     },
   });
 });
@@ -51,6 +55,20 @@ app.get('/', (_req, res) => {
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ── Swagger UI ───────────────────────────────────────────────────────────
+
+try {
+  const specPath = path.join(__dirname, '..', 'docs', 'openapi.yaml');
+  const specFile = fs.readFileSync(specPath, 'utf8');
+  const swaggerDoc = yaml.load(specFile) as Record<string, unknown>;
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'FEVO Event Feed API Docs',
+  }));
+} catch (err) {
+  console.warn('Swagger UI not loaded (docs/openapi.yaml not found)');
+}
 
 // ── Mount API routes ─────────────────────────────────────────────────────────
 
