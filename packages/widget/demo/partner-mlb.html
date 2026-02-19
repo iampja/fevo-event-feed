@@ -941,7 +941,18 @@
       <!-- Ticket Strip (opens FEVO modal) -->
       <div class="mlb-card fevo-strip" style="margin-bottom:24px">
         <div class="mlb-card-header">
-          <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences <span id="geo-city-label"></span><span class="fevo-strip-badge">FEVO</span></span>
+          <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences
+            <select id="geo-city-select" style="font-size:11px;font-weight:600;color:#6b7280;border:1px solid #d1d5db;border-radius:4px;padding:2px 20px 2px 6px;background:#fff url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E&quot;) no-repeat right 5px center;appearance:none;cursor:pointer;text-transform:none;letter-spacing:0;">
+              <option value="">All Cities</option>
+              <option value="new-york">New York</option>
+              <option value="boston">Boston</option>
+              <option value="chicago">Chicago</option>
+              <option value="houston">Houston</option>
+              <option value="los-angeles">Los Angeles</option>
+              <option value="san-francisco">San Francisco</option>
+              <option value="miami">Miami</option>
+            </select>
+            <span class="fevo-strip-badge">FEVO</span></span>
           <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
         </div>
         <div style="padding: 16px;">
@@ -1516,24 +1527,24 @@
       }
     }, true);
 
-    // ===== GEO CITY LABEL =====
-    const CITY_DISPLAY_NAMES = {
-      'new-york': 'New York',
-      'boston': 'Boston',
-      'chicago': 'Chicago',
-      'houston': 'Houston',
-      'los-angeles': 'Los Angeles',
-      'san-francisco': 'San Francisco',
-      'miami': 'Miami',
-    };
+    // ===== GEO CITY DROPDOWN =====
+    const geoSelect = document.getElementById('geo-city-select');
 
+    // Pre-select detected city when auto-geo resolves
     window.addEventListener('fevo:geo-resolved', function(e) {
       const city = e.detail && e.detail.city;
-      const label = document.getElementById('geo-city-label');
-      if (label && city && CITY_DISPLAY_NAMES[city]) {
-        label.textContent = 'near ' + CITY_DISPLAY_NAMES[city] + ' ';
-        label.style.cssText = 'font-weight:400;font-size:12px;color:#6b7280;text-transform:none;letter-spacing:0;';
+      if (geoSelect && city) {
+        geoSelect.value = city;
       }
+    });
+
+    // Re-render inline widget when city is changed manually
+    geoSelect.addEventListener('change', function() {
+      const feedEl = document.querySelector('.fevo-event-feed');
+      if (!feedEl || !window.FevoEventFeed) return;
+      window.FevoEventFeed.destroy(feedEl);
+      const geo = geoSelect.value || undefined;
+      window.FevoEventFeed.init({ theme: 'light', columns: 2, maxCards: 4, geo: geo }, feedEl);
     });
   </script>
 
