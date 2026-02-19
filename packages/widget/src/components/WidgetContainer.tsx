@@ -31,6 +31,9 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
     resolveGeo().then((city) => {
       setResolvedGeo(city);
       setGeoReady(true);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('fevo:geo-resolved', { detail: { city } }));
+      }
     });
   }, [config.geo]);
 

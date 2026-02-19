@@ -941,7 +941,7 @@
       <!-- Ticket Strip (opens FEVO modal) -->
       <div class="mlb-card fevo-strip" style="margin-bottom:24px">
         <div class="mlb-card-header">
-          <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences <span class="fevo-strip-badge">FEVO</span></span>
+          <span style="display:flex;align-items:center;gap:8px">Tickets & Experiences <span id="geo-city-label"></span><span class="fevo-strip-badge">FEVO</span></span>
           <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
         </div>
         <div style="padding: 16px;">
@@ -1515,6 +1515,26 @@
         } catch (err) { /* ignore */ }
       }
     }, true);
+
+    // ===== GEO CITY LABEL =====
+    const CITY_DISPLAY_NAMES = {
+      'new-york': 'New York',
+      'boston': 'Boston',
+      'chicago': 'Chicago',
+      'houston': 'Houston',
+      'los-angeles': 'Los Angeles',
+      'san-francisco': 'San Francisco',
+      'miami': 'Miami',
+    };
+
+    window.addEventListener('fevo:geo-resolved', function(e) {
+      const city = e.detail && e.detail.city;
+      const label = document.getElementById('geo-city-label');
+      if (label && city && CITY_DISPLAY_NAMES[city]) {
+        label.textContent = 'near ' + CITY_DISPLAY_NAMES[city] + ' ';
+        label.style.cssText = 'font-weight:400;font-size:12px;color:#6b7280;text-transform:none;letter-spacing:0;';
+      }
+    });
   </script>
 
   <script src="/src/index.ts" type="module"></script>
