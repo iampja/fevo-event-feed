@@ -57,15 +57,21 @@ app.get('/health', (_req, res) => {
 });
 
 // ── Swagger UI ───────────────────────────────────────────────────────────
+// Disable helmet CSP on /docs so Swagger UI inline scripts/styles load
 
 try {
   const specPath = path.join(__dirname, '..', 'docs', 'openapi.yaml');
   const specFile = fs.readFileSync(specPath, 'utf8');
   const swaggerDoc = yaml.load(specFile) as Record<string, unknown>;
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'FEVO Event Feed API Docs',
-  }));
+  app.use(
+    '/docs',
+    helmet({ contentSecurityPolicy: false }),
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDoc, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'FEVO Event Feed API Docs',
+    }),
+  );
 } catch (err) {
   console.warn('Swagger UI not loaded (docs/openapi.yaml not found)');
 }
