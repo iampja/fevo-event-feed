@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FEVO Widget Showcase</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f5f7;
+      color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Top nav ===== */
+    .nav {
+      background: #1a1a1a;
+      padding: 0 32px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo {
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 5px;
+      letter-spacing: -0.5px;
+    }
+    .nav-title {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .nav-links {
+      display: flex;
+      gap: 6px;
+    }
+    .nav-links a {
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: all 0.12s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-links a.active { color: #FFCC00; background: rgba(255,204,0,0.1); }
+
+    /* ===== Page layout ===== */
+    .page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .page-header { margin-bottom: 48px; }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .page-header p {
+      color: #6b7280;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 600px;
+    }
+
+    /* ===== Section ===== */
+    .section {
+      margin-bottom: 56px;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .section-meta {
+      font-size: 12px;
+      color: #9ca3af;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      background: #f0f0f0;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .section-desc {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* ===== Widget containers ===== */
+    .widget-frame {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .widget-frame-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+    .widget-frame-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .widget-frame-size {
+      font-size: 11px;
+      color: #d1d5db;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+    .widget-frame-body {
+      padding: 20px;
+    }
+
+    /* Constrained widths */
+    .frame-sidebar { max-width: 380px; }
+    .frame-card { max-width: 540px; }
+
+    /* Dark frame */
+    .widget-frame.dark {
+      background: #111827;
+      border-color: #374151;
+    }
+    .widget-frame.dark .widget-frame-header {
+      background: #1f2937;
+      border-color: #374151;
+    }
+    .widget-frame.dark .widget-frame-label { color: #6b7280; }
+    .widget-frame.dark .widget-frame-size { color: #4b5563; }
+
+    /* Full-page section */
+    .full-page-section {
+      margin-bottom: 56px;
+    }
+    .full-page-frame {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .full-page-frame .widget-frame-body {
+      padding: 32px;
+    }
+
+    /* Controls bar */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .control-select {
+      height: 32px;
+      padding: 0 28px 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+      cursor: pointer;
+    }
+    .control-select:focus { outline: none; border-color: #FFCC00; box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
+
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 56px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">FEVO</div>
+      <div class="nav-title">Widget Showcase</div>
+    </div>
+    <div class="nav-links">
+      <a href="/showcase.html" class="active">Showcase</a>
+      <a href="/">MLB Demo</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Event Feed Widget</h1>
+      <p>The FEVO widget can be embedded at any size — from a narrow sidebar card to a full-page event directory. Below are real examples at various dimensions.</p>
+    </div>
+
+    <!-- ===== Compact / Sidebar ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Sidebar Widget</h2>
+        <span class="section-meta">1 column &middot; 380px</span>
+      </div>
+      <p class="section-desc">Fits in a narrow sidebar or rail. Single column, 3 cards max.</p>
+      <div class="widget-frame frame-sidebar">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">max-width: 380px</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-theme="light" data-columns="1" data-max-cards="3" id="widget-sidebar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Card / Embed ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Card Embed</h2>
+        <span class="section-meta">2 columns &middot; 540px</span>
+      </div>
+      <p class="section-desc">Medium-sized embed for content cards or article sidebars. Two-column grid with 4 cards.</p>
+      <div class="widget-frame frame-card">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">max-width: 540px</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-theme="light" data-columns="2" data-max-cards="4" id="widget-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Dark theme ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Dark Theme</h2>
+        <span class="section-meta">2 columns &middot; 540px</span>
+      </div>
+      <p class="section-desc">Same card embed with the dark theme applied — ideal for dark backgrounds.</p>
+      <div class="widget-frame dark frame-card">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">data-theme="dark"</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-theme="dark" data-columns="2" data-max-cards="4" id="widget-dark"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ===== Full Page ===== -->
+    <div class="full-page-section">
+      <div class="section-header">
+        <h2>Full-Page Event Directory</h2>
+        <span class="section-meta">3 columns &middot; full width</span>
+      </div>
+      <p class="section-desc">Full-width layout for a dedicated events page. Includes geo filtering and shows all events.</p>
+
+      <div class="controls" style="margin-bottom:16px">
+        <select class="control-select" id="fp-geo">
+          <option value="">All Cities</option>
+          <option value="new-york">New York</option>
+          <option value="boston">Boston</option>
+          <option value="chicago">Chicago</option>
+          <option value="houston">Houston</option>
+          <option value="los-angeles">Los Angeles</option>
+          <option value="san-francisco">San Francisco</option>
+          <option value="miami">Miami</option>
+        </select>
+        <select class="control-select" id="fp-theme">
+          <option value="light">Light theme</option>
+          <option value="dark">Dark theme</option>
+        </select>
+        <select class="control-select" id="fp-cols">
+          <option value="3">3 columns</option>
+          <option value="2">2 columns</option>
+          <option value="4">4 columns</option>
+          <option value="1">1 column</option>
+        </select>
+      </div>
+
+      <div class="full-page-frame" id="fp-frame">
+        <div class="widget-frame-body">
+          <div id="widget-fullpage" class="fevo-event-feed" data-theme="light" data-columns="3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Mock data ===== -->
+  <script>
+    const ALL_OFFERS = [
+      { offer_id:'mlb-001', title:'Yankees vs Red Sox - Opening Day', description:'The rivalry continues.', image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop', price:{min:65,max:350,currency:'USD'}, date:'2026-03-28T13:05:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-001', tags:['baseball','game'], city_key:'new-york', created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-002', title:'Mets Family Sunday - Kids Run the Bases', description:'Kids run the bases after the game.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:75,currency:'USD'}, date:'2026-04-12T13:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'Mets'}, checkout_url:'/demo/checkout.html?offer=mlb-002', tags:['baseball','family'], city_key:'new-york', created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-10T00:00:00Z' },
+      { offer_id:'mlb-003', title:'Dodger Stadium Concert: Summer Nights', description:'Live music after the game.', image_url:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop', price:{min:55,max:180,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-003', tags:['concerts','baseball'], city_key:'los-angeles', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-004', title:'Wrigley Field Behind-the-Scenes Tour', description:'Explore the historic Wrigley Field.', image_url:'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop', price:{min:40,max:40,currency:'USD'}, date:'2026-05-20T10:00:00Z', venue:{name:'Wrigley Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-004', tags:['tours','baseball'], city_key:'chicago', created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-12T00:00:00Z' },
+      { offer_id:'mlb-005', title:'Red Sox VIP Dugout Experience', description:'Watch batting practice from the dugout.', image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop', price:{min:250,max:500,currency:'USD'}, date:'2026-05-15T16:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-005', tags:['vip','baseball'], city_key:'boston', created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-006', title:'Astros Craft Beer & BBQ Festival', description:'Local craft beers and BBQ at Minute Maid.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-07-04T12:00:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=mlb-006', tags:['food','festival'], city_key:'houston', created_at:'2026-02-10T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-007', title:'Giants vs Dodgers - Rivalry Weekend', description:'NL West showdown with fireworks.', image_url:'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop', price:{min:55,max:200,currency:'USD'}, date:'2026-06-20T19:15:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-007', tags:['baseball','game'], city_key:'san-francisco', created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-008', title:'Marlins Park Family Fun Zone', description:'Inflatables and catch on the field.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:20,max:55,currency:'USD'}, date:'2026-04-25T11:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-008', tags:['family','baseball'], city_key:'miami', created_at:'2026-02-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-009', title:'Yankee Stadium Legends Tour', description:'Visit Monument Park and the press box.', image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop', price:{min:35,max:35,currency:'USD'}, date:'2026-04-10T09:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-009', tags:['tours','baseball'], city_key:'new-york', created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-14T00:00:00Z' },
+      { offer_id:'mlb-010', title:'Cubs Rooftop Party - All-Inclusive', description:'Wrigleyville rooftop with food, drinks, DJ.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:120,max:200,currency:'USD'}, date:'2026-08-01T18:00:00Z', venue:{name:'Wrigley Rooftops',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-010', tags:['vip','food','baseball'], city_key:'chicago', created_at:'2026-02-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-011', title:'Fenway Concert: Country Night', description:'Top country artists at Fenway Park.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:75,max:175,currency:'USD'}, date:'2026-07-18T19:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-011', tags:['concerts'], city_key:'boston', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      { offer_id:'mlb-012', title:'All-Star Week Fan Fest 2026', description:'Exhibits, autographs, HR Derby viewing.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:30,max:85,currency:'USD'}, date:'2026-07-13T10:00:00Z', venue:{name:'Convention Center',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-mlb',name:'MLB'}, checkout_url:'/demo/checkout.html?offer=mlb-012', tags:['family','festival','baseball'], city_key:'houston', created_at:'2026-02-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+    ];
+
+    const _fetch = window.fetch;
+    window.fetch = function(url, opts) {
+      const u = typeof url === 'string' ? url : url.toString();
+      if (u.includes('/feed')) {
+        const params = new URL(u, window.location.origin).searchParams;
+        const geoParam = params.get('geo');
+        let d = ALL_OFFERS;
+        if (geoParam) {
+          const geoFiltered = d.filter(o => o.city_key === geoParam);
+          if (geoFiltered.length > 0) d = geoFiltered;
+        }
+        const perPage = parseInt(params.get('per_page')) || d.length;
+        const sliced = d.slice(0, perPage);
+        return Promise.resolve(new Response(JSON.stringify({
+          data: sliced,
+          meta: { page: 1, per_page: perPage, total: d.length, total_pages: Math.ceil(d.length / perPage) },
+          feed_updated_at: new Date().toISOString()
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+      return _fetch.apply(this, arguments);
+    };
+
+    // ===== Full-page controls =====
+    function rerenderFullPage() {
+      const el = document.getElementById('widget-fullpage');
+      const frame = document.getElementById('fp-frame');
+      const geo = document.getElementById('fp-geo').value || undefined;
+      const theme = document.getElementById('fp-theme').value;
+      const columns = parseInt(document.getElementById('fp-cols').value);
+
+      // Update frame background for dark theme
+      if (theme === 'dark') {
+        frame.style.background = '#111827';
+        frame.style.borderColor = '#374151';
+      } else {
+        frame.style.background = '#fff';
+        frame.style.borderColor = '#e5e7eb';
+      }
+
+      if (window.FevoEventFeed) {
+        window.FevoEventFeed.destroy(el);
+        window.FevoEventFeed.init({ theme: theme, columns: columns, geo: geo }, el);
+      }
+    }
+
+    document.getElementById('fp-geo').addEventListener('change', rerenderFullPage);
+    document.getElementById('fp-theme').addEventListener('change', rerenderFullPage);
+    document.getElementById('fp-cols').addEventListener('change', rerenderFullPage);
+  </script>
+
+  <script src="/src/index.ts" type="module"></script>
+</body>
+</html>
