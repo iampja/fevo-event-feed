@@ -32,6 +32,7 @@ export type WidgetConfig = {
   apiUrl?: string;
   apiKey?: string;
   partnerId?: string;
+  geo?: string;
 };
 
 export type WidgetState = 'loading' | 'ready' | 'empty' | 'error';

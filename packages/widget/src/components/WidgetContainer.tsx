@@ -1,9 +1,10 @@
 /** @jsxImportSource preact */
 
-import { useEffect } from 'preact/hooks';
+import { useEffect, useMemo } from 'preact/hooks';
 import { useState, useCallback } from 'preact/hooks';
 import type { Offer, WidgetConfig, WidgetState } from '../types';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { resolveGeo } from '../utils/resolveGeo';
 import { trackWidgetLoaded, trackOfferDetailOpened } from '../analytics';
 import { injectStyles } from '../styles';
 import { OfferCard } from './OfferCard';
@@ -21,8 +22,26 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
   // Inject styles on first render
   injectStyles();
 
+  // Geo resolution: when geo === 'auto', resolve IP location before first fetch
+  const [geoReady, setGeoReady] = useState(config.geo !== 'auto');
+  const [resolvedGeo, setResolvedGeo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (config.geo !== 'auto') return;
+    resolveGeo().then((city) => {
+      setResolvedGeo(city);
+      setGeoReady(true);
+    });
+  }, [config.geo]);
+
+  const effectiveConfig = useMemo<WidgetConfig>(() => {
+    if (config.geo !== 'auto') return config;
+    const { geo: _, ...rest } = config;
+    return resolvedGeo ? { ...rest, geo: resolvedGeo } : rest;
+  }, [config, resolvedGeo]);
+
   const { offers, isRefreshing, error, lastUpdated, retry } =
-    useAutoRefresh(config);
+    useAutoRefresh(effectiveConfig, geoReady);
 
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 

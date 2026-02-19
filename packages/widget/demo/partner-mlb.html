@@ -945,7 +945,7 @@
           <a href="#" class="see-all" id="open-fevo-seeall">Browse All Events &rarr;</a>
         </div>
         <div style="padding: 16px;">
-          <div class="fevo-event-feed" data-theme="light" data-columns="2" data-max-cards="4"></div>
+          <div class="fevo-event-feed" data-theme="light" data-columns="2" data-max-cards="4" data-geo="auto"></div>
         </div>
       </div>
 
@@ -1293,8 +1293,17 @@
     window.fetch = function(url, opts) {
       const u = typeof url === 'string' ? url : url.toString();
       if (u.includes('/feed')) {
-        const d = getFiltered();
         const params = new URL(u, window.location.origin).searchParams;
+
+        // Apply geo filter from query param (widget auto-geo)
+        const geoParam = params.get('geo');
+        let d = getFiltered();
+        if (geoParam) {
+          const geoFiltered = d.filter(o => o.city_key === geoParam);
+          // Fall back to all events if geo filter yields zero results
+          if (geoFiltered.length > 0) d = geoFiltered;
+        }
+
         const perPage = parseInt(params.get('per_page')) || d.length;
         const sliced = d.slice(0, perPage);
         return Promise.resolve(new Response(JSON.stringify({

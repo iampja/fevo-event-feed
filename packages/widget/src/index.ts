@@ -35,6 +35,9 @@ function parseConfigFromElement(el: Element): WidgetConfig {
   const partnerId = el.getAttribute('data-partner-id');
   if (partnerId) config.partnerId = partnerId;
 
+  const geo = el.getAttribute('data-geo');
+  if (geo) config.geo = geo;
+
   return config;
 }
 

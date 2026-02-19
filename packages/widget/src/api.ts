@@ -23,6 +23,9 @@ export async function fetchFeed(config: WidgetConfig): Promise<FeedResponse> {
   if (config.maxCards) {
     url.searchParams.set('per_page', String(config.maxCards));
   }
+  if (config.geo) {
+    url.searchParams.set('geo', config.geo);
+  }
 
   const headers: Record<string, string> = {
     Accept: 'application/json',

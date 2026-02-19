@@ -13,7 +13,7 @@ export type UseAutoRefreshResult = {
   retry: () => void;
 };
 
-export function useAutoRefresh(config: WidgetConfig): UseAutoRefreshResult {
+export function useAutoRefresh(config: WidgetConfig, enabled: boolean = true): UseAutoRefreshResult {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,16 +84,19 @@ export function useAutoRefresh(config: WidgetConfig): UseAutoRefreshResult {
 
   // Initial load
   useEffect(() => {
+    if (!enabled) return;
     isMountedRef.current = true;
     loadFeed(true);
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [loadFeed]);
+  }, [loadFeed, enabled]);
 
   // Polling with Page Visibility awareness
   useEffect(() => {
+    if (!enabled) return;
+
     const startPolling = () => {
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
@@ -125,7 +128,7 @@ export function useAutoRefresh(config: WidgetConfig): UseAutoRefreshResult {
       if (timerRef.current) clearInterval(timerRef.current);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [loadFeed]);
+  }, [loadFeed, enabled]);
 
   return { offers, isRefreshing, error, lastUpdated, retry };
 }
