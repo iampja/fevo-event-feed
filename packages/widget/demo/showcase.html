@@ -210,6 +210,294 @@
     .control-select:focus { outline: none; border-color: #FFCC00; box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
 
     .divider { height: 1px; background: #e5e7eb; margin: 56px 0; }
+
+    /* ================================================================
+       CHECKOUT DRAWER — slides from right
+       ================================================================ */
+    .co-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 2000;
+    }
+    .co-overlay.open { display: block; }
+
+    .co-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 480px;
+      max-width: 100vw;
+      height: 100vh;
+      background: #f9fafb;
+      z-index: 2001;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 3px solid #FFCC00;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+    }
+    .co-drawer.open { transform: translateX(0); }
+
+    .co-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: #FFFDF0;
+      border-bottom: 3px solid #FFCC00;
+      flex-shrink: 0;
+    }
+    .co-header-brand { display: flex; align-items: center; gap: 10px; }
+    .co-header-brand .fevo-logo {
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: 1px solid #e6b800;
+    }
+    .co-header-title { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .co-header-secure {
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .co-header-secure svg { width: 12px; height: 12px; }
+    .co-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f3f4f6;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .co-close:hover { background: #e5e7eb; }
+    .co-close svg { width: 16px; height: 16px; color: #6b7280; }
+
+    .co-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+    }
+
+    .co-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .co-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+
+    .co-event { display: flex; gap: 14px; align-items: center; }
+    .co-event img {
+      width: 90px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .co-event-title { font-size: 14px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
+    .co-event-meta { font-size: 12px; color: #6b7280; line-height: 1.4; }
+
+    .co-ticket {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.12s;
+      font-size: 13px;
+    }
+    .co-ticket:hover { border-color: #c7d2fe; }
+    .co-ticket.selected { border-color: #FFCC00; background: #FFFDF0; }
+    .co-ticket-name { font-weight: 600; }
+    .co-ticket-desc { font-size: 11px; color: #6b7280; margin-top: 1px; }
+    .co-ticket-price { font-weight: 800; font-size: 15px; white-space: nowrap; }
+    .co-ticket-price span { font-size: 11px; font-weight: 400; color: #6b7280; }
+
+    .co-qty {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .co-qty-label { font-size: 13px; font-weight: 600; }
+    .co-qty-controls { display: flex; align-items: center; gap: 10px; }
+    .co-qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .co-qty-btn:hover { background: #f3f4f6; }
+    .co-qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .co-qty-val { font-size: 16px; font-weight: 700; min-width: 24px; text-align: center; }
+
+    .co-summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .co-summary-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid #1a1a1a;
+    }
+
+    .co-promo { display: flex; gap: 6px; margin-top: 12px; }
+    .co-promo input {
+      flex: 1;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .co-promo button {
+      height: 34px;
+      padding: 0 14px;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .co-group {
+      background: #FFFDF0;
+      border: 1px solid #FFCC00;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .co-group h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .co-group h4 svg { width: 14px; height: 14px; color: #b8960a; }
+    .co-group p { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+    .co-group-row { display: flex; gap: 6px; }
+    .co-group-row input {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .co-group-row input:focus { outline: none; border-color: #FFCC00; }
+    .co-group-row button {
+      height: 32px;
+      padding: 0 12px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .co-checkout-btn {
+      width: 100%;
+      height: 46px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.12s;
+      margin-top: 16px;
+    }
+    .co-checkout-btn:hover { background: #e6b800; }
+
+    .co-powered {
+      text-align: center;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 12px;
+    }
+    .co-powered span { font-weight: 600; color: #6b7280; }
+
+    .co-confirmation {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .co-confirmation.visible { display: block; }
+    .co-conf-check {
+      width: 56px;
+      height: 56px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .co-confirmation h2 { font-size: 20px; margin-bottom: 8px; }
+    .co-confirmation p { color: #6b7280; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .co-conf-num {
+      background: #f3f4f6;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-family: 'SF Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .co-done-btn {
+      display: inline-block;
+      padding: 10px 28px;
+      background: #FFCC00;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -393,6 +681,108 @@
         <div class="widget-frame-body">
           <div class="fevo-event-feed" data-theme="light" data-columns="3" data-geo="auto" id="widget-fullpage"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       CHECKOUT DRAWER (slides from right)
+       ================================================================ -->
+  <div class="co-overlay" id="co-overlay"></div>
+  <div class="co-drawer" id="co-drawer">
+    <div class="co-header">
+      <div class="co-header-brand">
+        <div class="fevo-logo">FEVO</div>
+        <div>
+          <div class="co-header-title">Checkout</div>
+          <div class="co-header-secure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Secure Checkout
+          </div>
+        </div>
+      </div>
+      <button class="co-close" id="co-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="co-body" id="co-body">
+      <!-- Event info -->
+      <div class="co-card" id="co-card-event">
+        <div class="co-event">
+          <img id="co-img" src="" alt="" />
+          <div>
+            <div class="co-event-title" id="co-title"></div>
+            <div class="co-event-meta" id="co-meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticket selection -->
+      <div class="co-card" id="co-card-tickets">
+        <h3>Select Tickets</h3>
+        <div id="co-tickets"></div>
+        <div class="co-qty">
+          <span class="co-qty-label">Quantity</span>
+          <div class="co-qty-controls">
+            <button class="co-qty-btn" id="co-qty-minus" disabled>&minus;</button>
+            <span class="co-qty-val" id="co-qty-val">1</span>
+            <button class="co-qty-btn" id="co-qty-plus">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order summary -->
+      <div class="co-card" id="co-card-summary">
+        <h3>Order Summary</h3>
+        <div class="co-summary-line">
+          <span id="co-sum-label">General Admission &times; 1</span>
+          <span id="co-sum-price">$0.00</span>
+        </div>
+        <div class="co-summary-line">
+          <span>Service Fee</span>
+          <span id="co-sum-fee">$0.00</span>
+        </div>
+        <div class="co-summary-line">
+          <span>Facility Fee</span>
+          <span id="co-sum-facility">$0.00</span>
+        </div>
+        <div class="co-promo">
+          <input type="text" placeholder="Promo code" />
+          <button>Apply</button>
+        </div>
+        <div class="co-summary-total">
+          <span>Total</span>
+          <span id="co-sum-total">$0.00</span>
+        </div>
+        <button class="co-checkout-btn" id="co-pay-btn">Proceed to Payment</button>
+        <div class="co-powered">Powered by <span>FEVO</span></div>
+      </div>
+
+      <!-- Group invite -->
+      <div class="co-card" id="co-card-group">
+        <div class="co-group">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Invite Friends &amp; Save Together
+          </h4>
+          <p>Buy together with FEVO — invite friends and everyone gets the group rate!</p>
+          <div class="co-group-row">
+            <input type="email" placeholder="friend@email.com" />
+            <button>Invite</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation (hidden initially) -->
+      <div class="co-confirmation" id="co-confirmation">
+        <div class="co-conf-check">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>You're Going!</h2>
+        <p id="co-conf-msg">Your tickets have been reserved.</p>
+        <div class="co-conf-num" id="co-conf-num">FEVO-000000</div>
+        <br/><br/>
+        <button class="co-done-btn" id="co-done-btn">Done</button>
       </div>
     </div>
   </div>
@@ -581,6 +971,287 @@
       updateCount('dark-count', city, null, null, 4);
       updateCount('fp-count', city, null, null);
     });
+
+    // ===== CHECKOUT DATA (ticket tiers per offer) =====
+    const CHECKOUT_DATA = {
+      'mlb-001': { tickets: [
+        { name: 'Bleacher Seats', price: 65, desc: 'Outfield bleachers, general admission' },
+        { name: 'Mezzanine', price: 150, desc: 'Sections 200-230' },
+        { name: 'Field Level', price: 350, desc: 'Sections 100-130, rows 1-15' },
+      ]},
+      'mlb-002': { tickets: [
+        { name: 'Upper Deck', price: 25, desc: 'Sections 500+, family friendly' },
+        { name: 'Field Level', price: 50, desc: 'Sections 100-130' },
+        { name: 'Premium', price: 75, desc: 'Delta Club seats + kids run bases' },
+      ]},
+      'mlb-003': { tickets: [
+        { name: 'General Admission', price: 55, desc: 'Lawn and outfield standing' },
+        { name: 'Reserved Seating', price: 120, desc: 'Assigned seat, sections 1-10' },
+        { name: 'VIP Concert', price: 180, desc: 'Front rows + artist meet & greet' },
+      ]},
+      'mlb-004': { tickets: [
+        { name: 'Standard Tour', price: 40, desc: 'Behind-the-scenes access, 90 min' },
+      ]},
+      'mlb-005': { tickets: [
+        { name: 'Dugout Experience', price: 250, desc: 'Watch BP from the dugout' },
+        { name: 'Premium Dugout', price: 400, desc: 'Dugout + on-field access' },
+        { name: 'Ultimate VIP', price: 500, desc: 'Full day: BP, dugout, press box' },
+      ]},
+      'mlb-006': { tickets: [
+        { name: 'General Admission', price: 45, desc: 'Entry + 3 tasting tokens' },
+        { name: 'All-Inclusive', price: 75, desc: 'Unlimited tastings' },
+        { name: 'VIP All-Inclusive', price: 95, desc: 'Early entry + premium pours' },
+      ]},
+      'mlb-007': { tickets: [
+        { name: 'Upper Deck', price: 55, desc: 'Sections 300+' },
+        { name: 'Club Level', price: 120, desc: 'Club access + in-seat service' },
+        { name: 'Field Level', price: 200, desc: 'Sections 100-130' },
+      ]},
+      'mlb-008': { tickets: [
+        { name: 'Kids Pack', price: 20, desc: 'Child ticket + Fun Zone wristband' },
+        { name: 'Family 4-Pack', price: 40, desc: '4 tickets + snack voucher' },
+        { name: 'Premium Family', price: 55, desc: '4 tickets + field access' },
+      ]},
+      'mlb-009': { tickets: [
+        { name: 'Standard Tour', price: 35, desc: 'Monument Park + press box tour' },
+      ]},
+      'mlb-010': { tickets: [
+        { name: 'Rooftop General', price: 120, desc: 'Rooftop access, BYOB' },
+        { name: 'Rooftop VIP', price: 175, desc: 'Open bar + buffet' },
+        { name: 'Premium Rooftop', price: 200, desc: 'Open bar + buffet + DJ lounge' },
+      ]},
+      'mlb-011': { tickets: [
+        { name: 'General Admission', price: 75, desc: 'Lawn and grandstand' },
+        { name: 'Reserved', price: 125, desc: 'Assigned seating, field view' },
+        { name: 'VIP', price: 175, desc: 'Front pit + backstage' },
+      ]},
+      'mlb-012': { tickets: [
+        { name: 'Single Day', price: 30, desc: 'One-day general access' },
+        { name: 'Weekend Pass', price: 55, desc: 'Fri-Sun full access' },
+        { name: 'VIP Pass', price: 85, desc: 'Skip-the-line + autograph sessions' },
+      ]},
+      'mlb-013': { tickets: [
+        { name: 'Suite Seat', price: 300, desc: 'Suite access + buffet' },
+        { name: 'Suite + Meet & Greet', price: 450, desc: 'Suite + HOF player meet' },
+        { name: 'Ultimate Suite', price: 600, desc: 'Suite + field access + signed ball' },
+      ]},
+      'mlb-014': { tickets: [
+        { name: 'Pavilion', price: 50, desc: 'Outfield pavilion seating' },
+        { name: 'Loge', price: 125, desc: 'Loge level, sections 100-160' },
+        { name: 'Dugout Club', price: 250, desc: 'Premium behind home plate' },
+      ]},
+      'mlb-015': { tickets: [
+        { name: 'General Admission', price: 30, desc: 'Outfield seating + fireworks' },
+        { name: 'Family 4-Pack', price: 50, desc: '4 tickets + snack voucher' },
+        { name: 'Premium', price: 80, desc: 'Field level + early entry' },
+      ]},
+      'mlb-016': { tickets: [
+        { name: 'Dugout Club', price: 200, desc: 'On-field BP viewing + lunch' },
+        { name: 'All-Access', price: 350, desc: 'BP + clubhouse + premium seat' },
+        { name: 'Ultimate VIP', price: 450, desc: 'Full day all-access + signed gear' },
+      ]},
+      'mlb-017': { tickets: [
+        { name: 'Upper Deck', price: 45, desc: 'Sections 500+' },
+        { name: 'Lower Level', price: 100, desc: 'Sections 100-150' },
+        { name: 'Scout Seats', price: 175, desc: 'Front rows behind home plate' },
+      ]},
+      'mlb-018': { tickets: [
+        { name: 'Plaza Pass', price: 40, desc: 'Concert plaza access' },
+        { name: 'Game + Concert', price: 75, desc: 'Game ticket + concert access' },
+        { name: 'VIP Concert', price: 110, desc: 'Front stage + drink vouchers' },
+      ]},
+      'mlb-019': { tickets: [
+        { name: 'Grandstand', price: 85, desc: 'Grandstand seating' },
+        { name: 'Field Box', price: 225, desc: 'Field box, rows 1-20' },
+        { name: 'Green Monster', price: 400, desc: 'Iconic Green Monster seats' },
+      ]},
+      'mlb-020': { tickets: [
+        { name: 'Kids Ticket', price: 25, desc: 'Child admission + activity pass' },
+        { name: 'Family Pack', price: 45, desc: '2 adults + 2 kids + snacks' },
+        { name: 'Premium Family', price: 60, desc: 'Family pack + on-field access' },
+      ]},
+      'mlb-021': { tickets: [
+        { name: 'Upper Deck', price: 55, desc: 'Sections 400+' },
+        { name: 'Club Level', price: 125, desc: 'Club access + in-seat service' },
+        { name: 'Crawford Boxes', price: 225, desc: 'Left field premium seats' },
+      ]},
+      'mlb-022': { tickets: [
+        { name: 'Diamond Club', price: 275, desc: 'Behind home plate + buffet' },
+        { name: 'Diamond Premium', price: 400, desc: 'Diamond + batting practice access' },
+        { name: 'Diamond Ultimate', price: 550, desc: 'Full VIP day + signed jersey' },
+      ]},
+      'mlb-023': { tickets: [
+        { name: 'General Admission', price: 60, desc: 'Field and outfield standing' },
+        { name: 'Reserved', price: 110, desc: 'Assigned seating, field view' },
+        { name: 'VIP', price: 160, desc: 'Front rows + backstage' },
+      ]},
+      'mlb-024': { tickets: [
+        { name: 'Standard Tour', price: 30, desc: 'Clubhouse, dugout, press box' },
+      ]},
+      'mlb-025': { tickets: [
+        { name: 'General Admission', price: 50, desc: 'Entry + 3 tasting tokens' },
+        { name: 'All-Inclusive', price: 70, desc: 'Unlimited tastings' },
+        { name: 'VIP', price: 90, desc: 'Early entry + premium pours' },
+      ]},
+      'mlb-026': { tickets: [
+        { name: 'Upper Deck', price: 35, desc: 'Sections 300+' },
+        { name: 'Lower Level', price: 85, desc: 'Sections 1-20' },
+        { name: 'Home Plate Club', price: 150, desc: 'Premium behind home plate' },
+      ]},
+      'mlb-027': { tickets: [
+        { name: 'General Admission', price: 45, desc: 'Outfield + concert area' },
+        { name: 'Reserved', price: 90, desc: 'Assigned seat + concert' },
+        { name: 'VIP', price: 130, desc: 'Front stage + meet & greet' },
+      ]},
+      'mlb-028': { tickets: [
+        { name: 'Skybox', price: 350, desc: 'Private skybox, 10 guests' },
+        { name: 'Skybox + Catering', price: 500, desc: 'Skybox + full catering' },
+        { name: 'Premium Skybox', price: 700, desc: 'Skybox + field access + catering' },
+      ]},
+    };
+
+    // ===== CHECKOUT DRAWER =====
+    let coState = { offerId: null, ticketIdx: 0, qty: 1 };
+
+    function findOffer(id) {
+      return ALL_OFFERS.find(o => o.offer_id === id);
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+        + ' \u00b7 ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    }
+
+    function openCheckout(offerId) {
+      const offer = findOffer(offerId);
+      const checkout = CHECKOUT_DATA[offerId];
+      if (!offer || !checkout) return;
+
+      coState = { offerId, ticketIdx: 0, qty: 1 };
+
+      // Populate event info
+      document.getElementById('co-img').src = offer.image_url;
+      document.getElementById('co-title').textContent = offer.title;
+      document.getElementById('co-meta').innerHTML = formatDate(offer.date) + '<br/>' + offer.venue.name + ', ' + offer.venue.city + ', ' + offer.venue.state;
+
+      coRenderTickets();
+      coUpdateSummary();
+
+      // Show cards, hide confirmation
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = '');
+      document.getElementById('co-confirmation').classList.remove('visible');
+      document.getElementById('co-body').scrollTop = 0;
+
+      // Open drawer
+      document.getElementById('co-overlay').classList.add('open');
+      requestAnimationFrame(() => {
+        document.getElementById('co-drawer').classList.add('open');
+      });
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCheckout() {
+      document.getElementById('co-drawer').classList.remove('open');
+      setTimeout(() => {
+        document.getElementById('co-overlay').classList.remove('open');
+      }, 350);
+      document.body.style.overflow = '';
+    }
+
+    function coRenderTickets() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const container = document.getElementById('co-tickets');
+      container.innerHTML = '';
+      checkout.tickets.forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'co-ticket' + (i === coState.ticketIdx ? ' selected' : '');
+        div.innerHTML =
+          '<div><div class="co-ticket-name">' + t.name + '</div><div class="co-ticket-desc">' + t.desc + '</div></div>' +
+          '<div class="co-ticket-price">$' + t.price + '<span>/ea</span></div>';
+        div.onclick = function() { coState.ticketIdx = i; coRenderTickets(); coUpdateSummary(); };
+        container.appendChild(div);
+      });
+    }
+
+    function coUpdateSummary() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const ticket = checkout.tickets[coState.ticketIdx];
+      const subtotal = ticket.price * coState.qty;
+      const fee = Math.round(subtotal * 0.08 * 100) / 100;
+      const facility = coState.qty * 3.50;
+      const total = subtotal + fee + facility;
+
+      document.getElementById('co-sum-label').textContent = ticket.name + ' \u00d7 ' + coState.qty;
+      document.getElementById('co-sum-price').textContent = '$' + subtotal.toFixed(2);
+      document.getElementById('co-sum-fee').textContent = '$' + fee.toFixed(2);
+      document.getElementById('co-sum-facility').textContent = '$' + facility.toFixed(2);
+      document.getElementById('co-sum-total').textContent = '$' + total.toFixed(2);
+
+      document.getElementById('co-qty-val').textContent = coState.qty;
+      document.getElementById('co-qty-minus').disabled = coState.qty <= 1;
+    }
+
+    // Quantity controls
+    document.getElementById('co-qty-minus').onclick = function() {
+      if (coState.qty > 1) { coState.qty--; coUpdateSummary(); }
+    };
+    document.getElementById('co-qty-plus').onclick = function() {
+      if (coState.qty < 10) { coState.qty++; coUpdateSummary(); }
+    };
+
+    // Proceed to Payment
+    document.getElementById('co-pay-btn').onclick = function() {
+      const checkout = CHECKOUT_DATA[coState.offerId];
+      const offer = findOffer(coState.offerId);
+      const ticket = checkout.tickets[coState.ticketIdx];
+      const subtotal = ticket.price * coState.qty;
+      const total = subtotal + Math.round(subtotal * 0.08 * 100) / 100 + coState.qty * 3.50;
+      const confNum = 'FEVO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      document.getElementById('co-conf-num').textContent = confNum;
+      document.getElementById('co-conf-msg').innerHTML =
+        '<strong>' + coState.qty + '\u00d7 ' + ticket.name + '</strong> for<br/>' +
+        offer.title + '<br/><br/>Total charged: <strong>$' + total.toFixed(2) + '</strong>';
+
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = 'none');
+      document.getElementById('co-confirmation').classList.add('visible');
+      document.getElementById('co-body').scrollTop = 0;
+    };
+
+    // Done button (after confirmation)
+    document.getElementById('co-done-btn').onclick = function() {
+      document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = '');
+      document.getElementById('co-confirmation').classList.remove('visible');
+      closeCheckout();
+    };
+
+    // Close handlers
+    document.getElementById('co-close').onclick = closeCheckout;
+    document.getElementById('co-overlay').onclick = closeCheckout;
+
+    // Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('co-drawer').classList.contains('open')) {
+        closeCheckout();
+      }
+    });
+
+    // ===== INTERCEPT ALL CHECKOUT LINKS =====
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('a[href*="checkout"]');
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          var url = new URL(link.href, window.location.origin);
+          var offerId = url.searchParams.get('offer');
+          if (offerId && CHECKOUT_DATA[offerId]) {
+            openCheckout(offerId);
+          }
+        } catch (err) { /* ignore */ }
+      }
+    }, true);
 
     // Set initial counts after widget auto-inits
     setTimeout(function() {
