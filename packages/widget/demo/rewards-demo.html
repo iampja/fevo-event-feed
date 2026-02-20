@@ -1255,7 +1255,12 @@
         try {
           var url = new URL(link.href, window.location.origin);
           var offerId = url.searchParams.get('offer');
-          if (offerId && CHECKOUT_DATA[offerId]) openCheckout(offerId);
+          if (offerId && CHECKOUT_DATA[offerId]) {
+            // Close the modal if open so focus shifts to the checkout drawer
+            var modalClose = document.querySelector('.fevo-ef-modal-close');
+            if (modalClose) modalClose.click();
+            openCheckout(offerId);
+          }
         } catch (err) { /* ignore */ }
       }
     }, true);
