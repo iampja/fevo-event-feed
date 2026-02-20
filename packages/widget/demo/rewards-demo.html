@@ -356,23 +356,60 @@
     .co-checkout-btn:hover { background: #e6b800; }
 
     .co-reward-teaser {
+      background: #FFFDF0;
+      border: 1.5px solid #FFCC00;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .co-reward-teaser-header {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #FFFDF0;
-      border: 1px solid #FFCC00;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-top: 14px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #b8960a;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
     }
-    .co-reward-teaser svg {
+    .co-reward-teaser-header svg {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
       color: #b8960a;
+    }
+    .co-reward-teaser-sub {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .co-reward-tiers {
+      display: flex;
+      gap: 6px;
+    }
+    .co-reward-tier {
+      flex: 1;
+      background: rgba(255,204,0,0.1);
+      border: 1px solid rgba(255,204,0,0.3);
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .co-reward-tier-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #b8960a;
+      margin-bottom: 2px;
+    }
+    .co-reward-tier-threshold {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .co-reward-tier-reward {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a1a1a;
     }
 
     .co-powered {
@@ -747,10 +784,14 @@
           <span>Total</span>
           <span id="co-sum-total">$0.00</span>
         </div>
-        <!-- Reward teaser (shown for reward-eligible offers) -->
+        <!-- Reward teaser with tiers (shown for reward-eligible offers) -->
         <div class="co-reward-teaser" id="co-reward-teaser" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>
-          <span id="co-reward-teaser-text">Buy now &amp; earn rewards by sharing</span>
+          <div class="co-reward-teaser-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>
+            <span id="co-reward-teaser-text">Share &amp; Earn $5/ticket</span>
+          </div>
+          <div class="co-reward-teaser-sub">Buy now, get your personal share link, and earn rewards when friends buy through it</div>
+          <div class="co-reward-tiers" id="co-reward-tiers"></div>
         </div>
         <button class="co-checkout-btn" id="co-pay-btn">Proceed to Payment</button>
         <div class="co-powered">Powered by <span>FEVO</span></div>
@@ -1116,12 +1157,23 @@
       coRenderTickets();
       coUpdateSummary();
 
-      // Show/hide reward teaser in checkout
+      // Show/hide reward teaser with tiers in checkout
       var reward = getRewardForOffer(offerId);
       var teaser = document.getElementById('co-reward-teaser');
       if (reward) {
         document.getElementById('co-reward-teaser-text').textContent =
-          'Buy now & unlock: ' + reward.headline + ' when you share';
+          'Share & ' + reward.headline;
+        var tiersContainer = document.getElementById('co-reward-tiers');
+        tiersContainer.innerHTML = '';
+        reward.milestones.forEach(function(m) {
+          var div = document.createElement('div');
+          div.className = 'co-reward-tier';
+          div.innerHTML =
+            '<div class="co-reward-tier-label">' + m.label + '</div>' +
+            '<div class="co-reward-tier-threshold">' + m.threshold + ' tickets</div>' +
+            '<div class="co-reward-tier-reward">' + m.reward + '</div>';
+          tiersContainer.appendChild(div);
+        });
         teaser.style.display = '';
       } else {
         teaser.style.display = 'none';
