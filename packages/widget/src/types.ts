@@ -65,3 +65,67 @@ export type AnalyticsEvent = {
     | 'offer_detail_opened';
   data: Record<string, unknown>;
 };
+
+/* ===== Rewards Dashboard Types ===== */
+
+export type UserLifetimeStats = {
+  total_earned: number;
+  pending: number;
+  paid_out: number;
+  active_programs: number;
+  total_referrals: number;
+  total_tickets_sold: number;
+};
+
+export type UserProgramProgress = {
+  program_id: string;
+  program_name: string;
+  reward_type: RewardType;
+  referrals: number;
+  tickets_sold: number;
+  earned: number;
+  current_tier: number;
+  milestones: RewardMilestone[];
+  recent_referrals: { name: string; tickets: number; date: string }[];
+};
+
+export type EarningHistoryEntry = {
+  id: string;
+  date: string;
+  event: string;
+  referral_name: string;
+  tickets: number;
+  amount: number;
+  status: 'pending' | 'confirmed' | 'paid';
+};
+
+export type MonthlyEarning = {
+  month: string;
+  amount: number;
+};
+
+export type PayoutEntry = {
+  id: string;
+  date: string;
+  amount: number;
+  method: string;
+  status: 'processing' | 'completed' | 'failed';
+  reference: string;
+};
+
+export type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  unlocked_date?: string;
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  name: string;
+  referrals: number;
+  earned: number;
+  is_current_user: boolean;
+};

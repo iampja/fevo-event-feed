@@ -133,10 +133,30 @@ function destroy(target: Element | string): void {
   }
 }
 
+/**
+ * Open the My FEVO rewards dashboard panel.
+ */
+function openMyFevo(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('fevo:open-my-fevo'));
+  }
+}
+
+/**
+ * Close the My FEVO rewards dashboard panel.
+ */
+function closeMyFevo(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('fevo:close-my-fevo'));
+  }
+}
+
 // Public API exposed as a global
 const FevoEventFeed = {
   init,
   destroy,
+  openMyFevo,
+  closeMyFevo,
   version: '1.0.0',
 };
 
@@ -157,5 +177,5 @@ if (typeof document !== 'undefined') {
 }
 
 export default FevoEventFeed;
-export { init, destroy };
+export { init, destroy, openMyFevo, closeMyFevo };
 export type { WidgetConfig, Offer, FeedResponse, AnalyticsEvent } from './types';

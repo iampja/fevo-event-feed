@@ -826,6 +826,733 @@ export const WIDGET_STYLES = `
 .fevo-ef-root[data-theme="dark"] .fevo-ef-rw-social-btn:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* ===== Rewards Dashboard ===== */
+.fevo-ef-dash-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  animation: fevo-ef-backdrop-in 0.2s ease-out;
+}
+
+.fevo-ef-dash-panel {
+  background: var(--fevo-ef-bg);
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  animation: fevo-ef-modal-in 0.25s ease-out;
+  overflow: hidden;
+}
+
+@media (min-width: 641px) {
+  .fevo-ef-dash-panel {
+    margin: 24px 0;
+    border-radius: var(--fevo-ef-radius);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Header */
+.fevo-ef-dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--fevo-ef-border);
+  background: var(--fevo-ef-card-bg);
+  flex-shrink: 0;
+}
+
+.fevo-ef-dash-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fevo-ef-dash-header-logo {
+  background: #FFCC00;
+  color: #1a1a1a;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: -0.3px;
+}
+
+.fevo-ef-dash-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-header-user {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-dash-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--fevo-ef-text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-dash-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Tabs */
+.fevo-ef-dash-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--fevo-ef-border);
+  background: var(--fevo-ef-card-bg);
+  flex-shrink: 0;
+  padding: 0 24px;
+}
+
+.fevo-ef-dash-tab {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fevo-ef-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-dash-tab:hover {
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-tab.active {
+  color: #FFCC00;
+  border-bottom-color: #FFCC00;
+}
+
+/* Content */
+.fevo-ef-dash-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Stats Row */
+.fevo-ef-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.fevo-ef-dash-stat-card {
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.fevo-ef-dash-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--fevo-ef-text);
+  margin-bottom: 4px;
+}
+
+.fevo-ef-dash-stat-pending { color: #eab308; }
+.fevo-ef-dash-stat-paid { color: #22c55e; }
+
+.fevo-ef-dash-stat-label {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+  font-weight: 500;
+}
+
+/* How Rewards Work */
+.fevo-ef-dash-how {
+  margin-bottom: 24px;
+  background: #FFFDF0;
+  border: 1.5px solid #FFCC00;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-how {
+  background: #2a2714;
+  border-color: #b8960a;
+}
+
+.fevo-ef-dash-how-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--fevo-ef-font);
+  text-align: left;
+}
+
+.fevo-ef-dash-how-toggle-icon {
+  font-size: 12px;
+  color: #b8960a;
+}
+
+.fevo-ef-dash-how-content {
+  padding: 0 16px 16px;
+}
+
+.fevo-ef-dash-how-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fevo-ef-dash-how-step {
+  flex: 1;
+  text-align: center;
+}
+
+.fevo-ef-dash-how-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #FFCC00;
+  color: #1a1a1a;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.fevo-ef-dash-how-step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin-bottom: 4px;
+}
+
+.fevo-ef-dash-how-step-desc {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+  line-height: 1.4;
+}
+
+.fevo-ef-dash-how-arrow {
+  color: #b8960a;
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Sections */
+.fevo-ef-dash-section {
+  margin-bottom: 24px;
+}
+
+.fevo-ef-dash-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.fevo-ef-dash-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0 0 12px 0;
+}
+
+.fevo-ef-dash-section-header .fevo-ef-dash-section-title {
+  margin-bottom: 0;
+}
+
+/* Programs */
+.fevo-ef-dash-program {
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.fevo-ef-dash-program-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.fevo-ef-dash-program-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-program-earned {
+  font-size: 14px;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.fevo-ef-dash-program-tier {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.fevo-ef-dash-tier-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 204, 0, 0.15);
+  color: #b8960a;
+  border-radius: 999px;
+}
+
+.fevo-ef-dash-program-refs {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-dash-program-progress {
+  margin-bottom: 10px;
+}
+
+.fevo-ef-dash-program-progress-track {
+  height: 8px;
+  background: var(--fevo-ef-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.fevo-ef-dash-program-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFCC00, #f59e0b);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.fevo-ef-dash-program-progress-label {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-dash-program-referrals {
+  border-top: 1px solid var(--fevo-ef-border);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.fevo-ef-dash-referral-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.fevo-ef-dash-referral-name {
+  font-weight: 600;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-referral-detail {
+  color: var(--fevo-ef-text-secondary);
+}
+
+/* Achievements */
+.fevo-ef-dash-achievements {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.fevo-ef-dash-achievement {
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.fevo-ef-dash-achievement.unlocked {
+  background: #FFFDF0;
+  border-color: #FFCC00;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-achievement.unlocked {
+  background: #2a2714;
+  border-color: #b8960a;
+}
+
+.fevo-ef-dash-achievement.locked {
+  opacity: 0.5;
+}
+
+.fevo-ef-dash-achievement-icon {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.fevo-ef-dash-achievement-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin-bottom: 2px;
+}
+
+.fevo-ef-dash-achievement-desc {
+  font-size: 10px;
+  color: var(--fevo-ef-text-secondary);
+  line-height: 1.3;
+}
+
+/* Leaderboard */
+.fevo-ef-dash-lb-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--fevo-ef-border);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.fevo-ef-dash-lb-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fevo-ef-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--fevo-ef-font);
+  transition: all 0.12s;
+}
+
+.fevo-ef-dash-lb-btn.active {
+  background: var(--fevo-ef-card-bg);
+  color: var(--fevo-ef-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.fevo-ef-dash-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.fevo-ef-dash-lb-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fevo-ef-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--fevo-ef-border);
+}
+
+.fevo-ef-dash-lb-table td {
+  padding: 10px 12px;
+  color: var(--fevo-ef-text);
+  border-bottom: 1px solid var(--fevo-ef-border);
+}
+
+.fevo-ef-dash-lb-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fevo-ef-dash-lb-me {
+  background: rgba(255, 204, 0, 0.08);
+}
+
+.fevo-ef-dash-lb-me td {
+  font-weight: 700;
+}
+
+/* Charts */
+.fevo-ef-dash-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 160px;
+  padding: 0 4px;
+}
+
+.fevo-ef-dash-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.fevo-ef-dash-chart-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fevo-ef-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.fevo-ef-dash-chart-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.fevo-ef-dash-chart-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #FFCC00, #f59e0b);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  transition: height 0.4s ease;
+}
+
+.fevo-ef-dash-chart-label {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* Tables */
+.fevo-ef-dash-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fevo-ef-dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.fevo-ef-dash-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fevo-ef-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--fevo-ef-border);
+  white-space: nowrap;
+}
+
+.fevo-ef-dash-table td {
+  padding: 10px 12px;
+  color: var(--fevo-ef-text);
+  border-bottom: 1px solid var(--fevo-ef-border);
+  white-space: nowrap;
+}
+
+.fevo-ef-dash-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fevo-ef-dash-ref {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+/* Status Badges */
+.fevo-ef-dash-status {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.fevo-ef-dash-status-pending {
+  background: rgba(234, 179, 8, 0.12);
+  color: #b8960a;
+}
+
+.fevo-ef-dash-status-confirmed {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.fevo-ef-dash-status-paid,
+.fevo-ef-dash-status-completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+.fevo-ef-dash-status-processing {
+  background: rgba(234, 179, 8, 0.12);
+  color: #b8960a;
+}
+
+.fevo-ef-dash-status-failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+/* Balance Card */
+.fevo-ef-dash-balance-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-balance-card {
+  background: linear-gradient(135deg, #FFCC00 0%, #f59e0b 100%);
+  color: #1a1a1a;
+}
+
+.fevo-ef-dash-balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fevo-ef-dash-balance-label {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.fevo-ef-dash-balance-value {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.fevo-ef-dash-balance-pending {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.fevo-ef-dash-payout-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #FFCC00;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-dash-payout-btn:hover {
+  background: #e6b800;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-payout-btn {
+  background: #1a1a1a;
+  color: #FFCC00;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-payout-btn:hover {
+  background: #333;
+}
+
+/* Payment Method */
+.fevo-ef-dash-payment-method {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-payment-icon {
+  font-size: 20px;
+}
+
+/* ===== Dashboard Mobile ===== */
+@media (max-width: 640px) {
+  .fevo-ef-dash-panel {
+    max-width: 100%;
+  }
+
+  .fevo-ef-dash-content {
+    padding: 16px;
+  }
+
+  .fevo-ef-dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fevo-ef-dash-achievements {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fevo-ef-dash-how-steps {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fevo-ef-dash-how-arrow {
+    display: none;
+  }
+
+  .fevo-ef-dash-balance-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fevo-ef-dash-balance-value {
+    font-size: 26px;
+  }
+
+  .fevo-ef-dash-payout-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
 `;
 
 let injected = false;
