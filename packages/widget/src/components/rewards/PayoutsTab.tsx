@@ -1,68 +1,86 @@
 /** @jsxImportSource preact */
 
-import type { PayoutEntry } from '../../types';
+import type { RedemptionEntry } from '../../types';
 
-type PayoutsTabProps = {
-  balance: number;
+type RedeemTabProps = {
+  availableRewards: number;
   pending: number;
-  paymentMethod: string;
-  payouts: PayoutEntry[];
+  redemptions: RedemptionEntry[];
 };
 
-export function PayoutsTab({ balance, pending, paymentMethod, payouts }: PayoutsTabProps) {
+export function RedeemTab({ availableRewards, pending, redemptions }: RedeemTabProps) {
   return (
-    <div class="fevo-ef-dash-payouts">
+    <div class="fevo-ef-dash-redeem">
       {/* Balance Card */}
       <div class="fevo-ef-dash-balance-card">
         <div class="fevo-ef-dash-balance-row">
           <div>
-            <div class="fevo-ef-dash-balance-label">Available Balance</div>
-            <div class="fevo-ef-dash-balance-value">
-              ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </div>
+            <div class="fevo-ef-dash-balance-label">Available Rewards</div>
+            <div class="fevo-ef-dash-balance-value">{availableRewards}</div>
             {pending > 0 && (
               <div class="fevo-ef-dash-balance-pending">
-                + ${pending.toLocaleString('en-US', { minimumFractionDigits: 2 })} pending
+                + {pending} pending
               </div>
             )}
           </div>
-          <button class="fevo-ef-dash-payout-btn">Request Payout</button>
+          <button class="fevo-ef-dash-payout-btn">Redeem Rewards</button>
         </div>
       </div>
 
-      {/* Payment Method */}
+      {/* Redeem Options */}
       <div class="fevo-ef-dash-section">
-        <h3 class="fevo-ef-dash-section-title">Payment Method</h3>
-        <div class="fevo-ef-dash-payment-method">
-          <span class="fevo-ef-dash-payment-icon">💳</span>
-          <span>{paymentMethod}</span>
+        <h3 class="fevo-ef-dash-section-title">Redeem For</h3>
+        <div class="fevo-ef-dash-redeem-options">
+          <div class="fevo-ef-dash-redeem-option">
+            <span class="fevo-ef-dash-redeem-option-icon">🎟️</span>
+            <div class="fevo-ef-dash-redeem-option-info">
+              <div class="fevo-ef-dash-redeem-option-title">Ticket Discounts</div>
+              <div class="fevo-ef-dash-redeem-option-desc">Apply rewards toward your next ticket purchase</div>
+            </div>
+          </div>
+          <div class="fevo-ef-dash-redeem-option">
+            <span class="fevo-ef-dash-redeem-option-icon">👕</span>
+            <div class="fevo-ef-dash-redeem-option-info">
+              <div class="fevo-ef-dash-redeem-option-title">Exclusive Merchandise</div>
+              <div class="fevo-ef-dash-redeem-option-desc">Unlock limited-edition event merch</div>
+            </div>
+          </div>
+          <div class="fevo-ef-dash-redeem-option">
+            <span class="fevo-ef-dash-redeem-option-icon">⭐</span>
+            <div class="fevo-ef-dash-redeem-option-info">
+              <div class="fevo-ef-dash-redeem-option-title">VIP Experiences</div>
+              <div class="fevo-ef-dash-redeem-option-desc">Backstage passes, meet & greets, priority entry</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Payout History */}
+      {/* Redemption History */}
       <div class="fevo-ef-dash-section">
-        <h3 class="fevo-ef-dash-section-title">Payout History</h3>
+        <h3 class="fevo-ef-dash-section-title">Redemption History</h3>
         <div class="fevo-ef-dash-table-wrap">
           <table class="fevo-ef-dash-table">
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Amount</th>
-                <th>Method</th>
+                <th>Reward</th>
+                <th>Type</th>
                 <th>Reference</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {payouts.map((payout) => (
-                <tr key={payout.id}>
-                  <td>{payout.date}</td>
-                  <td>${payout.amount.toFixed(2)}</td>
-                  <td>{payout.method}</td>
-                  <td class="fevo-ef-dash-ref">{payout.reference}</td>
+              {redemptions.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.date}</td>
+                  <td>{r.reward}</td>
                   <td>
-                    <span class={`fevo-ef-dash-status fevo-ef-dash-status-${payout.status}`}>
-                      {payout.status}
+                    <span class="fevo-ef-dash-type-pill">{r.type}</span>
+                  </td>
+                  <td class="fevo-ef-dash-ref">{r.reference}</td>
+                  <td>
+                    <span class={`fevo-ef-dash-status fevo-ef-dash-status-${r.status}`}>
+                      {r.status}
                     </span>
                   </td>
                 </tr>

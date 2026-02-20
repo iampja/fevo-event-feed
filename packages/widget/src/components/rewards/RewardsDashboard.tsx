@@ -4,20 +4,21 @@ import { useEffect, useCallback, useRef, useState } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
-import { PayoutsTab } from './PayoutsTab';
+import { RedeemTab } from './PayoutsTab';
 import {
   MOCK_USER,
   MOCK_STATS,
   MOCK_PROGRAMS,
+  MOCK_ACTIVITY_FEED,
   MOCK_EARNINGS,
-  MOCK_MONTHLY_EARNINGS,
-  MOCK_PAYOUTS,
+  MOCK_MONTHLY_REWARDS,
+  MOCK_REDEMPTIONS,
   MOCK_ACHIEVEMENTS,
   LEADERBOARD_MONTH,
   LEADERBOARD_ALL_TIME,
 } from '../../data/mockRewardsData';
 
-type Tab = 'overview' | 'history' | 'payouts';
+type Tab = 'overview' | 'history' | 'redeem';
 
 type RewardsDashboardProps = {
   theme: 'light' | 'dark';
@@ -69,8 +70,7 @@ export function RewardsDashboard({ theme, onClose }: RewardsDashboardProps) {
     e.stopPropagation();
   }, []);
 
-  // Available balance = total_earned - paid_out - pending (confirmed but not yet paid)
-  const availableBalance = MOCK_STATS.total_earned - MOCK_STATS.paid_out - MOCK_STATS.pending;
+  const availableRewards = MOCK_STATS.total_rewards - MOCK_STATS.redeemed - MOCK_STATS.pending;
 
   return createPortal(
     <div class="fevo-ef-dash-backdrop" onClick={handleBackdropClick}>
@@ -79,14 +79,14 @@ export function RewardsDashboard({ theme, onClose }: RewardsDashboardProps) {
         onClick={handlePanelClick}
         role="dialog"
         aria-modal="true"
-        aria-label="My FEVO Rewards"
+        aria-label="My FEVO"
       >
         {/* Header */}
         <div class="fevo-ef-dash-header">
           <div class="fevo-ef-dash-header-left">
             <div class="fevo-ef-dash-header-logo">FEVO</div>
             <div>
-              <div class="fevo-ef-dash-header-title">My Rewards</div>
+              <div class="fevo-ef-dash-header-title">My FEVO</div>
               <div class="fevo-ef-dash-header-user">{MOCK_USER.name}</div>
             </div>
           </div>
@@ -110,10 +110,10 @@ export function RewardsDashboard({ theme, onClose }: RewardsDashboardProps) {
             History
           </button>
           <button
-            class={`fevo-ef-dash-tab ${activeTab === 'payouts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('payouts')}
+            class={`fevo-ef-dash-tab ${activeTab === 'redeem' ? 'active' : ''}`}
+            onClick={() => setActiveTab('redeem')}
           >
-            Payouts
+            Redeem
           </button>
         </div>
 
@@ -123,23 +123,21 @@ export function RewardsDashboard({ theme, onClose }: RewardsDashboardProps) {
             <OverviewTab
               stats={MOCK_STATS}
               programs={MOCK_PROGRAMS}
+              activityFeed={MOCK_ACTIVITY_FEED}
+              monthlyRewards={MOCK_MONTHLY_REWARDS}
               achievements={MOCK_ACHIEVEMENTS}
               leaderboardMonth={LEADERBOARD_MONTH}
               leaderboardAllTime={LEADERBOARD_ALL_TIME}
             />
           )}
           {activeTab === 'history' && (
-            <HistoryTab
-              earnings={MOCK_EARNINGS}
-              monthlyEarnings={MOCK_MONTHLY_EARNINGS}
-            />
+            <HistoryTab earnings={MOCK_EARNINGS} />
           )}
-          {activeTab === 'payouts' && (
-            <PayoutsTab
-              balance={availableBalance}
+          {activeTab === 'redeem' && (
+            <RedeemTab
+              availableRewards={availableRewards}
               pending={MOCK_STATS.pending}
-              paymentMethod={`PayPal (${MOCK_USER.email})`}
-              payouts={MOCK_PAYOUTS}
+              redemptions={MOCK_REDEMPTIONS}
             />
           )}
         </div>

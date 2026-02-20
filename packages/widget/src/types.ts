@@ -69,9 +69,9 @@ export type AnalyticsEvent = {
 /* ===== Rewards Dashboard Types ===== */
 
 export type UserLifetimeStats = {
-  total_earned: number;
+  total_rewards: number;
   pending: number;
-  paid_out: number;
+  redeemed: number;
   active_programs: number;
   total_referrals: number;
   total_tickets_sold: number;
@@ -83,10 +83,16 @@ export type UserProgramProgress = {
   reward_type: RewardType;
   referrals: number;
   tickets_sold: number;
-  earned: number;
+  rewards_earned: number;
   current_tier: number;
   milestones: RewardMilestone[];
   recent_referrals: { name: string; tickets: number; date: string }[];
+};
+
+export type ActivityFeedItem = {
+  id: string;
+  text: string;
+  time_ago: string;
 };
 
 export type EarningHistoryEntry = {
@@ -95,8 +101,8 @@ export type EarningHistoryEntry = {
   event: string;
   referral_name: string;
   tickets: number;
-  amount: number;
-  status: 'pending' | 'confirmed' | 'paid';
+  reward: string;
+  status: 'pending' | 'confirmed' | 'redeemed';
 };
 
 export type MonthlyEarning = {
@@ -104,11 +110,11 @@ export type MonthlyEarning = {
   amount: number;
 };
 
-export type PayoutEntry = {
+export type RedemptionEntry = {
   id: string;
   date: string;
-  amount: number;
-  method: string;
+  reward: string;
+  type: 'discount' | 'merchandise' | 'experience' | 'credit';
   status: 'processing' | 'completed' | 'failed';
   reference: string;
 };
@@ -126,6 +132,6 @@ export type LeaderboardEntry = {
   rank: number;
   name: string;
   referrals: number;
-  earned: number;
+  rewards: number;
   is_current_user: boolean;
 };
