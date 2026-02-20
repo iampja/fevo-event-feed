@@ -1,6 +1,6 @@
 export type DateValue = string | { utc: string | null; timezone: string | null; display: string | null };
 
-export type RewardType = 'money' | 'points' | 'discount' | 'merchandise';
+export type RewardType = 'money' | 'points' | 'discount' | 'merchandise' | 'upgrade' | 'experience';
 
 export type RewardMilestone = {
   tier: number;

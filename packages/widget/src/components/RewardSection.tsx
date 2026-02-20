@@ -40,7 +40,7 @@ export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
       </div>
 
       <div class="fevo-ef-rw-rule">
-        Earn <strong>${reward.rule.amount}</strong> per {reward.rule.per} sold through your link
+        <strong>{reward.headline}</strong> — share your link and earn rewards when friends buy
       </div>
 
       {/* Milestone tiers */}
