@@ -157,6 +157,55 @@ export const WIDGET_STYLES = `
   margin: 8px 0;
 }
 
+/* ===== Reward Callout (Card Body) ===== */
+.fevo-ef-rw-card-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #FFFDF0;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-card-callout {
+  background: #2a2714;
+  border-color: rgba(184, 150, 10, 0.4);
+}
+
+.fevo-ef-rw-card-callout-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #b8960a;
+  margin-top: 1px;
+}
+
+.fevo-ef-rw-card-callout-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fevo-ef-rw-card-callout-headline {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b8960a;
+}
+
+.fevo-ef-rw-card-callout-tiers {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+  line-height: 1.4;
+}
+
+.fevo-ef-rw-card-callout-tiers strong {
+  color: var(--fevo-ef-text);
+  font-weight: 600;
+}
+
 .fevo-ef-card-footer {
   display: flex;
   align-items: center;

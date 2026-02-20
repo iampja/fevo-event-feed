@@ -111,6 +111,27 @@ export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
           {formatPrice(offer.price)}
         </div>
 
+        {offer.reward && (
+          <div class="fevo-ef-rw-card-callout">
+            <svg class="fevo-ef-rw-card-callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18" />
+              <path d="M5 9h14v2a7 7 0 0 1-14 0V9z" />
+              <path d="M12 9v12" />
+            </svg>
+            <div class="fevo-ef-rw-card-callout-text">
+              <span class="fevo-ef-rw-card-callout-headline">{offer.reward.headline}</span>
+              <span class="fevo-ef-rw-card-callout-tiers">
+                {offer.reward.milestones.map((m, i) => (
+                  <span key={m.tier}>
+                    {i > 0 && ' → '}
+                    <strong>{m.label}</strong>: {m.reward}
+                  </span>
+                ))}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div class="fevo-ef-card-footer">
           <span class="fevo-ef-availability">
             <span

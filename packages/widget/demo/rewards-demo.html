@@ -491,6 +491,47 @@
     .rw2-custom { color: #14b8a6; }
 
     /* ================================================================
+       REWARDS: Card Callout (reward tiers in card body)
+       ================================================================ */
+    .rw-card-callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #FFFDF0;
+      border: 1px solid rgba(255, 204, 0, 0.4);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .rw-card-callout-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: #b8960a;
+      margin-top: 1px;
+    }
+    .rw-card-callout-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .rw-card-callout-headline {
+      font-size: 12px;
+      font-weight: 700;
+      color: #b8960a;
+    }
+    .rw-card-callout-tiers {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+    .rw-card-callout-tiers strong {
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    /* ================================================================
        REWARDS: Modal Section
        ================================================================ */
     .rw-modal-section {
@@ -1394,6 +1435,30 @@
           badge.className = badgeClass;
           badge.innerHTML = iconSvg + ' ' + reward.headline;
           imageWrap.appendChild(badge);
+        }
+
+        // Inject reward callout with tiers into card body
+        var cardFooter = card.querySelector('.fevo-ef-card-footer');
+        if (cardFooter) {
+          var callout = document.createElement('div');
+          callout.className = 'rw-card-callout';
+
+          var tiersHtml = reward.milestones.map(function(m, i) {
+            return (i > 0 ? ' → ' : '') + '<strong>' + m.label + '</strong>: ' + m.reward;
+          }).join('');
+
+          callout.innerHTML =
+            '<svg class="rw-card-callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+              '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18" />' +
+              '<path d="M5 9h14v2a7 7 0 0 1-14 0V9z" />' +
+              '<path d="M12 9v12" />' +
+            '</svg>' +
+            '<div class="rw-card-callout-text">' +
+              '<span class="rw-card-callout-headline">' + reward.headline + '</span>' +
+              '<span class="rw-card-callout-tiers">' + tiersHtml + '</span>' +
+            '</div>';
+
+          cardFooter.parentNode.insertBefore(callout, cardFooter);
         }
 
         card.setAttribute('data-rw-injected', 'true');
