@@ -31,7 +31,6 @@ export type Offer = {
   tags: string[];
   media?: { image_url: string | null; video_url: string | null };
   reward?: Reward;
-  cta_text?: string;
   source?: string;
   created_at: string;
   updated_at: string;
