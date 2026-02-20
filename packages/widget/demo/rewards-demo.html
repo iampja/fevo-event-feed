@@ -551,47 +551,6 @@
     .rw-social-btn svg { width: 14px; height: 14px; }
 
     /* ================================================================
-       REWARDS: Checkout Card
-       ================================================================ */
-    .co-reward-card {
-      background: #FFFDF0;
-      border: 1.5px solid #FFCC00;
-    }
-    .co-reward-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    .co-reward-header svg { width: 18px; height: 18px; color: #b8960a; }
-    .co-reward-milestone {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,204,0,0.3);
-      font-size: 12px;
-    }
-    .co-reward-milestone:last-child { border-bottom: none; }
-    .co-reward-milestone .milestone-tier {
-      width: 20px;
-      height: 20px;
-      background: #FFCC00;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 800;
-      color: #1a1a1a;
-      flex-shrink: 0;
-    }
-    .co-reward-milestone .milestone-text { flex: 1; color: #4b5563; }
-    .co-reward-milestone .milestone-reward { font-weight: 700; color: #1a1a1a; white-space: nowrap; }
-
-    /* ================================================================
        REWARDS: Post-Purchase Sharing
        ================================================================ */
     .rw-share-section {
@@ -772,30 +731,6 @@
         <div class="co-powered">Powered by <span>FEVO</span></div>
       </div>
 
-      <!-- REWARDS: Checkout reward card (injected between summary and group) -->
-      <div class="co-card co-reward-card" id="co-card-reward" style="display:none;">
-        <div class="co-reward-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>
-          <span id="co-reward-title">Share &amp; Earn $5 Per Ticket</span>
-        </div>
-        <div id="co-reward-milestones"></div>
-      </div>
-
-      <!-- Group invite -->
-      <div class="co-card" id="co-card-group">
-        <div class="co-group">
-          <h4>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Invite Friends &amp; Save Together
-          </h4>
-          <p>Buy together with FEVO — invite friends and everyone gets the group rate!</p>
-          <div class="co-group-row">
-            <input type="email" placeholder="friend@email.com" />
-            <button>Invite</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Confirmation (hidden initially) -->
       <div class="co-confirmation" id="co-confirmation">
         <div class="co-conf-check">
@@ -805,7 +740,7 @@
         <p id="co-conf-msg">Your tickets have been reserved.</p>
         <div class="co-conf-num" id="co-conf-num">FEVO-000000</div>
 
-        <!-- REWARDS: Post-purchase sharing (injected into confirmation) -->
+        <!-- REWARDS: Post-purchase sharing -->
         <div class="rw-share-section" id="rw-share-section" style="display:none;">
           <div class="rw-share-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>
@@ -820,7 +755,22 @@
           <div class="rw-share-progress" id="rw-share-progress"></div>
         </div>
 
-        <br/><br/>
+        <!-- Post-purchase: Invite friends -->
+        <div class="co-card" id="co-card-group" style="margin-top:20px;">
+          <div class="co-group">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Invite Friends &amp; Save Together
+            </h4>
+            <p>Buy together with FEVO — invite friends and everyone gets the group rate!</p>
+            <div class="co-group-row">
+              <input type="email" placeholder="friend@email.com" />
+              <button>Invite</button>
+            </div>
+          </div>
+        </div>
+
+        <br/>
         <button class="co-done-btn" id="co-done-btn">Done</button>
       </div>
     </div>
@@ -1140,11 +1090,11 @@
 
       coRenderTickets();
       coUpdateSummary();
-      coPopulateRewardCard(offerId);
 
       document.querySelectorAll('#co-body > .co-card').forEach(function(c){ c.style.display = ''; });
       document.getElementById('co-confirmation').classList.remove('visible');
       document.getElementById('rw-share-section').style.display = 'none';
+      document.getElementById('co-card-group').style.display = 'none';
       document.getElementById('co-body').scrollTop = 0;
 
       document.getElementById('co-overlay').classList.add('open');
@@ -1193,30 +1143,6 @@
 
       document.getElementById('co-qty-val').textContent = coState.qty;
       document.getElementById('co-qty-minus').disabled = coState.qty <= 1;
-    }
-
-    // TOUCHPOINT 3: Populate reward card in checkout
-    function coPopulateRewardCard(offerId) {
-      var reward = getRewardForOffer(offerId);
-      var card = document.getElementById('co-card-reward');
-      if (!reward) {
-        card.style.display = 'none';
-        return;
-      }
-      card.style.display = '';
-      document.getElementById('co-reward-title').textContent = 'Share & ' + reward.headline;
-
-      var container = document.getElementById('co-reward-milestones');
-      container.innerHTML = '';
-      reward.milestones.forEach(function(m) {
-        var div = document.createElement('div');
-        div.className = 'co-reward-milestone';
-        div.innerHTML =
-          '<div class="milestone-tier">' + m.tier + '</div>' +
-          '<div class="milestone-text">' + m.threshold + ' tickets \u2192 ' + m.label + '</div>' +
-          '<div class="milestone-reward">' + m.reward + '</div>';
-        container.appendChild(div);
-      });
     }
 
     // Quantity controls
@@ -1281,6 +1207,7 @@
 
       document.querySelectorAll('#co-body > .co-card').forEach(function(c){ c.style.display = 'none'; });
       document.getElementById('co-confirmation').classList.add('visible');
+      document.getElementById('co-card-group').style.display = '';
       document.getElementById('co-body').scrollTop = 0;
     };
 
@@ -1308,6 +1235,7 @@
       document.querySelectorAll('#co-body > .co-card').forEach(function(c){ c.style.display = ''; });
       document.getElementById('co-confirmation').classList.remove('visible');
       document.getElementById('rw-share-section').style.display = 'none';
+      document.getElementById('co-card-group').style.display = 'none';
       closeCheckout();
     };
 
