@@ -1,5 +1,7 @@
 import { render, h } from 'preact';
 import { WidgetContainer } from './components/WidgetContainer';
+import { RewardsDashboard } from './components/rewards/RewardsDashboard';
+import { injectStyles } from './styles';
 import type { WidgetConfig } from './types';
 
 /**
@@ -69,21 +71,18 @@ function autoInit(): void {
     const config = parseConfigFromElement(el);
     renderWidget(el, config);
   });
+
+  // Auto-init My FEVO pages
+  const myFevoTargets = document.querySelectorAll('.fevo-my-fevo');
+  myFevoTargets.forEach((el) => {
+    const theme = (el.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+    injectStyles();
+    render(h(RewardsDashboard, { theme }), el);
+  });
 }
 
 /**
  * Programmatic initialization.
- * Usage:
- *   FevoEventFeed.init({
- *     segment: 'hello-kitty-nights',
- *     theme: 'dark',
- *     columns: 2,
- *     apiUrl: 'https://api.example.com/v1/feed',
- *     apiKey: 'key_abc123',
- *   });
- *
- * Or target a specific element:
- *   FevoEventFeed.init({ segment: 'events' }, document.getElementById('my-feed'));
  */
 function init(config: WidgetConfig, target?: Element | string): void {
   let el: Element | null = null;
@@ -134,20 +133,19 @@ function destroy(target: Element | string): void {
 }
 
 /**
- * Open the My FEVO rewards dashboard panel.
+ * Render the My FEVO rewards dashboard into a target element.
  */
-function openMyFevo(): void {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('fevo:open-my-fevo'));
+function renderMyFevo(target: Element | string, theme?: 'light' | 'dark'): void {
+  let el: Element | null = null;
+  if (typeof target === 'string') {
+    el = document.querySelector(target);
+  } else {
+    el = target;
   }
-}
-
-/**
- * Close the My FEVO rewards dashboard panel.
- */
-function closeMyFevo(): void {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('fevo:close-my-fevo'));
+  if (el) {
+    const resolvedTheme = theme || (el.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+    injectStyles();
+    render(h(RewardsDashboard, { theme: resolvedTheme }), el);
   }
 }
 
@@ -155,8 +153,7 @@ function closeMyFevo(): void {
 const FevoEventFeed = {
   init,
   destroy,
-  openMyFevo,
-  closeMyFevo,
+  renderMyFevo,
   version: '1.0.0',
 };
 
@@ -177,5 +174,5 @@ if (typeof document !== 'undefined') {
 }
 
 export default FevoEventFeed;
-export { init, destroy, openMyFevo, closeMyFevo };
+export { init, destroy, renderMyFevo };
 export type { WidgetConfig, Offer, FeedResponse, AnalyticsEvent } from './types';

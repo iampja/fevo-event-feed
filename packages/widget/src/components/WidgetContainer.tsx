@@ -13,8 +13,6 @@ import { ErrorState } from './ErrorState';
 import { EmptyState } from './EmptyState';
 import { PoweredByFevo } from './PoweredByFevo';
 import { OfferDetailModal } from './OfferDetailModal';
-import { RewardsDashboard } from './rewards/RewardsDashboard';
-
 type WidgetContainerProps = {
   config: WidgetConfig;
 };
@@ -48,19 +46,6 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
     useAutoRefresh(effectiveConfig, geoReady);
 
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [dashboardOpen, setDashboardOpen] = useState(false);
-
-  // Listen for custom events to open/close the rewards dashboard
-  useEffect(() => {
-    const handleOpen = () => setDashboardOpen(true);
-    const handleClose = () => setDashboardOpen(false);
-    window.addEventListener('fevo:open-my-fevo', handleOpen);
-    window.addEventListener('fevo:close-my-fevo', handleClose);
-    return () => {
-      window.removeEventListener('fevo:open-my-fevo', handleOpen);
-      window.removeEventListener('fevo:close-my-fevo', handleClose);
-    };
-  }, []);
 
   const handleCardClick = useCallback((offer: Offer) => {
     setSelectedOffer(offer);
@@ -141,13 +126,6 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
         />
       )}
 
-      {/* Rewards dashboard */}
-      {dashboardOpen && (
-        <RewardsDashboard
-          theme={theme}
-          onClose={() => setDashboardOpen(false)}
-        />
-      )}
     </div>
   );
 }

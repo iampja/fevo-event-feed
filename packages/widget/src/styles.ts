@@ -827,35 +827,11 @@ export const WIDGET_STYLES = `
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* ===== Rewards Dashboard ===== */
+/* ===== Rewards Dashboard (Page) ===== */
 
-.fevo-ef-dash-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  animation: fevo-ef-backdrop-in 0.2s ease-out;
-}
-
-.fevo-ef-dash-panel {
-  background: var(--fevo-ef-bg);
-  width: 100%;
+.fevo-ef-dash-page {
   max-width: 860px;
-  display: flex;
-  flex-direction: column;
-  animation: fevo-ef-modal-in 0.25s ease-out;
-  overflow: hidden;
-}
-
-@media (min-width: 641px) {
-  .fevo-ef-dash-panel {
-    margin: 24px 0;
-    border-radius: var(--fevo-ef-radius);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  }
+  margin: 0 auto;
 }
 
 /* Header */
@@ -894,31 +870,6 @@ export const WIDGET_STYLES = `
 .fevo-ef-dash-header-user {
   font-size: 12px;
   color: var(--fevo-ef-text-secondary);
-}
-
-.fevo-ef-dash-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--fevo-ef-text-secondary);
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-  font-family: var(--fevo-ef-font);
-}
-
-.fevo-ef-dash-close:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.fevo-ef-root[data-theme="dark"] .fevo-ef-dash-close:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Tabs */
@@ -1683,10 +1634,6 @@ export const WIDGET_STYLES = `
 
 /* ===== Dashboard Mobile ===== */
 @media (max-width: 640px) {
-  .fevo-ef-dash-panel {
-    max-width: 100%;
-  }
-
   .fevo-ef-dash-content {
     padding: 16px;
   }
