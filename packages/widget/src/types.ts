@@ -1,5 +1,22 @@
 export type DateValue = string | { utc: string | null; timezone: string | null; display: string | null };
 
+export type RewardType = 'money' | 'points' | 'discount' | 'merchandise';
+
+export type RewardMilestone = {
+  tier: number;
+  threshold: number;
+  label: string;
+  reward: string;
+};
+
+export type Reward = {
+  program_id: string;
+  type: RewardType;
+  headline: string;
+  rule: { amount: number; unit: string; per: string };
+  milestones: RewardMilestone[];
+};
+
 export type Offer = {
   offer_id: string;
   title: string;
@@ -13,6 +30,7 @@ export type Offer = {
   checkout_url: string;
   tags: string[];
   media?: { image_url: string | null; video_url: string | null };
+  reward?: Reward;
   source?: string;
   created_at: string;
   updated_at: string;

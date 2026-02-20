@@ -7,6 +7,7 @@ import { trackOfferViewed, trackOfferClicked } from '../analytics';
 import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { formatDate } from '../utils/formatDate';
 import { formatPrice } from '../utils/formatPrice';
+import { RewardBadge } from './RewardBadge';
 
 type OfferCardProps = {
   offer: Offer;
@@ -82,6 +83,7 @@ export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
             onError={handleImageError}
           />
         )}
+        {offer.reward && <RewardBadge reward={offer.reward} />}
       </div>
 
       <div class="fevo-ef-card-body">

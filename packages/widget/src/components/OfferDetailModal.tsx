@@ -7,6 +7,7 @@ import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { trackOfferClicked } from '../analytics';
 import { formatDate } from '../utils/formatDate';
 import { formatPrice } from '../utils/formatPrice';
+import { RewardSection } from './RewardSection';
 
 const AVAILABILITY_LABELS: Record<string, string> = {
   available: 'Available',
@@ -150,6 +151,10 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
                 <span key={tag} class="fevo-ef-modal-tag">{tag}</span>
               ))}
             </div>
+          )}
+
+          {offer.reward && (
+            <RewardSection reward={offer.reward} offerTitle={offer.title} />
           )}
         </div>
 

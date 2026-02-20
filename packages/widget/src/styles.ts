@@ -609,6 +609,223 @@ export const WIDGET_STYLES = `
     transform: translateY(0);
   }
 }
+
+/* ===== Reward Badge (Card) ===== */
+.fevo-ef-rw-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.fevo-ef-rw-badge-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* ===== Reward Section (Modal) ===== */
+.fevo-ef-rw-section {
+  background: #FFFDF0;
+  border: 1.5px solid #FFCC00;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-section {
+  background: #2a2714;
+  border-color: #b8960a;
+}
+
+.fevo-ef-rw-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin-bottom: 8px;
+}
+
+.fevo-ef-rw-header-icon {
+  width: 18px;
+  height: 18px;
+  color: #b8960a;
+  flex-shrink: 0;
+}
+
+.fevo-ef-rw-rule {
+  font-size: 13px;
+  color: var(--fevo-ef-text-secondary);
+  margin-bottom: 14px;
+}
+
+/* Milestones */
+.fevo-ef-rw-milestones {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.fevo-ef-rw-milestone {
+  flex: 1;
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.fevo-ef-rw-milestone-tier {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b8960a;
+  margin-bottom: 2px;
+}
+
+.fevo-ef-rw-milestone-threshold {
+  font-size: 10px;
+  color: var(--fevo-ef-text-secondary);
+  margin-bottom: 4px;
+}
+
+.fevo-ef-rw-milestone-reward {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fevo-ef-text);
+}
+
+/* Progress bar */
+.fevo-ef-rw-progress {
+  margin-bottom: 14px;
+}
+
+.fevo-ef-rw-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+  margin-bottom: 6px;
+}
+
+.fevo-ef-rw-progress-track {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fevo-ef-rw-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFCC00, #f59e0b);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* Copy link */
+.fevo-ef-rw-copy {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.fevo-ef-rw-copy-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #fff;
+  color: #333;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-copy-input {
+  background: var(--fevo-ef-card-bg);
+  color: var(--fevo-ef-text);
+  border-color: var(--fevo-ef-border);
+}
+
+.fevo-ef-rw-copy-btn {
+  height: 34px;
+  padding: 0 14px;
+  background: #FFCC00;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-rw-copy-btn:hover {
+  background: #e6b800;
+}
+
+.fevo-ef-rw-copy-btn.copied {
+  background: #22c55e;
+  color: #fff;
+}
+
+/* Social share */
+.fevo-ef-rw-social {
+  display: flex;
+  gap: 8px;
+}
+
+.fevo-ef-rw-social-btn {
+  flex: 1;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #4b5563;
+  transition: all 0.12s;
+  text-decoration: none;
+}
+
+.fevo-ef-rw-social-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.fevo-ef-rw-social-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-social-btn {
+  background: var(--fevo-ef-card-bg);
+  color: var(--fevo-ef-text-secondary);
+  border-color: var(--fevo-ef-border);
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-social-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 `;
 
 let injected = false;
