@@ -149,7 +149,7 @@ export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
             data-status={offer.availability}
             onClick={isSoldOut ? undefined : handleCtaClick}
           >
-            {isSoldOut ? 'Sold Out' : 'Get Tickets'}
+            {isSoldOut ? 'Sold Out' : (offer.cta_text || 'Get Tickets')}
           </a>
         </div>
       </div>
