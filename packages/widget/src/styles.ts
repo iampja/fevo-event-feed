@@ -613,25 +613,27 @@ export const WIDGET_STYLES = `
 /* ===== Reward Badge (Card) ===== */
 .fevo-ef-rw-badge {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
+  bottom: 10px;
+  left: 10px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  font-size: 11px;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
   z-index: 2;
   pointer-events: none;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .fevo-ef-rw-badge-icon {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
@@ -734,97 +736,36 @@ export const WIDGET_STYLES = `
   transition: width 0.4s ease;
 }
 
-/* Copy link */
-.fevo-ef-rw-copy {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.fevo-ef-rw-copy-input {
-  flex: 1;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 12px;
-  background: #fff;
-  color: #333;
-  font-family: var(--fevo-ef-font);
-}
-
-.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-copy-input {
-  background: var(--fevo-ef-card-bg);
-  color: var(--fevo-ef-text);
-  border-color: var(--fevo-ef-border);
-}
-
-.fevo-ef-rw-copy-btn {
-  height: 34px;
-  padding: 0 14px;
-  background: #FFCC00;
-  color: #1a1a1a;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s;
-  font-family: var(--fevo-ef-font);
-}
-
-.fevo-ef-rw-copy-btn:hover {
-  background: #e6b800;
-}
-
-.fevo-ef-rw-copy-btn.copied {
-  background: #22c55e;
-  color: #fff;
-}
-
-/* Social share */
-.fevo-ef-rw-social {
-  display: flex;
-  gap: 8px;
-}
-
-.fevo-ef-rw-social-btn {
-  flex: 1;
-  height: 32px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
+/* CTA prompt — encourages purchase to unlock share link */
+.fevo-ef-rw-cta-prompt {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: #4b5563;
-  transition: all 0.12s;
-  text-decoration: none;
+  gap: 10px;
+  background: rgba(255, 204, 0, 0.12);
+  border: 1px dashed #FFCC00;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b8960a;
+  line-height: 1.4;
 }
 
-.fevo-ef-rw-social-btn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+.fevo-ef-rw-cta-prompt-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #b8960a;
 }
 
-.fevo-ef-rw-social-btn svg {
-  width: 14px;
-  height: 14px;
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-cta-prompt {
+  background: rgba(255, 204, 0, 0.08);
+  border-color: #b8960a;
+  color: #FFCC00;
 }
 
-.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-social-btn {
-  background: var(--fevo-ef-card-bg);
-  color: var(--fevo-ef-text-secondary);
-  border-color: var(--fevo-ef-border);
-}
-
-.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-social-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-cta-prompt-icon {
+  color: #FFCC00;
 }
 
 /* ===== Rewards Dashboard (Page) ===== */
