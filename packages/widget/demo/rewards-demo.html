@@ -397,7 +397,6 @@
     .co-reward-tier[data-tier-level="1"] { background: #fdf6ee; border-color: #d4a574; }
     .co-reward-tier[data-tier-level="2"] { background: #f0f4f8; border-color: #94a3b8; }
     .co-reward-tier[data-tier-level="3"] { background: #fefce8; border-color: #eab308; }
-    .co-reward-tier[data-tier-level="4"] { background: #faf5ff; border-color: #a855f7; }
     .co-reward-tier-label {
       font-size: 11px;
       font-weight: 700;
@@ -406,7 +405,6 @@
     .co-reward-tier[data-tier-level="1"] .co-reward-tier-label { color: #a0714a; }
     .co-reward-tier[data-tier-level="2"] .co-reward-tier-label { color: #64748b; }
     .co-reward-tier[data-tier-level="3"] .co-reward-tier-label { color: #a16207; }
-    .co-reward-tier[data-tier-level="4"] .co-reward-tier-label { color: #7e22ce; }
     .co-reward-tier-threshold {
       font-size: 10px;
       color: #9ca3af;
@@ -538,7 +536,6 @@
     .rw-card-callout-tiers strong[data-tier-level="1"] { color: #a0714a; }
     .rw-card-callout-tiers strong[data-tier-level="2"] { color: #64748b; }
     .rw-card-callout-tiers strong[data-tier-level="3"] { color: #a16207; }
-    .rw-card-callout-tiers strong[data-tier-level="4"] { color: #7e22ce; }
 
     /* ================================================================
        REWARDS: Modal Section
@@ -623,8 +620,6 @@
     .rw-milestone[data-tier-level="3"] { background: #fefce8; border-color: #eab308; }
     .rw-milestone[data-tier-level="3"] .rw-milestone-tier { color: #a16207; }
     /* Tier 4 — Platinum */
-    .rw-milestone[data-tier-level="4"] { background: #faf5ff; border-color: #a855f7; }
-    .rw-milestone[data-tier-level="4"] .rw-milestone-tier { color: #7e22ce; }
 
     /* Copy link (post-purchase sharing) */
     .rw-copy-row {
@@ -927,7 +922,7 @@
         reward: { program_id:'rp-012', type:'points', headline:'Earn 10 pts/ticket', rule:{amount:10,unit:'points',per:'ticket'}, milestones:[{tier:1,threshold:4,label:'Rookie',reward:'40 pts'},{tier:2,threshold:10,label:'All-Star',reward:'100 pts + Autograph Pass'},{tier:3,threshold:20,label:'MVP',reward:'200 pts + VIP Fest'}] }
       },
       { offer_id:'mlb-013', title:'Yankees Legends VIP Suite Night', description:'Premium suite with HOF player meet & greet.', image_url:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop', price:{min:300,max:600,currency:'USD'}, date:'2026-05-23T18:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-013', tags:['vip','baseball'], city_key:'new-york', type_key:'vip', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-013', type:'custom', headline:'Unlock Legends Access', rule:{amount:1,unit:'experience',per:'2 referrals'}, milestones:[{tier:1,threshold:2,label:'Field',reward:'Pre-game Field Access'},{tier:2,threshold:5,label:'Suite',reward:'Suite Night + Player Meet'},{tier:3,threshold:10,label:'Legends',reward:'HOF Dinner + Private Suite'},{tier:4,threshold:20,label:'Inner Circle',reward:'Season Suite + Ring Ceremony'}] }
+        reward: { program_id:'rp-013', type:'custom', headline:'Unlock Legends Access', rule:{amount:1,unit:'experience',per:'2 referrals'}, milestones:[{tier:1,threshold:2,label:'Field',reward:'Pre-game Field Access'},{tier:2,threshold:5,label:'Suite',reward:'Suite Night + Player Meet'},{tier:3,threshold:10,label:'Legends',reward:'HOF Dinner + Private Suite'}] }
       },
       { offer_id:'mlb-014', title:'Dodgers vs Angels - Freeway Series', description:'Cross-town rivalry at its finest.', image_url:'https://images.unsplash.com/photo-1562077981-4d7eafd44932?w=600&h=400&fit=crop', price:{min:50,max:250,currency:'USD'}, date:'2026-06-06T19:10:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-014', tags:['baseball','game'], city_key:'los-angeles', type_key:'game', created_at:'2026-01-25T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-015', title:'Dodger Stadium Family Fireworks Night', description:'Post-game fireworks show for the whole family.', image_url:'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&h=400&fit=crop', price:{min:30,max:80,currency:'USD'}, date:'2026-07-04T17:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-015', tags:['family','baseball'], city_key:'los-angeles', type_key:'family', created_at:'2026-02-03T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },

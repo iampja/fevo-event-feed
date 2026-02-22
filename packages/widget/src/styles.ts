@@ -207,7 +207,6 @@ export const WIDGET_STYLES = `
 .fevo-ef-rw-card-callout-tiers strong[data-tier-level="1"] { color: #a0714a; }
 .fevo-ef-rw-card-callout-tiers strong[data-tier-level="2"] { color: #64748b; }
 .fevo-ef-rw-card-callout-tiers strong[data-tier-level="3"] { color: #a16207; }
-.fevo-ef-rw-card-callout-tiers strong[data-tier-level="4"] { color: #7e22ce; }
 
 .fevo-ef-card-footer {
   display: flex;
@@ -762,13 +761,6 @@ export const WIDGET_STYLES = `
 }
 .fevo-ef-rw-milestone[data-tier-level="3"] .fevo-ef-rw-milestone-tier { color: #a16207; }
 
-/* Tier 4 — Platinum */
-.fevo-ef-rw-milestone[data-tier-level="4"] {
-  background: #faf5ff;
-  border-color: #a855f7;
-}
-.fevo-ef-rw-milestone[data-tier-level="4"] .fevo-ef-rw-milestone-tier { color: #7e22ce; }
-
 /* Dark theme tier overrides */
 .fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="1"] {
   background: #2a2114; border-color: #8b6a42;
@@ -778,9 +770,6 @@ export const WIDGET_STYLES = `
 }
 .fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="3"] {
   background: #2a2714; border-color: #ca8a04;
-}
-.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="4"] {
-  background: #1f1530; border-color: #9333ea;
 }
 
 .fevo-ef-rw-milestone-tier {
