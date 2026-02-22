@@ -11,6 +11,7 @@ type RewardSectionProps = {
 export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
   const maxThreshold = reward.milestones[reward.milestones.length - 1].threshold;
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const handleTierClick = (index: number) => {
     setSelectedTier(selectedTier === index ? null : index);
@@ -55,7 +56,12 @@ export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
       {selected && (
         <div class="fevo-ef-rw-detail" data-tier-level={selectedLevel}>
           {selected.image_url && (
-            <img class="fevo-ef-rw-detail-img" src={selected.image_url} alt={selected.label} />
+            <img
+              class="fevo-ef-rw-detail-img"
+              src={selected.image_url}
+              alt={selected.label}
+              onClick={(e) => { e.stopPropagation(); setLightboxSrc(selected.image_url!); }}
+            />
           )}
           <div class="fevo-ef-rw-detail-body">
             <div class="fevo-ef-rw-detail-label">{selected.label}</div>
@@ -65,6 +71,13 @@ export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
               <div class="fevo-ef-rw-detail-desc">{selected.description}</div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Image lightbox */}
+      {lightboxSrc && (
+        <div class="fevo-ef-rw-lightbox" onClick={() => setLightboxSrc(null)}>
+          <img class="fevo-ef-rw-lightbox-img" src={lightboxSrc} alt="Reward preview" />
         </div>
       )}
 

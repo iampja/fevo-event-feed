@@ -657,6 +657,36 @@
       object-fit: cover;
       border-radius: 6px;
       flex-shrink: 0;
+      cursor: zoom-in;
+      transition: opacity 0.15s ease;
+    }
+    .rw-detail-img:hover { opacity: 0.85; }
+
+    /* Lightbox */
+    .rw-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999999;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      padding: 24px;
+      animation: rw-lb-in 0.15s ease-out;
+    }
+    @keyframes rw-lb-in { from { opacity: 0; } to { opacity: 1; } }
+    .rw-lightbox-img {
+      max-width: 90%;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      object-fit: contain;
+      animation: rw-lb-img-in 0.2s ease-out;
+    }
+    @keyframes rw-lb-img-in {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
     }
     .rw-detail-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .rw-detail-label { font-size: 14px; font-weight: 700; color: #1a1a1a; }
@@ -1617,7 +1647,7 @@
           var m = reward.milestones[selectedIdx];
           var level = selectedIdx + 1;
           var imgHtml = m.image_url
-            ? '<img class="rw-detail-img" src="' + m.image_url + '" alt="' + m.label + '" />'
+            ? '<img class="rw-detail-img" src="' + m.image_url + '" alt="' + m.label + '" data-full-src="' + m.image_url.replace('w=300&h=200', 'w=900&h=600') + '" />'
             : '';
           var descHtml = m.description
             ? '<div class="rw-detail-desc">' + m.description + '</div>'
@@ -1633,6 +1663,20 @@
                 descHtml +
               '</div>' +
             '</div>';
+
+          // Attach lightbox click to detail image
+          var detailImg = detailSlot.querySelector('.rw-detail-img');
+          if (detailImg) {
+            detailImg.addEventListener('click', function(e) {
+              e.stopPropagation();
+              var src = detailImg.getAttribute('data-full-src') || detailImg.src;
+              var lb = document.createElement('div');
+              lb.className = 'rw-lightbox';
+              lb.innerHTML = '<img class="rw-lightbox-img" src="' + src + '" alt="Reward preview" />';
+              lb.addEventListener('click', function() { lb.remove(); });
+              document.body.appendChild(lb);
+            });
+          }
         }
 
         milestoneEls.forEach(function(el, i) {

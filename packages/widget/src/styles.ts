@@ -884,6 +884,12 @@ export const WIDGET_STYLES = `
   object-fit: cover;
   border-radius: 6px;
   flex-shrink: 0;
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+
+.fevo-ef-rw-detail-img:hover {
+  opacity: 0.85;
 }
 
 .fevo-ef-rw-detail-body {
@@ -915,6 +921,29 @@ export const WIDGET_STYLES = `
   color: var(--fevo-ef-text-secondary);
   line-height: 1.4;
   margin-top: 4px;
+}
+
+/* ===== Reward Image Lightbox ===== */
+.fevo-ef-rw-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: fevo-ef-backdrop-in 0.15s ease-out;
+  padding: 24px;
+}
+
+.fevo-ef-rw-lightbox-img {
+  max-width: 90%;
+  max-height: 85vh;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+  animation: fevo-ef-modal-in 0.2s ease-out;
 }
 
 /* ===== Rewards Dashboard (Page) ===== */
