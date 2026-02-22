@@ -389,18 +389,24 @@
     }
     .co-reward-tier {
       flex: 1;
-      background: rgba(255,204,0,0.1);
-      border: 1px solid rgba(255,204,0,0.3);
       border-radius: 8px;
       padding: 8px 6px;
       text-align: center;
+      border: 1.5px solid;
     }
+    .co-reward-tier[data-tier-level="1"] { background: #fdf6ee; border-color: #d4a574; }
+    .co-reward-tier[data-tier-level="2"] { background: #f0f4f8; border-color: #94a3b8; }
+    .co-reward-tier[data-tier-level="3"] { background: #fefce8; border-color: #eab308; }
+    .co-reward-tier[data-tier-level="4"] { background: #faf5ff; border-color: #a855f7; }
     .co-reward-tier-label {
       font-size: 11px;
       font-weight: 700;
-      color: #b8960a;
       margin-bottom: 2px;
     }
+    .co-reward-tier[data-tier-level="1"] .co-reward-tier-label { color: #a0714a; }
+    .co-reward-tier[data-tier-level="2"] .co-reward-tier-label { color: #64748b; }
+    .co-reward-tier[data-tier-level="3"] .co-reward-tier-label { color: #a16207; }
+    .co-reward-tier[data-tier-level="4"] .co-reward-tier-label { color: #7e22ce; }
     .co-reward-tier-threshold {
       font-size: 10px;
       color: #9ca3af;
@@ -527,9 +533,12 @@
       line-height: 1.4;
     }
     .rw-card-callout-tiers strong {
-      color: #1a1a1a;
       font-weight: 600;
     }
+    .rw-card-callout-tiers strong[data-tier-level="1"] { color: #a0714a; }
+    .rw-card-callout-tiers strong[data-tier-level="2"] { color: #64748b; }
+    .rw-card-callout-tiers strong[data-tier-level="3"] { color: #a16207; }
+    .rw-card-callout-tiers strong[data-tier-level="4"] { color: #7e22ce; }
 
     /* ================================================================
        REWARDS: Modal Section
@@ -590,6 +599,32 @@
       text-align: center;
     }
     .rw-tier-mark.active { color: #FFCC00; font-weight: 700; }
+
+    /* Milestone tier cards */
+    .rw-milestones { display: flex; gap: 8px; margin-bottom: 14px; }
+    .rw-milestone {
+      flex: 1;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1.5px solid;
+    }
+    .rw-milestone-tier { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .rw-milestone-threshold { font-size: 10px; color: #6b7280; margin-bottom: 4px; }
+    .rw-milestone-reward { font-size: 11px; font-weight: 600; color: #1a1a1a; }
+
+    /* Tier 1 — Bronze */
+    .rw-milestone[data-tier-level="1"] { background: #fdf6ee; border-color: #d4a574; }
+    .rw-milestone[data-tier-level="1"] .rw-milestone-tier { color: #a0714a; }
+    /* Tier 2 — Silver */
+    .rw-milestone[data-tier-level="2"] { background: #f0f4f8; border-color: #94a3b8; }
+    .rw-milestone[data-tier-level="2"] .rw-milestone-tier { color: #64748b; }
+    /* Tier 3 — Gold */
+    .rw-milestone[data-tier-level="3"] { background: #fefce8; border-color: #eab308; }
+    .rw-milestone[data-tier-level="3"] .rw-milestone-tier { color: #a16207; }
+    /* Tier 4 — Platinum */
+    .rw-milestone[data-tier-level="4"] { background: #faf5ff; border-color: #a855f7; }
+    .rw-milestone[data-tier-level="4"] .rw-milestone-tier { color: #7e22ce; }
 
     /* Copy link (post-purchase sharing) */
     .rw-copy-row {
@@ -1189,9 +1224,10 @@
           'Share & ' + reward.headline;
         var tiersContainer = document.getElementById('co-reward-tiers');
         tiersContainer.innerHTML = '';
-        reward.milestones.forEach(function(m) {
+        reward.milestones.forEach(function(m, i) {
           var div = document.createElement('div');
           div.className = 'co-reward-tier';
+          div.setAttribute('data-tier-level', i + 1);
           div.innerHTML =
             '<div class="co-reward-tier-label">' + m.label + '</div>' +
             '<div class="co-reward-tier-threshold">' + m.threshold + ' tickets</div>' +
@@ -1433,7 +1469,7 @@
           callout.className = 'rw-card-callout';
 
           var tiersHtml = reward.milestones.map(function(m, i) {
-            return (i > 0 ? ' → ' : '') + '<strong>' + m.label + '</strong>: ' + m.reward;
+            return (i > 0 ? ' → ' : '') + '<strong data-tier-level="' + (i + 1) + '">' + m.label + '</strong>: ' + m.reward;
           }).join('');
 
           callout.innerHTML =
@@ -1488,6 +1524,16 @@
         var section = document.createElement('div');
         section.className = 'rw-modal-section';
 
+        // Build milestone tier cards
+        var milestoneCardsHtml = reward.milestones.map(function(m, i) {
+          return '<div class="rw-milestone" data-tier-level="' + (i + 1) + '">' +
+            '<div class="rw-milestone-tier">' + m.label + '</div>' +
+            '<div class="rw-milestone-threshold">' + m.threshold + ' tickets</div>' +
+            '<div class="rw-milestone-reward">' + m.reward + '</div>' +
+          '</div>';
+        }).join('');
+
+        // Build progress tier labels
         var tiersHtml = reward.milestones.map(function(m) {
           var isActive = ticketsSold >= m.threshold;
           return '<div class="rw-tier-mark' + (isActive ? ' active' : '') + '">' + m.label + '<br/>' + m.threshold + '</div>';
@@ -1498,7 +1544,8 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>' +
             'Share &amp; Earn' +
           '</div>' +
-          '<div class="rw-modal-rule">Earn <strong>$' + reward.rule.amount + '</strong> per ' + reward.rule.per + ' sold through your link</div>' +
+          '<div class="rw-modal-rule"><strong>' + reward.headline + '</strong> — share your link and earn rewards when friends buy</div>' +
+          '<div class="rw-milestones">' + milestoneCardsHtml + '</div>' +
           '<div class="rw-progress-wrap">' +
             '<div class="rw-progress-label"><span>' + ticketsSold + ' tickets sold</span><span>' + maxThreshold + ' for ' + reward.milestones[reward.milestones.length-1].label + '</span></div>' +
             '<div class="rw-progress-track"><div class="rw-progress-fill" style="width:' + fillPct + '%"></div></div>' +

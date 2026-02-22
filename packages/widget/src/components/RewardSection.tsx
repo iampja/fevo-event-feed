@@ -27,8 +27,8 @@ export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
 
       {/* Milestone tiers */}
       <div class="fevo-ef-rw-milestones">
-        {reward.milestones.map((m) => (
-          <div key={m.tier} class="fevo-ef-rw-milestone">
+        {reward.milestones.map((m, i) => (
+          <div key={m.tier} class="fevo-ef-rw-milestone" data-tier-level={i + 1}>
             <div class="fevo-ef-rw-milestone-tier">{m.label}</div>
             <div class="fevo-ef-rw-milestone-threshold">{m.threshold} tickets</div>
             <div class="fevo-ef-rw-milestone-reward">{m.reward}</div>

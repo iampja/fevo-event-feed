@@ -202,9 +202,12 @@ export const WIDGET_STYLES = `
 }
 
 .fevo-ef-rw-card-callout-tiers strong {
-  color: var(--fevo-ef-text);
   font-weight: 600;
 }
+.fevo-ef-rw-card-callout-tiers strong[data-tier-level="1"] { color: #a0714a; }
+.fevo-ef-rw-card-callout-tiers strong[data-tier-level="2"] { color: #64748b; }
+.fevo-ef-rw-card-callout-tiers strong[data-tier-level="3"] { color: #a16207; }
+.fevo-ef-rw-card-callout-tiers strong[data-tier-level="4"] { color: #7e22ce; }
 
 .fevo-ef-card-footer {
   display: flex;
@@ -732,17 +735,57 @@ export const WIDGET_STYLES = `
 
 .fevo-ef-rw-milestone {
   flex: 1;
-  background: rgba(255, 204, 0, 0.1);
-  border: 1px solid rgba(255, 204, 0, 0.3);
   border-radius: 8px;
   padding: 10px 8px;
   text-align: center;
+  border: 1.5px solid;
+}
+
+/* Tier 1 — Bronze */
+.fevo-ef-rw-milestone[data-tier-level="1"] {
+  background: #fdf6ee;
+  border-color: #d4a574;
+}
+.fevo-ef-rw-milestone[data-tier-level="1"] .fevo-ef-rw-milestone-tier { color: #a0714a; }
+
+/* Tier 2 — Silver */
+.fevo-ef-rw-milestone[data-tier-level="2"] {
+  background: #f0f4f8;
+  border-color: #94a3b8;
+}
+.fevo-ef-rw-milestone[data-tier-level="2"] .fevo-ef-rw-milestone-tier { color: #64748b; }
+
+/* Tier 3 — Gold */
+.fevo-ef-rw-milestone[data-tier-level="3"] {
+  background: #fefce8;
+  border-color: #eab308;
+}
+.fevo-ef-rw-milestone[data-tier-level="3"] .fevo-ef-rw-milestone-tier { color: #a16207; }
+
+/* Tier 4 — Platinum */
+.fevo-ef-rw-milestone[data-tier-level="4"] {
+  background: #faf5ff;
+  border-color: #a855f7;
+}
+.fevo-ef-rw-milestone[data-tier-level="4"] .fevo-ef-rw-milestone-tier { color: #7e22ce; }
+
+/* Dark theme tier overrides */
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="1"] {
+  background: #2a2114; border-color: #8b6a42;
+}
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="2"] {
+  background: #1e2430; border-color: #64748b;
+}
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="3"] {
+  background: #2a2714; border-color: #ca8a04;
+}
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-milestone[data-tier-level="4"] {
+  background: #1f1530; border-color: #9333ea;
 }
 
 .fevo-ef-rw-milestone-tier {
   font-size: 12px;
   font-weight: 700;
-  color: #b8960a;
   margin-bottom: 2px;
 }
 

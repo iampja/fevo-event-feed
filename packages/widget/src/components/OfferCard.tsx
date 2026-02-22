@@ -124,7 +124,7 @@ export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
                 {offer.reward.milestones.map((m, i) => (
                   <span key={m.tier}>
                     {i > 0 && ' → '}
-                    <strong>{m.label}</strong>: {m.reward}
+                    <strong data-tier-level={i + 1}>{m.label}</strong>: {m.reward}
                   </span>
                 ))}
               </span>
