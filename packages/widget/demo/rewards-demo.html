@@ -682,31 +682,6 @@
     }
     .rw-share-progress strong { color: #1a1a1a; }
 
-    /* ================================================================
-       REWARDS: Floating Panel (FAB + Panel)
-       ================================================================ */
-    .rw-fab {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 1500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #FFCC00;
-      color: #1a1a1a;
-      padding: 12px 20px;
-      border-radius: 28px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: all 0.2s;
-      border: none;
-      font-family: inherit;
-    }
-    .rw-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
-    .rw-fab svg { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -882,12 +857,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Floating Rewards Button — links to My FEVO page -->
-  <a class="rw-fab" href="/myfevo.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 9 7h6s2-3 4.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M5 9h14v2a7 7 0 0 1-14 0V9z"/><path d="M12 9v12"/></svg>
-    <span>My FEVO</span>
-  </a>
 
   <!-- ===== Data + Logic ===== -->
   <script>
