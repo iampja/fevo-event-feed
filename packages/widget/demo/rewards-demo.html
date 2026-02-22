@@ -619,7 +619,50 @@
     /* Tier 3 — Gold */
     .rw-milestone[data-tier-level="3"] { background: #fefce8; border-color: #eab308; }
     .rw-milestone[data-tier-level="3"] .rw-milestone-tier { color: #a16207; }
-    /* Tier 4 — Platinum */
+
+    /* Clickable milestone states */
+    .rw-milestone {
+      cursor: pointer;
+      transition: opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+    .rw-milestone:hover { opacity: 0.85; }
+    .rw-milestone[data-selected] {
+      box-shadow: 0 0 0 2px #1a1a1a;
+    }
+
+    /* Detail panel */
+    .rw-detail {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border-left: 4px solid #d4a574;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      animation: rw-detail-in 0.2s ease-out;
+    }
+    @keyframes rw-detail-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rw-detail[data-tier-level="1"] { border-left-color: #d4a574; }
+    .rw-detail[data-tier-level="2"] { border-left-color: #94a3b8; }
+    .rw-detail[data-tier-level="3"] { border-left-color: #eab308; }
+    .rw-detail-img {
+      width: 100px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .rw-detail-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .rw-detail-label { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .rw-detail-threshold { font-size: 11px; color: #6b7280; }
+    .rw-detail-reward { font-size: 13px; font-weight: 600; color: #b8960a; }
+    .rw-detail-desc { font-size: 12px; color: #6b7280; line-height: 1.4; margin-top: 4px; }
 
     /* Copy link (post-purchase sharing) */
     .rw-copy-row {
@@ -895,59 +938,59 @@
     // ================================================================
     var ALL_OFFERS = [
       { offer_id:'mlb-001', title:'Yankees vs Red Sox - Opening Day', description:'The rivalry continues. Experience the electric atmosphere of Opening Day at Yankee Stadium.', image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&h=400&fit=crop', price:{min:65,max:350,currency:'USD'}, date:'2026-03-28T13:05:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-001', tags:['baseball','game'], city_key:'new-york', type_key:'game', created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-001', type:'money', headline:'Earn $5/ticket sold', rule:{amount:5,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:5,label:'Starter',reward:'$25 cash back'},{tier:2,threshold:10,label:'Pro',reward:'$50 + Yankees cap'},{tier:3,threshold:25,label:'Legend',reward:'$125 + signed ball'}] }
+        reward: { program_id:'rp-001', type:'money', headline:'Earn $5/ticket sold', rule:{amount:5,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:5,label:'Starter',reward:'$25 cash back',description:'Get $25 cash back deposited directly to your account when 5 friends buy tickets through your link.',image_url:'https://images.unsplash.com/photo-1554672723-b208e07e6e8c?w=300&h=200&fit=crop'},{tier:2,threshold:10,label:'Pro',reward:'$50 + Yankees cap',description:'Earn $50 cash plus an official New Era Yankees cap shipped to your door.',image_url:'https://images.unsplash.com/photo-1588462520755-4dd4ef7da0ea?w=300&h=200&fit=crop'},{tier:3,threshold:25,label:'Legend',reward:'$125 + signed ball',description:'The ultimate reward — $125 cash and an authenticated signed baseball from the team.',image_url:'https://images.unsplash.com/photo-1508344928928-7165b67de128?w=300&h=200&fit=crop'}] }
       },
 
       { offer_id:'mlb-002', title:'Mets Family Sunday - Kids Run the Bases', description:'Kids run the bases after the game.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:75,currency:'USD'}, date:'2026-04-12T13:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'Mets'}, checkout_url:'/demo/checkout.html?offer=mlb-002', tags:['baseball','family'], city_key:'new-york', type_key:'family', created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-10T00:00:00Z' },
       { offer_id:'mlb-003', title:'Dodger Stadium Concert: Summer Nights', description:'Live music after the game under the LA stars.', image_url:'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop', price:{min:55,max:180,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-003', tags:['concerts','baseball'], city_key:'los-angeles', type_key:'concert', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-003', type:'merchandise', headline:'Earn exclusive merch', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:5,label:'Fan',reward:'Dodgers sticker pack'},{tier:2,threshold:15,label:'Superfan',reward:'Limited edition concert tee'},{tier:3,threshold:30,label:'Ambassador',reward:'Signed jersey bundle'}] }
+        reward: { program_id:'rp-003', type:'merchandise', headline:'Earn exclusive merch', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:5,label:'Fan',reward:'Dodgers sticker pack',description:'A collectible vinyl sticker pack featuring Dodger Stadium and team logos.',image_url:'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=300&h=200&fit=crop'},{tier:2,threshold:15,label:'Superfan',reward:'Limited edition concert tee',description:'An exclusive concert-night tee only available through the rewards program.',image_url:'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=300&h=200&fit=crop'},{tier:3,threshold:30,label:'Ambassador',reward:'Signed jersey bundle',description:'A framed, authenticated signed jersey plus a complete gear set.',image_url:'https://images.unsplash.com/photo-1580087256394-dc596e1c8f4f?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-004', title:'Wrigley Field Behind-the-Scenes Tour', description:'Explore the historic Wrigley Field.', image_url:'https://images.unsplash.com/photo-1568581357391-c71a1675ef93?w=600&h=400&fit=crop', price:{min:40,max:40,currency:'USD'}, date:'2026-05-20T10:00:00Z', venue:{name:'Wrigley Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-004', tags:['tours','baseball'], city_key:'chicago', type_key:'tour', created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-12T00:00:00Z' },
       { offer_id:'mlb-005', title:'Red Sox VIP Dugout Experience', description:'Watch batting practice from the dugout at Fenway Park.', image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=600&h=400&fit=crop', price:{min:250,max:500,currency:'USD'}, date:'2026-05-15T16:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-005', tags:['vip','baseball'], city_key:'boston', type_key:'vip', created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-005', type:'discount', headline:'Unlock game discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Insider',reward:'15% off next game'},{tier:2,threshold:8,label:'VIP',reward:'40% off + seat upgrade'}] }
+        reward: { program_id:'rp-005', type:'discount', headline:'Unlock game discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Insider',reward:'15% off next game',description:'Unlock a 15% discount code for any upcoming Red Sox game at Fenway Park.',image_url:'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=300&h=200&fit=crop'},{tier:2,threshold:8,label:'VIP',reward:'40% off + seat upgrade',description:'Get 40% off your next ticket plus an automatic upgrade to premium seating.',image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-006', title:'Astros Craft Beer & BBQ Festival', description:'Local craft beers and BBQ at Minute Maid.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-07-04T12:00:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=mlb-006', tags:['food','festival'], city_key:'houston', type_key:'festival', created_at:'2026-02-10T00:00:00Z', updated_at:'2026-02-14T00:00:00Z',
-        reward: { program_id:'rp-006', type:'money', headline:'Earn $3/ticket sold', rule:{amount:3,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:3,label:'Grill Rookie',reward:'$9 food credit'},{tier:2,threshold:8,label:'Pitmaster',reward:'$24 + free beer'},{tier:3,threshold:15,label:'Pit Boss',reward:'$45 + BBQ prize pack'}] }
+        reward: { program_id:'rp-006', type:'money', headline:'Earn $3/ticket sold', rule:{amount:3,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:3,label:'Grill Rookie',reward:'$9 food credit',description:'Earn a $9 food credit redeemable at any concession stand in the park.',image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop'},{tier:2,threshold:8,label:'Pitmaster',reward:'$24 + free beer',description:'$24 credit plus a voucher for a craft beer from the festival lineup.',image_url:'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=300&h=200&fit=crop'},{tier:3,threshold:15,label:'Pit Boss',reward:'$45 + BBQ prize pack',description:'The full package — $45 cash, a BBQ prize pack with sauces, rubs, and branded gear.',image_url:'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-007', title:'Giants vs Dodgers - Rivalry Weekend', description:'NL West showdown with fireworks.', image_url:'https://images.unsplash.com/photo-1562077772-3bd90f2a3a2c?w=600&h=400&fit=crop', price:{min:55,max:200,currency:'USD'}, date:'2026-06-20T19:15:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-007', tags:['baseball','game'], city_key:'san-francisco', type_key:'game', created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-008', title:'Marlins Park Family Fun Zone', description:'Inflatables and catch on the field.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:20,max:55,currency:'USD'}, date:'2026-04-25T11:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-008', tags:['family','baseball'], city_key:'miami', type_key:'family', created_at:'2026-02-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-009', title:'Yankee Stadium Legends Tour', description:'Visit Monument Park and the press box.', image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=600&h=400&fit=crop', price:{min:35,max:35,currency:'USD'}, date:'2026-04-10T09:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-009', tags:['tours','baseball'], city_key:'new-york', type_key:'tour', created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-14T00:00:00Z',
-        reward: { program_id:'rp-009', type:'discount', headline:'Unlock tour discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Bronze',reward:'10% off next tour'},{tier:2,threshold:8,label:'Silver',reward:'25% off + tour upgrade'},{tier:3,threshold:15,label:'Gold',reward:'Free tour + VIP access'}] }
+        reward: { program_id:'rp-009', type:'discount', headline:'Unlock tour discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Bronze',reward:'10% off next tour',description:'A 10% discount on any Yankee Stadium tour experience.',image_url:'https://images.unsplash.com/photo-1590502160462-58b41354f588?w=300&h=200&fit=crop'},{tier:2,threshold:8,label:'Silver',reward:'25% off + tour upgrade',description:'25% off plus an automatic upgrade to the premium behind-the-scenes tour.',image_url:'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=300&h=200&fit=crop'},{tier:3,threshold:15,label:'Gold',reward:'Free tour + VIP access',description:'A complimentary tour plus exclusive VIP access to Monument Park and the press level.',image_url:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-010', title:'Cubs Rooftop Party - All-Inclusive', description:'Wrigleyville rooftop with food, drinks, DJ.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:120,max:200,currency:'USD'}, date:'2026-08-01T18:00:00Z', venue:{name:'Wrigley Rooftops',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-010', tags:['vip','food','baseball'], city_key:'chicago', type_key:'vip', created_at:'2026-02-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-010', type:'money', headline:'Earn $8/ticket sold', rule:{amount:8,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:2,label:'Host',reward:'$16 food credit'},{tier:2,threshold:6,label:'Party Captain',reward:'$48 + drinks voucher'}] }
+        reward: { program_id:'rp-010', type:'money', headline:'Earn $8/ticket sold', rule:{amount:8,unit:'dollar',per:'ticket sold'}, milestones:[{tier:1,threshold:2,label:'Host',reward:'$16 food credit',description:'$16 food credit to use at the rooftop buffet on game day.',image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=300&h=200&fit=crop'},{tier:2,threshold:6,label:'Party Captain',reward:'$48 + drinks voucher',description:'$48 cash plus an open bar drink voucher for the VIP lounge.',image_url:'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-011', title:'Fenway Concert: Country Night', description:'Top country artists at Fenway Park.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:75,max:175,currency:'USD'}, date:'2026-07-18T19:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-011', tags:['concerts'], city_key:'boston', type_key:'concert', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-012', title:'All-Star Week Fan Fest 2026', description:'Exhibits, autographs, HR Derby viewing.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:30,max:85,currency:'USD'}, date:'2026-07-13T10:00:00Z', venue:{name:'Convention Center',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-mlb',name:'MLB'}, checkout_url:'/demo/checkout.html?offer=mlb-012', tags:['family','festival','baseball'], city_key:'houston', type_key:'festival', created_at:'2026-02-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-012', type:'points', headline:'Earn 10 pts/ticket sold', rule:{amount:10,unit:'points',per:'ticket sold'}, milestones:[{tier:1,threshold:4,label:'Rookie',reward:'40 pts — redeem for merch'},{tier:2,threshold:10,label:'All-Star',reward:'100 pts + autograph pass'},{tier:3,threshold:20,label:'MVP',reward:'200 pts + VIP fest access'}] }
+        reward: { program_id:'rp-012', type:'points', headline:'Earn 10 pts/ticket sold', rule:{amount:10,unit:'points',per:'ticket sold'}, milestones:[{tier:1,threshold:4,label:'Rookie',reward:'40 pts — redeem for merch',description:'Earn 40 points redeemable for MLB merchandise at the Fan Fest shop.',image_url:'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=300&h=200&fit=crop'},{tier:2,threshold:10,label:'All-Star',reward:'100 pts + autograph pass',description:'100 points plus an exclusive pass to the player autograph session.',image_url:'https://images.unsplash.com/photo-1508344928928-7165b67de128?w=300&h=200&fit=crop'},{tier:3,threshold:20,label:'MVP',reward:'200 pts + VIP fest access',description:'200 points and VIP access to all Fan Fest exhibits, including the HR Derby viewing deck.',image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-013', title:'Yankees Legends VIP Suite Night', description:'Premium suite with HOF player meet & greet.', image_url:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop', price:{min:300,max:600,currency:'USD'}, date:'2026-05-23T18:30:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'Yankees'}, checkout_url:'/demo/checkout.html?offer=mlb-013', tags:['vip','baseball'], city_key:'new-york', type_key:'vip', created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-013', type:'custom', headline:'Unlock VIP experiences', rule:{amount:1,unit:'experience',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Field',reward:'Pre-game field access'},{tier:2,threshold:5,label:'Suite',reward:'Suite night + player meet'},{tier:3,threshold:10,label:'Legends',reward:'HOF dinner + private suite'}] }
+        reward: { program_id:'rp-013', type:'custom', headline:'Unlock VIP experiences', rule:{amount:1,unit:'experience',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Field',reward:'Pre-game field access',description:'Walk the field during batting practice and watch from the dugout steps.',image_url:'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?w=300&h=200&fit=crop'},{tier:2,threshold:5,label:'Suite',reward:'Suite night + player meet',description:'A private suite for you and 10 guests plus a post-game meet-and-greet with a current player.',image_url:'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=300&h=200&fit=crop'},{tier:3,threshold:10,label:'Legends',reward:'HOF dinner + private suite',description:'An intimate dinner with a Hall of Famer in a private luxury suite overlooking the diamond.',image_url:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-014', title:'Dodgers vs Angels - Freeway Series', description:'Cross-town rivalry at its finest.', image_url:'https://images.unsplash.com/photo-1562077981-4d7eafd44932?w=600&h=400&fit=crop', price:{min:50,max:250,currency:'USD'}, date:'2026-06-06T19:10:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-014', tags:['baseball','game'], city_key:'los-angeles', type_key:'game', created_at:'2026-01-25T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-015', title:'Dodger Stadium Family Fireworks Night', description:'Post-game fireworks show for the whole family.', image_url:'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&h=400&fit=crop', price:{min:30,max:80,currency:'USD'}, date:'2026-07-04T17:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-015', tags:['family','baseball'], city_key:'los-angeles', type_key:'family', created_at:'2026-02-03T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-016', title:'LA Dugout Club All-Access Experience', description:'On-field BP, clubhouse tour, and premium dining.', image_url:'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=600&h=400&fit=crop', price:{min:200,max:450,currency:'USD'}, date:'2026-05-30T16:00:00Z', venue:{name:'Dodger Stadium',city:'Los Angeles',state:'CA'}, availability:'limited', organization:{id:'org-lad',name:'Dodgers'}, checkout_url:'/demo/checkout.html?offer=mlb-016', tags:['vip','baseball'], city_key:'los-angeles', type_key:'vip', created_at:'2026-02-07T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-016', type:'merchandise', headline:'Earn Dodgers gear', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Fan',reward:'Dodgers cap'},{tier:2,threshold:8,label:'Superfan',reward:'Authentic jersey'},{tier:3,threshold:15,label:'Ambassador',reward:'Signed jersey + gear set'}] }
+        reward: { program_id:'rp-016', type:'merchandise', headline:'Earn Dodgers gear', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Fan',reward:'Dodgers cap',description:'An official Dodgers New Era 59FIFTY fitted cap in team blue.',image_url:'https://images.unsplash.com/photo-1588462520755-4dd4ef7da0ea?w=300&h=200&fit=crop'},{tier:2,threshold:8,label:'Superfan',reward:'Authentic jersey',description:'A Nike authentic on-field Dodgers jersey with your choice of player name.',image_url:'https://images.unsplash.com/photo-1580087256394-dc596e1c8f4f?w=300&h=200&fit=crop'},{tier:3,threshold:15,label:'Ambassador',reward:'Signed jersey + gear set',description:'A framed signed jersey plus a complete gear set including cap, bag, and warm-up jacket.',image_url:'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-017', title:'White Sox vs Cubs - Crosstown Classic', description:'Chicago bragging rights on the line.', image_url:'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=600&h=400&fit=crop', price:{min:45,max:175,currency:'USD'}, date:'2026-06-27T19:05:00Z', venue:{name:'Guaranteed Rate Field',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-cws',name:'White Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-017', tags:['baseball','game'], city_key:'chicago', type_key:'game', created_at:'2026-01-18T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-018', title:'Wrigleyville Summer Concert Series', description:'Live bands on the plaza after every Friday game.', image_url:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&h=400&fit=crop', price:{min:40,max:110,currency:'USD'}, date:'2026-07-10T18:00:00Z', venue:{name:'Gallagher Way',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chc',name:'Cubs'}, checkout_url:'/demo/checkout.html?offer=mlb-018', tags:['concerts','baseball'], city_key:'chicago', type_key:'concert', created_at:'2026-02-09T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-019', title:'Red Sox vs Yankees - Rivalry Weekend', description:'The greatest rivalry in sports, live at Fenway.', image_url:'https://images.unsplash.com/photo-1567982047351-76b6f93e38ee?w=600&h=400&fit=crop', price:{min:85,max:400,currency:'USD'}, date:'2026-06-13T19:10:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'limited', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-019', tags:['baseball','game'], city_key:'boston', type_key:'game', created_at:'2026-01-28T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-019', type:'points', headline:'Earn 15 pts/ticket sold', rule:{amount:15,unit:'points',per:'ticket sold'}, milestones:[{tier:1,threshold:3,label:'Rookie',reward:'45 pts — redeem for gear'},{tier:2,threshold:10,label:'Veteran',reward:'150 pts + loge upgrade'},{tier:3,threshold:20,label:'Captain',reward:'300 pts + Green Monster seats'}] }
+        reward: { program_id:'rp-019', type:'points', headline:'Earn 15 pts/ticket sold', rule:{amount:15,unit:'points',per:'ticket sold'}, milestones:[{tier:1,threshold:3,label:'Rookie',reward:'45 pts — redeem for gear',description:'45 points to spend on Red Sox gear in the rewards shop.',image_url:'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=300&h=200&fit=crop'},{tier:2,threshold:10,label:'Veteran',reward:'150 pts + loge upgrade',description:'150 points plus an automatic seat upgrade to loge-level seating.',image_url:'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=300&h=200&fit=crop'},{tier:3,threshold:20,label:'Captain',reward:'300 pts + Green Monster seats',description:'300 points and iconic Green Monster seats for a game of your choice.',image_url:'https://images.unsplash.com/photo-1567982047351-76b6f93e38ee?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-020', title:'Fenway Family Fun Day', description:'Kids crafts, mascot parade, and wiffle ball on the field.', image_url:'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=600&h=400&fit=crop', price:{min:25,max:60,currency:'USD'}, date:'2026-05-03T11:00:00Z', venue:{name:'Fenway Park',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Red Sox'}, checkout_url:'/demo/checkout.html?offer=mlb-020', tags:['family','baseball'], city_key:'boston', type_key:'family', created_at:'2026-02-04T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-021', title:'Astros vs Rangers - Lone Star Showdown', description:'Texas rivalry under the retractable roof.', image_url:'https://images.unsplash.com/photo-1578432156326-d23f4289be3a?w=600&h=400&fit=crop', price:{min:55,max:225,currency:'USD'}, date:'2026-05-09T19:10:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'available', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=mlb-021', tags:['baseball','game'], city_key:'houston', type_key:'game', created_at:'2026-01-22T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-022', title:'Minute Maid Park VIP Diamond Club', description:'All-inclusive premium seating behind home plate.', image_url:'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&h=400&fit=crop', price:{min:275,max:550,currency:'USD'}, date:'2026-06-21T19:10:00Z', venue:{name:'Minute Maid Park',city:'Houston',state:'TX'}, availability:'limited', organization:{id:'org-hou',name:'Astros'}, checkout_url:'/demo/checkout.html?offer=mlb-022', tags:['vip','baseball'], city_key:'houston', type_key:'vip', created_at:'2026-02-11T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-022', type:'discount', headline:'Unlock VIP discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Insider',reward:'20% off next event'},{tier:2,threshold:5,label:'Diamond',reward:'50% off + priority access'}] }
+        reward: { program_id:'rp-022', type:'discount', headline:'Unlock VIP discounts', rule:{amount:1,unit:'discount',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Insider',reward:'20% off next event',description:'A 20% discount code valid for any Diamond Club or VIP event at Minute Maid Park.',image_url:'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=300&h=200&fit=crop'},{tier:2,threshold:5,label:'Diamond',reward:'50% off + priority access',description:'50% off your next premium event plus priority lane entry and early access to the club.',image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-023', title:'Oracle Park Concert: Bay Area Beats', description:'Hip-hop and R&B hits on the waterfront.', image_url:'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&h=400&fit=crop', price:{min:60,max:160,currency:'USD'}, date:'2026-08-08T18:30:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-023', tags:['concerts'], city_key:'san-francisco', type_key:'concert', created_at:'2026-02-02T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-024', title:'Giants Behind-the-Scenes Tour', description:'Clubhouse, dugout, and press box tour at Oracle Park.', image_url:'https://images.unsplash.com/photo-1495563923587-bdc4282494d0?w=600&h=400&fit=crop', price:{min:30,max:30,currency:'USD'}, date:'2026-04-18T10:00:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-024', tags:['tours','baseball'], city_key:'san-francisco', type_key:'tour', created_at:'2026-01-30T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-025', title:'Bay Area Food & Brew Festival', description:'Local food trucks and craft breweries at the ballpark.', image_url:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop', price:{min:50,max:90,currency:'USD'}, date:'2026-07-25T12:00:00Z', venue:{name:'Oracle Park',city:'San Francisco',state:'CA'}, availability:'available', organization:{id:'org-sfg',name:'Giants'}, checkout_url:'/demo/checkout.html?offer=mlb-025', tags:['food','festival'], city_key:'san-francisco', type_key:'festival', created_at:'2026-02-13T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-025', type:'merchandise', headline:'Earn foodie gear', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Taster',reward:'Festival tee'},{tier:2,threshold:8,label:'Connoisseur',reward:"Chef's apron + VIP tasting"}] }
+        reward: { program_id:'rp-025', type:'merchandise', headline:'Earn foodie gear', rule:{amount:1,unit:'item',per:'milestone'}, milestones:[{tier:1,threshold:3,label:'Taster',reward:'Festival tee',description:'A limited-edition Bay Area Food & Brew Festival graphic tee.',image_url:'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=300&h=200&fit=crop'},{tier:2,threshold:8,label:'Connoisseur',reward:"Chef's apron + VIP tasting",description:"A branded chef's apron plus access to the VIP tasting tent with premium pours.",image_url:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop'}] }
       },
       { offer_id:'mlb-026', title:'Marlins vs Braves - Weekend Series', description:'NL East action under the Miami sun.', image_url:'https://images.unsplash.com/photo-1544427920-c49ccfb85579?w=600&h=400&fit=crop', price:{min:35,max:150,currency:'USD'}, date:'2026-05-16T18:10:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-026', tags:['baseball','game'], city_key:'miami', type_key:'game', created_at:'2026-01-26T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-027', title:'loanDepot Park Latin Night Concert', description:'Salsa, reggaeton, and merengue after the game.', image_url:'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&h=400&fit=crop', price:{min:45,max:130,currency:'USD'}, date:'2026-08-15T19:00:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-027', tags:['concerts'], city_key:'miami', type_key:'concert', created_at:'2026-02-06T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
       { offer_id:'mlb-028', title:'Miami VIP Skybox Experience', description:'Private skybox with catering and field-level access.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:350,max:700,currency:'USD'}, date:'2026-06-07T18:40:00Z', venue:{name:'loanDepot park',city:'Miami',state:'FL'}, availability:'limited', organization:{id:'org-mia',name:'Marlins'}, checkout_url:'/demo/checkout.html?offer=mlb-028', tags:['vip','baseball'], city_key:'miami', type_key:'vip', created_at:'2026-02-09T00:00:00Z', updated_at:'2026-02-15T00:00:00Z',
-        reward: { program_id:'rp-028', type:'custom', headline:'Unlock skybox perks', rule:{amount:1,unit:'perk',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Silver',reward:'Priority entry + welcome drink'},{tier:2,threshold:5,label:'Gold',reward:'Catered skybox + field access'},{tier:3,threshold:10,label:'Platinum',reward:'Private yacht party + season pass'}] }
+        reward: { program_id:'rp-028', type:'custom', headline:'Unlock skybox perks', rule:{amount:1,unit:'perk',per:'milestone'}, milestones:[{tier:1,threshold:2,label:'Silver',reward:'Priority entry + welcome drink',description:'Skip the line with priority entry and enjoy a complimentary welcome cocktail in the skybox.',image_url:'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=300&h=200&fit=crop'},{tier:2,threshold:5,label:'Gold',reward:'Catered skybox + field access',description:'A fully catered skybox for up to 12 guests with pre-game field-level access.',image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=300&h=200&fit=crop'},{tier:3,threshold:10,label:'Platinum',reward:'Private yacht party + season pass',description:'The ultimate Miami experience — a private yacht party in Biscayne Bay plus a full season pass.',image_url:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&h=200&fit=crop'}] }
       },
     ];
 
@@ -1521,7 +1564,7 @@
 
         // Build milestone tier cards
         var milestoneCardsHtml = reward.milestones.map(function(m, i) {
-          return '<div class="rw-milestone" data-tier-level="' + (i + 1) + '">' +
+          return '<div class="rw-milestone" data-tier-level="' + (i + 1) + '" data-tier-idx="' + i + '">' +
             '<div class="rw-milestone-tier">' + m.label + '</div>' +
             '<div class="rw-milestone-threshold">' + m.threshold + ' tickets</div>' +
             '<div class="rw-milestone-reward">' + m.reward + '</div>' +
@@ -1541,6 +1584,7 @@
           '</div>' +
           '<div class="rw-modal-rule"><strong>' + reward.headline + '</strong> — share your link and earn rewards when friends buy</div>' +
           '<div class="rw-milestones">' + milestoneCardsHtml + '</div>' +
+          '<div class="rw-detail-slot"></div>' +
           '<div class="rw-progress-wrap">' +
             '<div class="rw-progress-label"><span>' + ticketsSold + ' tickets sold</span><span>' + maxThreshold + ' for ' + reward.milestones[reward.milestones.length-1].label + '</span></div>' +
             '<div class="rw-progress-track"><div class="rw-progress-fill" style="width:' + fillPct + '%"></div></div>' +
@@ -1552,6 +1596,52 @@
           '</div>';
 
         body.appendChild(section);
+
+        // Make milestone boxes clickable with detail toggle
+        var selectedIdx = null;
+        var milestoneEls = section.querySelectorAll('.rw-milestone');
+        var detailSlot = section.querySelector('.rw-detail-slot');
+
+        function renderDetail() {
+          // Clear selected state on all milestones
+          milestoneEls.forEach(function(el) { el.removeAttribute('data-selected'); });
+
+          if (selectedIdx === null) {
+            detailSlot.innerHTML = '';
+            return;
+          }
+
+          // Set selected state
+          milestoneEls[selectedIdx].setAttribute('data-selected', '');
+
+          var m = reward.milestones[selectedIdx];
+          var level = selectedIdx + 1;
+          var imgHtml = m.image_url
+            ? '<img class="rw-detail-img" src="' + m.image_url + '" alt="' + m.label + '" />'
+            : '';
+          var descHtml = m.description
+            ? '<div class="rw-detail-desc">' + m.description + '</div>'
+            : '';
+
+          detailSlot.innerHTML =
+            '<div class="rw-detail" data-tier-level="' + level + '">' +
+              imgHtml +
+              '<div class="rw-detail-body">' +
+                '<div class="rw-detail-label">' + m.label + '</div>' +
+                '<div class="rw-detail-threshold">' + m.threshold + ' tickets sold</div>' +
+                '<div class="rw-detail-reward">' + m.reward + '</div>' +
+                descHtml +
+              '</div>' +
+            '</div>';
+        }
+
+        milestoneEls.forEach(function(el, i) {
+          el.addEventListener('click', function() {
+            selectedIdx = selectedIdx === i ? null : i;
+            renderDetail();
+          });
+        });
+
         body.setAttribute('data-rw-injected', 'true');
       });
     }

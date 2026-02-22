@@ -738,6 +738,16 @@ export const WIDGET_STYLES = `
   padding: 10px 8px;
   text-align: center;
   border: 1.5px solid;
+  cursor: pointer;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fevo-ef-rw-milestone:hover {
+  opacity: 0.85;
+}
+
+.fevo-ef-rw-milestone[data-selected] {
+  box-shadow: 0 0 0 2px var(--fevo-ef-text);
 }
 
 /* Tier 1 — Bronze */
@@ -847,6 +857,64 @@ export const WIDGET_STYLES = `
 
 .fevo-ef-root[data-theme="dark"] .fevo-ef-rw-cta-prompt-icon {
   color: #FFCC00;
+}
+
+/* ===== Reward Detail Panel ===== */
+.fevo-ef-rw-detail {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border-left: 4px solid #d4a574;
+  background: var(--fevo-ef-card-bg);
+  border-top: 1px solid var(--fevo-ef-border);
+  border-right: 1px solid var(--fevo-ef-border);
+  border-bottom: 1px solid var(--fevo-ef-border);
+  animation: fevo-ef-fade-in 0.2s ease-out;
+}
+
+.fevo-ef-rw-detail[data-tier-level="1"] { border-left-color: #d4a574; }
+.fevo-ef-rw-detail[data-tier-level="2"] { border-left-color: #94a3b8; }
+.fevo-ef-rw-detail[data-tier-level="3"] { border-left-color: #eab308; }
+
+.fevo-ef-rw-detail-img {
+  width: 100px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.fevo-ef-rw-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fevo-ef-rw-detail-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-rw-detail-threshold {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-rw-detail-reward {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b8960a;
+}
+
+.fevo-ef-rw-detail-desc {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+  line-height: 1.4;
+  margin-top: 4px;
 }
 
 /* ===== Rewards Dashboard (Page) ===== */

@@ -7,6 +7,8 @@ export type RewardMilestone = {
   threshold: number;
   label: string;
   reward: string;
+  description?: string;
+  image_url?: string;
 };
 
 export type Reward = {

@@ -1,5 +1,6 @@
 /** @jsxImportSource preact */
 
+import { useState } from 'preact/hooks';
 import type { Reward } from '../types';
 
 type RewardSectionProps = {
@@ -9,6 +10,14 @@ type RewardSectionProps = {
 
 export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
   const maxThreshold = reward.milestones[reward.milestones.length - 1].threshold;
+  const [selectedTier, setSelectedTier] = useState<number | null>(null);
+
+  const handleTierClick = (index: number) => {
+    setSelectedTier(selectedTier === index ? null : index);
+  };
+
+  const selected = selectedTier !== null ? reward.milestones[selectedTier] : null;
+  const selectedLevel = selectedTier !== null ? selectedTier + 1 : 0;
 
   return (
     <div class="fevo-ef-rw-section">
@@ -28,13 +37,36 @@ export function RewardSection({ reward, offerTitle }: RewardSectionProps) {
       {/* Milestone tiers */}
       <div class="fevo-ef-rw-milestones">
         {reward.milestones.map((m, i) => (
-          <div key={m.tier} class="fevo-ef-rw-milestone" data-tier-level={i + 1}>
+          <div
+            key={m.tier}
+            class="fevo-ef-rw-milestone"
+            data-tier-level={i + 1}
+            data-selected={selectedTier === i ? '' : undefined}
+            onClick={() => handleTierClick(i)}
+          >
             <div class="fevo-ef-rw-milestone-tier">{m.label}</div>
             <div class="fevo-ef-rw-milestone-threshold">{m.threshold} sold</div>
             <div class="fevo-ef-rw-milestone-reward">{m.reward}</div>
           </div>
         ))}
       </div>
+
+      {/* Detail panel */}
+      {selected && (
+        <div class="fevo-ef-rw-detail" data-tier-level={selectedLevel}>
+          {selected.image_url && (
+            <img class="fevo-ef-rw-detail-img" src={selected.image_url} alt={selected.label} />
+          )}
+          <div class="fevo-ef-rw-detail-body">
+            <div class="fevo-ef-rw-detail-label">{selected.label}</div>
+            <div class="fevo-ef-rw-detail-threshold">{selected.threshold} tickets sold</div>
+            <div class="fevo-ef-rw-detail-reward">{selected.reward}</div>
+            {selected.description && (
+              <div class="fevo-ef-rw-detail-desc">{selected.description}</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Progress bar */}
       <div class="fevo-ef-rw-progress">
