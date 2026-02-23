@@ -159,9 +159,6 @@ export const WIDGET_STYLES = `
 
 /* ===== Reward Callout (Card Body) ===== */
 .fevo-ef-rw-card-callout {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   background: #FFFDF0;
   border: 1px solid rgba(255, 204, 0, 0.4);
   border-radius: 8px;
@@ -174,19 +171,18 @@ export const WIDGET_STYLES = `
   border-color: rgba(184, 150, 10, 0.4);
 }
 
-.fevo-ef-rw-card-callout-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: #b8960a;
-  margin-top: 1px;
+.fevo-ef-rw-card-callout-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
-.fevo-ef-rw-card-callout-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+.fevo-ef-rw-card-callout-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #b8960a;
 }
 
 .fevo-ef-rw-card-callout-headline {
@@ -196,17 +192,54 @@ export const WIDGET_STYLES = `
 }
 
 .fevo-ef-rw-card-callout-tiers {
-  font-size: 11px;
-  color: var(--fevo-ef-text-secondary);
-  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.fevo-ef-rw-card-callout-tiers strong {
-  font-weight: 600;
+.fevo-ef-rw-card-callout-tier {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid;
+  font-size: 11px;
+  line-height: 1.3;
 }
-.fevo-ef-rw-card-callout-tiers strong[data-tier-level="1"] { color: #a0714a; }
-.fevo-ef-rw-card-callout-tiers strong[data-tier-level="2"] { color: #64748b; }
-.fevo-ef-rw-card-callout-tiers strong[data-tier-level="3"] { color: #a16207; }
+
+.fevo-ef-rw-card-callout-tier[data-tier-level="1"] {
+  border-left-color: #d4a574;
+  background: rgba(160, 113, 74, 0.06);
+}
+.fevo-ef-rw-card-callout-tier[data-tier-level="2"] {
+  border-left-color: #94a3b8;
+  background: rgba(100, 116, 139, 0.06);
+}
+.fevo-ef-rw-card-callout-tier[data-tier-level="3"] {
+  border-left-color: #eab308;
+  background: rgba(234, 179, 8, 0.06);
+}
+
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-card-callout-tier[data-tier-level="1"] { background: rgba(160, 113, 74, 0.12); }
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-card-callout-tier[data-tier-level="2"] { background: rgba(100, 116, 139, 0.12); }
+.fevo-ef-root[data-theme="dark"] .fevo-ef-rw-card-callout-tier[data-tier-level="3"] { background: rgba(234, 179, 8, 0.12); }
+
+.fevo-ef-rw-card-callout-tier-label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fevo-ef-rw-card-callout-tier[data-tier-level="1"] .fevo-ef-rw-card-callout-tier-label { color: #a0714a; }
+.fevo-ef-rw-card-callout-tier[data-tier-level="2"] .fevo-ef-rw-card-callout-tier-label { color: #64748b; }
+.fevo-ef-rw-card-callout-tier[data-tier-level="3"] .fevo-ef-rw-card-callout-tier-label { color: #a16207; }
+
+.fevo-ef-rw-card-callout-tier-reward {
+  color: var(--fevo-ef-text);
+  font-weight: 500;
+  text-align: right;
+}
 
 .fevo-ef-card-footer {
   display: flex;
