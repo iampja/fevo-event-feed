@@ -41,7 +41,7 @@ tags:
   - name: Admin - Offers
     description: Offer management and enrichment
   - name: Admin - Organizations
-    description: Organization CRUD
+    description: Organization listing (read-only, synced from FEVO)
   - name: Admin - Segments
     description: Curated segment management
   - name: Admin - Kill Switch
@@ -616,41 +616,6 @@ paths:
                     items:
                       $ref: "#/components/schemas/Organization"
 
-    post:
-      tags: [Admin - Organizations]
-      summary: Create organization
-      security:
-        - InternalAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [name]
-              properties:
-                name:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                logo_url:
-                  type: string
-                  format: uri
-                  nullable: true
-                fevo_org_id:
-                  type: string
-                  nullable: true
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Organization"
-
   /api/v1/event-feed/admin/organizations/{orgId}:
     get:
       tags: [Admin - Organizations]
@@ -673,73 +638,6 @@ paths:
                 properties:
                   data:
                     $ref: "#/components/schemas/Organization"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-    put:
-      tags: [Admin - Organizations]
-      summary: Update organization
-      security:
-        - InternalAuth: []
-      parameters:
-        - name: orgId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                logo_url:
-                  type: string
-                  format: uri
-                  nullable: true
-                fevo_org_id:
-                  type: string
-                  nullable: true
-      responses:
-        "200":
-          description: Updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Organization"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-    delete:
-      tags: [Admin - Organizations]
-      summary: Delete organization
-      security:
-        - InternalAuth: []
-      parameters:
-        - name: orgId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Organization deleted
         "404":
           $ref: "#/components/responses/NotFound"
 

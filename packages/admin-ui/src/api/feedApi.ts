@@ -335,18 +335,6 @@ export interface Organization {
   updated_at: string;
 }
 
-export interface CreateOrganizationPayload {
-  name: string;
-  logo_url?: string | null;
-  fevo_org_id?: string | null;
-}
-
-export interface UpdateOrganizationPayload {
-  name?: string;
-  logo_url?: string | null;
-  fevo_org_id?: string | null;
-}
-
 export async function getOrganizations(): Promise<Organization[]> {
   const response = await apiClient.get<{ data: Organization[] }>(
     '/admin/organizations',
@@ -359,31 +347,6 @@ export async function getOrganization(orgId: string): Promise<Organization> {
     `/admin/organizations/${orgId}`,
   );
   return response.data.data;
-}
-
-export async function createOrganization(
-  payload: CreateOrganizationPayload,
-): Promise<Organization> {
-  const response = await apiClient.post<{ data: Organization }>(
-    '/admin/organizations',
-    payload,
-  );
-  return response.data.data;
-}
-
-export async function updateOrganization(
-  orgId: string,
-  payload: UpdateOrganizationPayload,
-): Promise<Organization> {
-  const response = await apiClient.put<{ data: Organization }>(
-    `/admin/organizations/${orgId}`,
-    payload,
-  );
-  return response.data.data;
-}
-
-export async function deleteOrganization(orgId: string): Promise<void> {
-  await apiClient.delete(`/admin/organizations/${orgId}`);
 }
 
 // ========================

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
+
 import { internalAuth } from '../middleware/auth';
 import { adminRateLimiter } from '../middleware/rateLimit';
 import {
@@ -30,13 +30,7 @@ import {
   addOfferToSegment,
   removeOfferFromSegment,
 } from '../services/segmentService';
-import {
-  listRewards,
-  getRewardByOfferId,
-  createReward,
-  updateReward,
-  deleteReward,
-} from '../services/rewardService';
+
 import { listOffers, getOfferById, getOfferStats } from '../services/offerService';
 import { triggerFeedRefresh } from '../jobs/feedRefresh';
 import db from '../db/connection';
@@ -537,19 +531,6 @@ router.delete('/segments/:segmentId/offers/:offerId', async (req: Request, res: 
   }
 });
 
-// ── POST /reseed ────────────────────────────────────────────────────────────
-
-router.post('/reseed', async (_req: Request, res: Response) => {
-  try {
-    const db = (await import('../db/connection')).default;
-    await db.seed.run();
-    res.json({ message: 'Database reseeded with stub data' });
-  } catch (err) {
-    console.error('POST /reseed error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // FEED MANAGEMENT ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -636,144 +617,7 @@ router.put('/offers/:offerId', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// REWARD PROGRAM ROUTES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ── GET /rewards ────────────────────────────────────────────────────────────
-
-router.get('/rewards', async (_req: Request, res: Response) => {
-  try {
-    const rewards = await listRewards();
-    res.json({ data: rewards });
-  } catch (err) {
-    console.error('GET /rewards error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── GET /offers/:offerId/reward ─────────────────────────────────────────────
-
-router.get('/offers/:offerId/reward', async (req: Request, res: Response) => {
-  try {
-    const reward = await getRewardByOfferId(req.params.offerId);
-    if (!reward) {
-      res.status(404).json({ error: 'No reward program found for this offer' });
-      return;
-    }
-    res.json({ data: reward });
-  } catch (err) {
-    console.error('GET /offers/:offerId/reward error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── POST /offers/:offerId/reward ────────────────────────────────────────────
-
-const milestoneSchema = z.object({
-  tier: z.number().int().min(1),
-  threshold: z.number().int().min(1),
-  label: z.string().min(1).max(100),
-  reward: z.string().min(1).max(255),
-  description: z.string().max(1000).optional(),
-  image_url: z.string().url().optional(),
-});
-
-const createRewardSchema = z.object({
-  type: z.enum(['money', 'points', 'discount', 'merchandise', 'custom']),
-  headline: z.string().min(1).max(255),
-  rule: z.object({
-    amount: z.number().min(0),
-    unit: z.string().min(1),
-    per: z.string().min(1),
-  }),
-  milestones: z.array(milestoneSchema).min(1).max(10),
-});
-
-router.post('/offers/:offerId/reward', async (req: Request, res: Response) => {
-  try {
-    const parsed = createRewardSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const reward = await createReward({
-      offer_id: req.params.offerId,
-      ...parsed.data,
-    });
-
-    res.status(201).json({ data: reward });
-  } catch (err: any) {
-    if (err.message?.includes('already exists')) {
-      res.status(409).json({ error: err.message });
-      return;
-    }
-    if (err.message?.includes('not found')) {
-      res.status(404).json({ error: err.message });
-      return;
-    }
-    console.error('POST /offers/:offerId/reward error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── PUT /offers/:offerId/reward ─────────────────────────────────────────────
-
-const updateRewardSchema = z.object({
-  type: z.enum(['money', 'points', 'discount', 'merchandise', 'custom']).optional(),
-  headline: z.string().min(1).max(255).optional(),
-  rule: z.object({
-    amount: z.number().min(0),
-    unit: z.string().min(1),
-    per: z.string().min(1),
-  }).optional(),
-  milestones: z.array(milestoneSchema).min(1).max(10).optional(),
-});
-
-router.put('/offers/:offerId/reward', async (req: Request, res: Response) => {
-  try {
-    const parsed = updateRewardSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const reward = await updateReward(req.params.offerId, parsed.data);
-    res.json({ data: reward });
-  } catch (err: any) {
-    if (err.message?.includes('not found')) {
-      res.status(404).json({ error: err.message });
-      return;
-    }
-    console.error('PUT /offers/:offerId/reward error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── DELETE /offers/:offerId/reward ──────────────────────────────────────────
-
-router.delete('/offers/:offerId/reward', async (req: Request, res: Response) => {
-  try {
-    await deleteReward(req.params.offerId);
-    res.json({ data: { message: 'Reward program deleted successfully' } });
-  } catch (err: any) {
-    if (err.message?.includes('not found')) {
-      res.status(404).json({ error: err.message });
-      return;
-    }
-    console.error('DELETE /offers/:offerId/reward error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ORGANIZATION CRUD ROUTES
+// ORGANIZATION ROUTES (read-only — orgs are synced from FEVO)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── GET /organizations ──────────────────────────────────────────────────────
@@ -800,99 +644,6 @@ router.get('/organizations/:orgId', async (req: Request, res: Response) => {
     res.json({ data: org });
   } catch (err) {
     console.error('GET /organizations/:orgId error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── POST /organizations ─────────────────────────────────────────────────────
-
-const createOrgSchema = z.object({
-  name: z.string().min(1).max(255),
-  logo_url: z.string().url().nullable().optional(),
-  fevo_org_id: z.string().nullable().optional(),
-});
-
-router.post('/organizations', async (req: Request, res: Response) => {
-  try {
-    const parsed = createOrgSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const org = {
-      id: uuidv4(),
-      name: parsed.data.name,
-      logo_url: parsed.data.logo_url || null,
-      fevo_org_id: parsed.data.fevo_org_id || null,
-      created_at: now,
-      updated_at: now,
-    };
-
-    await db('organizations').insert(org);
-    res.status(201).json({ data: org });
-  } catch (err) {
-    console.error('POST /organizations error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── PUT /organizations/:orgId ───────────────────────────────────────────────
-
-const updateOrgSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  logo_url: z.string().url().nullable().optional(),
-  fevo_org_id: z.string().nullable().optional(),
-});
-
-router.put('/organizations/:orgId', async (req: Request, res: Response) => {
-  try {
-    const parsed = updateOrgSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const existing = await db('organizations').where('id', req.params.orgId).first();
-    if (!existing) {
-      res.status(404).json({ error: 'Organization not found' });
-      return;
-    }
-
-    await db('organizations').where('id', req.params.orgId).update({
-      ...parsed.data,
-      updated_at: new Date().toISOString(),
-    });
-
-    const updated = await db('organizations').where('id', req.params.orgId).first();
-    res.json({ data: updated });
-  } catch (err) {
-    console.error('PUT /organizations/:orgId error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── DELETE /organizations/:orgId ────────────────────────────────────────────
-
-router.delete('/organizations/:orgId', async (req: Request, res: Response) => {
-  try {
-    const existing = await db('organizations').where('id', req.params.orgId).first();
-    if (!existing) {
-      res.status(404).json({ error: 'Organization not found' });
-      return;
-    }
-
-    await db('organizations').where('id', req.params.orgId).del();
-    res.json({ data: { message: 'Organization deleted successfully' } });
-  } catch (err) {
-    console.error('DELETE /organizations/:orgId error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
