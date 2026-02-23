@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { colors, spacings, typography, radius } from '@/theme/tokens';
 import { Modal } from '@/components/ui/Modal';
 import { FormLabel } from '@/components/ui/FormLabel';
+import { getOrganizations, Organization } from '@/api/feedApi';
 
 interface KillOrgModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ const FormGroup = styled.div`
   margin-bottom: ${spacings.xl};
 `;
 
-const TextInput = styled.input`
+const SelectInput = styled.select`
   width: 100%;
   height: 40px;
   padding: ${spacings.md} ${spacings.lg};
@@ -29,10 +30,6 @@ const TextInput = styled.input`
     outline: none;
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-  }
-
-  &::placeholder {
-    color: ${colors.text.neutral.tertiary};
   }
 `;
 
@@ -92,23 +89,11 @@ const WarningText = styled.p`
   margin: 0;
 `;
 
-const ConfirmSection = styled.div`
-  margin-top: ${spacings.xl};
-  padding: ${spacings.xl};
-  border: 1px dashed ${colors.surface.danger.primary};
-  border-radius: ${radius.cornerRadiusMd};
-  background: ${colors.surface.neutral.bgSubtle};
-`;
-
-const ConfirmPrompt = styled.p`
+const SelectedInfo = styled.div`
+  margin-top: ${spacings.md};
   font-size: ${typography.fontSize.sm};
   color: ${colors.text.neutral.secondary};
-  margin-bottom: ${spacings.md};
-`;
-
-const ConfirmInput = styled(TextInput)<{ $isMatch: boolean }>`
-  border-color: ${({ $isMatch }) =>
-    $isMatch ? colors.surface.success.primary : colors.border.neutral.primary};
+  font-family: monospace;
 `;
 
 export const KillOrgModal: React.FC<KillOrgModalProps> = ({
@@ -118,20 +103,27 @@ export const KillOrgModal: React.FC<KillOrgModalProps> = ({
 }) => {
   const [orgId, setOrgId] = useState('');
   const [reason, setReason] = useState('');
-  const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [orgs, setOrgs] = useState<Organization[]>([]);
 
-  const isConfirmed = orgId.trim() !== '' && confirmText === orgId.trim();
-  const canSubmit = orgId.trim() !== '' && reason.trim() !== '' && isConfirmed;
+  useEffect(() => {
+    if (isOpen) {
+      getOrganizations()
+        .then(setOrgs)
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  const selectedOrg = orgs.find((o) => o.id === orgId);
+  const canSubmit = orgId !== '' && reason.trim() !== '';
 
   const handleConfirm = async () => {
     if (!canSubmit) return;
     try {
       setLoading(true);
-      await onConfirm(orgId.trim(), reason.trim());
+      await onConfirm(orgId, reason.trim());
       setOrgId('');
       setReason('');
-      setConfirmText('');
       onClose();
     } catch {
       // Error handling done by parent
@@ -143,7 +135,6 @@ export const KillOrgModal: React.FC<KillOrgModalProps> = ({
   const handleCancel = () => {
     setOrgId('');
     setReason('');
-    setConfirmText('');
     onClose();
   };
 
@@ -168,15 +159,24 @@ export const KillOrgModal: React.FC<KillOrgModalProps> = ({
 
       <FormGroup>
         <FormLabel htmlFor="kill-org-id" required>
-          Organization ID
+          Organization
         </FormLabel>
-        <TextInput
+        <SelectInput
           id="kill-org-id"
           value={orgId}
           onChange={(e) => setOrgId(e.target.value)}
-          placeholder="Enter the Organization ID"
           autoFocus
-        />
+        >
+          <option value="">Select an organization...</option>
+          {orgs.map((org) => (
+            <option key={org.id} value={org.id}>
+              {org.name}
+            </option>
+          ))}
+        </SelectInput>
+        {selectedOrg && (
+          <SelectedInfo>ID: {selectedOrg.id}</SelectedInfo>
+        )}
       </FormGroup>
 
       <FormGroup>
@@ -190,20 +190,6 @@ export const KillOrgModal: React.FC<KillOrgModalProps> = ({
           placeholder="A reason is required for organization-level kills"
         />
       </FormGroup>
-
-      {orgId.trim() && (
-        <ConfirmSection>
-          <ConfirmPrompt>
-            Type <strong>{orgId.trim()}</strong> to confirm this action:
-          </ConfirmPrompt>
-          <ConfirmInput
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder={orgId.trim()}
-            $isMatch={isConfirmed}
-          />
-        </ConfirmSection>
-      )}
     </Modal>
   );
 };
