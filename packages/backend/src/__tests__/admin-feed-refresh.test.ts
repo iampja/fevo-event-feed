@@ -20,7 +20,7 @@ beforeAll(async () => {
   await db('event_feed_segment_offers').del();
   await db('event_feed_segments').del();
   await db('feed_exclusions').del();
-  await db('event_feed_kills').del();
+
   await db('feed_cache').del();
   await db('api_keys').del();
   await db('offers').del();
@@ -88,7 +88,7 @@ afterAll(async () => {
   await db('event_feed_segment_offers').del();
   await db('event_feed_segments').del();
   await db('feed_exclusions').del();
-  await db('event_feed_kills').del();
+
   await db('feed_cache').del();
   await db('api_keys').del();
   await db('offers').del();

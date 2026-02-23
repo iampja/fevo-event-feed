@@ -563,7 +563,6 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('event_feed_segment_offers').del();
   await knex('event_feed_segments').del();
   await knex('feed_exclusions').del();
-  await knex('event_feed_kills').del();
   await knex('feed_cache').del();
   await knex('api_keys').del();
   await knex('sync_log').del();

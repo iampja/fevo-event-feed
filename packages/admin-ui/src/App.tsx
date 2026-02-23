@@ -4,7 +4,6 @@ import { AuthProvider } from '@/auth/AuthContext';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { LoginPage } from '@/pages/LoginPage';
-import { KillSwitchDashboard } from '@/components/killswitch/KillSwitchDashboard';
 import { AllOffersPage } from '@/pages/AllOffersPage';
 import { OfferDetailPage } from '@/pages/OfferDetailPage';
 import { SegmentsPage } from '@/pages/SegmentsPage';
@@ -40,8 +39,7 @@ function App() {
                 <Sidebar />
                 <MainContent>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/kills" replace />} />
-                    <Route path="/kills" element={<KillSwitchDashboard />} />
+                    <Route path="/" element={<Navigate to="/offers" replace />} />
                     <Route path="/offers" element={<AllOffersPage />} />
                     <Route path="/offers/:offerId" element={<OfferDetailPage />} />
                     <Route path="/segments" element={<SegmentsPage />} />

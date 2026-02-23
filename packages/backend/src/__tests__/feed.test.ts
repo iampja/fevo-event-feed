@@ -23,7 +23,6 @@ beforeAll(async () => {
   await db('event_feed_segment_offers').del();
   await db('event_feed_segments').del();
   await db('feed_exclusions').del();
-  await db('event_feed_kills').del();
   await db('feed_cache').del();
   await db('api_keys').del();
   await db('offers').del();
@@ -148,7 +147,6 @@ afterAll(async () => {
   await db('event_feed_segment_offers').del();
   await db('event_feed_segments').del();
   await db('feed_exclusions').del();
-  await db('event_feed_kills').del();
   await db('feed_cache').del();
   await db('api_keys').del();
   await db('offers').del();
@@ -184,93 +182,7 @@ describe('GET /api/v1/event-feed', () => {
     expect(ids).not.toContain('test-offer-inactive-1');
   });
 
-  it('should exclude killed offers from the feed', async () => {
-    // Kill offer #1
-    const killRes = await request(app)
-      .post('/api/v1/event-feed/admin/kills/offer')
-      .set('x-internal-auth', INTERNAL_TOKEN)
-      .send({ offerId: 'test-offer-enabled-1', reason: 'test kill' })
-      .expect(201);
-
-    expect(killRes.body.data.target_id).toBe('test-offer-enabled-1');
-
-    // Fetch the feed
-    const feedRes = await request(app)
-      .get('/api/v1/event-feed')
-      .set('x-api-key', API_KEY)
-      .expect(200);
-
-    const ids = feedRes.body.data.map((o: any) => o.offer_id);
-    expect(ids).not.toContain('test-offer-enabled-1');
-    expect(feedRes.body.meta.total).toBe(4);
-  });
-
-  it('should exclude all org offers when org is killed', async () => {
-    // Kill org-bsc-test (offers 4 and 5)
-    await request(app)
-      .post('/api/v1/event-feed/admin/kills/organization')
-      .set('x-internal-auth', INTERNAL_TOKEN)
-      .send({ orgId: 'org-bsc-test', reason: 'org-level kill' })
-      .expect(201);
-
-    const feedRes = await request(app)
-      .get('/api/v1/event-feed')
-      .set('x-api-key', API_KEY)
-      .expect(200);
-
-    const ids = feedRes.body.data.map((o: any) => o.offer_id);
-    expect(ids).not.toContain('test-offer-enabled-4');
-    expect(ids).not.toContain('test-offer-enabled-5');
-    // Only offers 2 and 3 remain (1 was killed individually, 4 & 5 org killed)
-    expect(feedRes.body.meta.total).toBe(2);
-  });
-
-  it('should restore a killed offer back into the feed', async () => {
-    // Get kills to find the offer-level kill
-    const killsRes = await request(app)
-      .get('/api/v1/event-feed/admin/kills')
-      .set('x-internal-auth', INTERNAL_TOKEN)
-      .expect(200);
-
-    const offerKill = killsRes.body.data.find(
-      (k: any) => k.target_type === 'offer' && k.target_id === 'test-offer-enabled-1'
-    );
-    expect(offerKill).toBeDefined();
-
-    // Restore
-    await request(app)
-      .post(`/api/v1/event-feed/admin/kills/${offerKill.id}/restore`)
-      .set('x-internal-auth', INTERNAL_TOKEN)
-      .expect(200);
-
-    // Check feed
-    const feedRes = await request(app)
-      .get('/api/v1/event-feed')
-      .set('x-api-key', API_KEY)
-      .expect(200);
-
-    const ids = feedRes.body.data.map((o: any) => o.offer_id);
-    expect(ids).toContain('test-offer-enabled-1');
-    expect(feedRes.body.meta.total).toBe(3); // 1, 2, 3 (4 & 5 still org-killed)
-  });
-
   it('should paginate results correctly', async () => {
-    // Restore org kill to get all 5 offers back
-    const killsRes = await request(app)
-      .get('/api/v1/event-feed/admin/kills')
-      .set('x-internal-auth', INTERNAL_TOKEN)
-      .expect(200);
-
-    const orgKill = killsRes.body.data.find(
-      (k: any) => k.target_type === 'organization' && k.target_id === 'org-bsc-test'
-    );
-    if (orgKill) {
-      await request(app)
-        .post(`/api/v1/event-feed/admin/kills/${orgKill.id}/restore`)
-        .set('x-internal-auth', INTERNAL_TOKEN)
-        .expect(200);
-    }
-
     // Page 1 with per_page=2
     const page1 = await request(app)
       .get('/api/v1/event-feed?page=1&per_page=2')
@@ -337,7 +249,7 @@ describe('Authentication', () => {
 
   it('should return 401 for admin routes without internal auth', async () => {
     const res = await request(app)
-      .get('/api/v1/event-feed/admin/kills')
+      .get('/api/v1/event-feed/admin/offers')
       .expect(401);
 
     expect(res.body.error).toMatch(/Unauthorized/i);
@@ -365,7 +277,7 @@ describe('Rate Limiting', () => {
     for (let i = 0; i < 35; i++) {
       promises.push(
         request(app)
-          .get('/api/v1/event-feed/admin/kills')
+          .get('/api/v1/event-feed/admin/offers')
           .set('x-internal-auth', INTERNAL_TOKEN)
       );
     }

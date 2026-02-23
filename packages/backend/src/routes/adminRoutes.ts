@@ -4,12 +4,6 @@ import { z } from 'zod';
 import { internalAuth } from '../middleware/auth';
 import { adminRateLimiter } from '../middleware/rateLimit';
 import {
-  killOffer,
-  killOrganization,
-  restoreKill,
-  getActiveKills,
-} from '../services/killService';
-import {
   enableDistribution,
   disableDistribution,
   getDistributionStatus,
@@ -40,111 +34,6 @@ const router = Router();
 // All admin routes require internal auth
 router.use(internalAuth);
 router.use(adminRateLimiter);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// KILL SWITCH ROUTES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ── GET /kills ───────────────────────────────────────────────────────────────
-
-router.get('/kills', async (_req: Request, res: Response) => {
-  try {
-    const kills = await getActiveKills();
-    res.json({ data: kills });
-  } catch (err) {
-    console.error('GET /kills error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── POST /kills/offer ────────────────────────────────────────────────────────
-
-const killOfferSchema = z.object({
-  offerId: z.string().min(1),
-  reason: z.string().optional(),
-});
-
-router.post('/kills/offer', async (req: Request, res: Response) => {
-  try {
-    const parsed = killOfferSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const { offerId, reason } = parsed.data;
-    const killedBy = (req.headers['x-user'] as string) || 'admin';
-    const kill = await killOffer(offerId, killedBy, reason);
-
-    res.status(201).json({ data: kill });
-  } catch (err: any) {
-    if (err.message?.startsWith('Offer not found')) {
-      res.status(404).json({ error: err.message });
-      return;
-    }
-    console.error('POST /kills/offer error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── POST /kills/organization ─────────────────────────────────────────────────
-
-const killOrgSchema = z.object({
-  orgId: z.string().min(1),
-  reason: z.string().min(1),
-});
-
-router.post('/kills/organization', async (req: Request, res: Response) => {
-  try {
-    const parsed = killOrgSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const { orgId, reason } = parsed.data;
-    const killedBy = (req.headers['x-user'] as string) || 'admin';
-    const kill = await killOrganization(orgId, killedBy, reason);
-
-    res.status(201).json({ data: kill });
-  } catch (err: any) {
-    if (err.message?.startsWith('No offers found')) {
-      res.status(404).json({ error: err.message });
-      return;
-    }
-    console.error('POST /kills/organization error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── POST /kills/:killId/restore ──────────────────────────────────────────────
-
-router.post('/kills/:killId/restore', async (req: Request, res: Response) => {
-  try {
-    const restoredBy = (req.headers['x-user'] as string) || 'admin';
-    const kill = await restoreKill(req.params.killId, restoredBy);
-
-    if (!kill) {
-      res.status(404).json({ error: 'Kill record not found' });
-      return;
-    }
-
-    res.json({ data: kill });
-  } catch (err: any) {
-    if (err.message?.includes('already restored')) {
-      res.status(409).json({ error: err.message });
-      return;
-    }
-    console.error('POST /kills/:killId/restore error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISTRIBUTION ROUTES

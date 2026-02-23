@@ -1,54 +1,6 @@
 import { apiClient } from './client';
 
 // ========================
-// KILL TYPES & METHODS
-// ========================
-
-export interface Kill {
-  id: string;
-  targetType: 'offer' | 'organization';
-  targetId: string;
-  targetName: string;
-  reason?: string;
-  killedBy: string;
-  killedAt: string;
-  restoredAt?: string;
-  restoredBy?: string;
-}
-
-export interface KillOfferPayload {
-  offerId: string;
-  reason?: string;
-}
-
-export interface KillOrganizationPayload {
-  organizationId: string;
-  reason: string;
-}
-
-export async function getActiveKills(): Promise<Kill[]> {
-  const response = await apiClient.get<{ data: Kill[] }>('/admin/kills');
-  return response.data.data;
-}
-
-export async function killOffer(payload: KillOfferPayload): Promise<Kill> {
-  const response = await apiClient.post<{ data: Kill }>('/admin/kills/offer', payload);
-  return response.data.data;
-}
-
-export async function killOrganization(payload: KillOrganizationPayload): Promise<Kill> {
-  const response = await apiClient.post<{ data: Kill }>(
-    '/admin/kills/organization',
-    payload,
-  );
-  return response.data.data;
-}
-
-export async function restoreKill(killId: string): Promise<void> {
-  await apiClient.post(`/admin/kills/${killId}/restore`);
-}
-
-// ========================
 // DISTRIBUTION TYPES & METHODS
 // ========================
 

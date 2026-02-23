@@ -160,22 +160,6 @@ export interface FeedOffer {
   updated_at: string;
 }
 
-// ── Kill ─────────────────────────────────────────────────────────────────────
-
-export type KillTargetType = 'offer' | 'organization';
-
-export interface Kill {
-  id: string;
-  target_type: KillTargetType;
-  target_id: string;
-  killed_by: string;
-  killed_at: string;
-  reason: string | null;
-  is_active: boolean;
-  restored_by: string | null;
-  restored_at: string | null;
-}
-
 // ── Segment ──────────────────────────────────────────────────────────────────
 
 export type SegmentType =
@@ -209,7 +193,7 @@ export interface SegmentOffer {
 
 // ── Feed exclusion ───────────────────────────────────────────────────────────
 
-export type ExclusionReason = 'killed' | 'sold_out' | 'inactive' | 'deleted';
+export type ExclusionReason = 'sold_out' | 'inactive' | 'deleted';
 
 export interface FeedExclusion {
   id: string;

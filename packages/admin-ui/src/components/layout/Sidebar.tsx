@@ -144,25 +144,6 @@ export const Sidebar: React.FC = () => {
       </BrandSection>
 
       <NavSection>
-        <SectionHeader>Operations</SectionHeader>
-        <StyledNavLink to="/kills">
-          <NavIcon>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-              <line x1="12" y1="2" x2="12" y2="12" />
-            </svg>
-          </NavIcon>
-          Kill Switch
-        </StyledNavLink>
-
         <SectionHeader>Manage Offers</SectionHeader>
         <StyledNavLink to="/offers" end>
           <NavIcon>
