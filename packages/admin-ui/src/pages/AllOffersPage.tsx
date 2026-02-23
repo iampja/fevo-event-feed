@@ -213,7 +213,7 @@ export const AllOffersPage: React.FC = () => {
       <Table<OfferRow>
         columns={columns}
         data={offers as OfferRow[]}
-        onRowClick={(row) => navigate(`/offers/${row.id}/distribution`)}
+        onRowClick={(row) => navigate(`/offers/${row.id}`)}
         emptyMessage={loading ? 'Loading offers...' : 'No offers found'}
       />
 

@@ -1,42 +1,29 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { apiClient } from '@/api/client';
+import { getOffer, getDistributionStatus, updateDistribution, Offer, DistributionStatus } from '@/api/feedApi';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/Button';
+import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Badge } from '@/components/ui/Badge';
+import { DistributionToggle } from '@/components/distribution/DistributionToggle';
+import { showSuccess, showError } from '@/components/ui/Toast';
 import { colors, spacings, typography, radius, shadows } from '@/theme/tokens';
-
-interface OfferDetail {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  price_min: number | null;
-  price_max: number | null;
-  currency: string;
-  date: string | null;
-  venue_name: string | null;
-  venue_city: string | null;
-  venue_state: string | null;
-  availability: string;
-  organization_id: string | null;
-  organization_name: string | null;
-  checkout_url: string | null;
-  tags: string | null;
-  status: string;
-  distribution_enabled: boolean;
-  source?: string;
-  video_url?: string | null;
-  tickets_available?: number | null;
-  fevo_offer_id?: string | null;
-  fevo_synced_at?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import {
+  formatDateTime,
+  formatStatusLabel,
+  getStatusBadgeVariant,
+  formatPriceRange,
+} from '@/utils/formatters';
 
 const Container = styled.div`
   max-width: 900px;
+`;
+
+const MetaBadges = styled.div`
+  display: flex;
+  gap: ${spacings.md};
+  flex-wrap: wrap;
+  margin-bottom: ${spacings['2xl']};
 `;
 
 const Card = styled.div`
@@ -57,299 +44,344 @@ const SectionTitle = styled.h3`
   border-bottom: 1px solid ${colors.border.neutral.subtle};
 `;
 
-const FormGrid = styled.div`
+const FieldGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${spacings.xl};
 `;
 
-const FormGroup = styled.div<{ $full?: boolean }>`
+const Field = styled.div<{ $full?: boolean }>`
   grid-column: ${(p) => (p.$full ? '1 / -1' : 'auto')};
 `;
 
-const Label = styled.label`
-  display: block;
+const FieldLabel = styled.div`
   font-size: ${typography.fontSize.sm};
   font-weight: ${typography.fontWeight.medium};
   color: ${colors.text.neutral.secondary};
   margin-bottom: ${spacings.sm};
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: ${spacings.md} ${spacings.lg};
-  border: 1px solid ${colors.border.neutral.primary};
-  border-radius: ${radius.cornerRadiusMd};
+const FieldValue = styled.div`
   font-size: ${typography.fontSize.md};
-  font-family: ${typography.fontFamily};
-  box-sizing: border-box;
+  color: ${colors.text.neutral.primary};
+  line-height: ${typography.lineHeight.normal};
+`;
 
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+const MonoValue = styled.span`
+  font-family: monospace;
+  font-size: 13px;
+  color: ${colors.text.neutral.secondary};
+`;
+
+const Thumbnail = styled.img`
+  max-width: 200px;
+  max-height: 140px;
+  border-radius: ${radius.cornerRadiusMd};
+  object-fit: cover;
+  border: 1px solid ${colors.border.neutral.primary};
+`;
+
+const OrgLink = styled(Link)`
+  color: #2563eb;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
   }
 `;
 
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: ${spacings.md} ${spacings.lg};
-  border: 1px solid ${colors.border.neutral.primary};
-  border-radius: ${radius.cornerRadiusMd};
-  font-size: ${typography.fontSize.md};
-  font-family: ${typography.fontFamily};
-  min-height: 100px;
-  resize: vertical;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+const ExternalLink = styled.a`
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-all;
+  &:hover {
+    text-decoration: underline;
   }
 `;
 
-const SelectInput = styled.select`
-  width: 100%;
-  padding: ${spacings.md} ${spacings.lg};
-  border: 1px solid ${colors.border.neutral.primary};
-  border-radius: ${radius.cornerRadiusMd};
-  font-size: ${typography.fontSize.md};
-  font-family: ${typography.fontFamily};
-  background: white;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  }
-`;
-
-const MetaBadges = styled.div`
-  display: flex;
-  gap: ${spacings.md};
-  margin-bottom: ${spacings.xl};
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  gap: ${spacings.md};
-  justify-content: flex-end;
+const LastUpdated = styled.div`
   margin-top: ${spacings.xl};
+  padding: ${spacings.xl};
+  background: ${colors.surface.neutral.bgSubtle};
+  border-radius: ${radius.cornerRadiusMd};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.neutral.secondary};
 `;
 
-const StatusMessage = styled.div<{ $type: 'success' | 'error' }>`
-  padding: ${spacings.md} ${spacings.lg};
-  border-radius: ${radius.cornerRadiusMd};
-  margin-bottom: ${spacings.xl};
-  background: ${(p) => (p.$type === 'success' ? '#f0fdf4' : '#fef2f2')};
-  color: ${(p) => (p.$type === 'success' ? '#166534' : '#991b1b')};
-  font-size: ${typography.fontSize.sm};
-`;
+function parseTags(tags: string | null | undefined): string[] {
+  if (!tags) return [];
+  try {
+    const parsed = JSON.parse(tags);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export const OfferDetailPage: React.FC = () => {
   const { offerId } = useParams<{ offerId: string }>();
-  const navigate = useNavigate();
-  const [offer, setOffer] = useState<OfferDetail | null>(null);
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [distribution, setDistribution] = useState<DistributionStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [priceMin, setPriceMin] = useState('');
-  const [priceMax, setPriceMax] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [date, setDate] = useState('');
-  const [venueName, setVenueName] = useState('');
-  const [venueCity, setVenueCity] = useState('');
-  const [venueState, setVenueState] = useState('');
-  const [availability, setAvailability] = useState('available');
-  const [checkoutUrl, setCheckoutUrl] = useState('');
-  const [tagsStr, setTagsStr] = useState('');
-
-  const fetchOffer = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    if (!offerId) return;
     try {
-      const res = await apiClient.get<{ data: OfferDetail }>(`/admin/offers/${offerId}`);
-      const o = res.data.data;
-      setOffer(o);
-      setTitle(o.title || '');
-      setDescription(o.description || '');
-      setImageUrl(o.image_url || '');
-      setVideoUrl(o.video_url || '');
-      setPriceMin(o.price_min != null ? String(o.price_min) : '');
-      setPriceMax(o.price_max != null ? String(o.price_max) : '');
-      setCurrency(o.currency || 'USD');
-      setDate(o.date || '');
-      setVenueName(o.venue_name || '');
-      setVenueCity(o.venue_city || '');
-      setVenueState(o.venue_state || '');
-      setAvailability(o.availability || 'available');
-      setCheckoutUrl(o.checkout_url || '');
-      try {
-        const tags = o.tags ? JSON.parse(o.tags) : [];
-        setTagsStr(tags.join(', '));
-      } catch {
-        setTagsStr('');
-      }
+      setLoading(true);
+      setError(null);
+      const [offerData, distData] = await Promise.all([
+        getOffer(offerId),
+        getDistributionStatus(offerId).catch(() => null),
+      ]);
+      setOffer(offerData);
+      setDistribution(distData);
     } catch {
-      setMessage({ type: 'error', text: 'Failed to load offer' });
+      setError('Failed to load offer');
     } finally {
       setLoading(false);
     }
   }, [offerId]);
 
   useEffect(() => {
-    fetchOffer();
-  }, [fetchOffer]);
+    fetchData();
+  }, [fetchData]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setMessage(null);
+  const handleDistributionToggle = async (enabled: boolean) => {
+    if (!offerId) return;
     try {
-      const tags = tagsStr
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-
-      await apiClient.put(`/admin/offers/${offerId}`, {
-        title,
-        description: description || null,
-        image_url: imageUrl || null,
-        video_url: videoUrl || null,
-        price_min: priceMin ? Number(priceMin) : null,
-        price_max: priceMax ? Number(priceMax) : null,
-        currency,
-        date: date || null,
-        venue_name: venueName || null,
-        venue_city: venueCity || null,
-        venue_state: venueState || null,
-        availability,
-        checkout_url: checkoutUrl || null,
-        tags: tags.length > 0 ? tags : null,
-      });
-      setMessage({ type: 'success', text: 'Offer updated successfully' });
-      fetchOffer();
+      setUpdating(true);
+      const updated = await updateDistribution(offerId, enabled);
+      setDistribution(updated);
+      showSuccess(
+        enabled
+          ? 'Distribution enabled. Offer will appear in the Event Feed.'
+          : 'Distribution disabled. Offer removed from the Event Feed.',
+      );
     } catch {
-      setMessage({ type: 'error', text: 'Failed to update offer' });
+      showError('Failed to update distribution');
     } finally {
-      setSaving(false);
+      setUpdating(false);
     }
   };
 
   if (loading) {
-    return <Container><PageHeader title="Loading..." /></Container>;
+    return (
+      <Container>
+        <PageHeader title="Loading..." />
+      </Container>
+    );
   }
 
-  if (!offer) {
-    return <Container><PageHeader title="Offer Not Found" /></Container>;
+  if (error || !offer) {
+    return (
+      <Container>
+        <PageHeader title="Offer Not Found" />
+      </Container>
+    );
   }
+
+  const tags = parseTags(offer.tags);
 
   return (
     <Container>
-      <PageHeader title="Edit Offer" />
+      <Breadcrumb
+        items={[
+          { label: 'All Offers', to: '/offers' },
+          { label: offer.title },
+        ]}
+      />
+      <PageHeader title={offer.title} />
 
       <MetaBadges>
-        <Badge>{offer.status}</Badge>
-        <Badge>{offer.source || 'manual'}</Badge>
-        {offer.fevo_offer_id && <Badge>FEVO: {offer.fevo_offer_id}</Badge>}
-        {offer.distribution_enabled && <Badge>Distributed</Badge>}
+        <Badge variant={getStatusBadgeVariant(offer.status)}>
+          {formatStatusLabel(offer.status)}
+        </Badge>
+        <Badge variant="neutral">{offer.source || 'manual'}</Badge>
+        {offer.fevo_offer_id && <Badge variant="neutral">FEVO: {offer.fevo_offer_id}</Badge>}
+        <Badge variant={offer.distribution_enabled ? 'success' : 'neutral'}>
+          {offer.distribution_enabled ? 'Distributed' : 'Not Distributed'}
+        </Badge>
       </MetaBadges>
 
-      {message && <StatusMessage $type={message.type}>{message.text}</StatusMessage>}
-
+      {/* Basic Info */}
       <Card>
         <SectionTitle>Basic Information</SectionTitle>
-        <FormGrid>
-          <FormGroup $full>
-            <Label>Title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-          </FormGroup>
-          <FormGroup $full>
-            <Label>Description</Label>
-            <TextArea value={description} onChange={(e) => setDescription(e.target.value)} />
-          </FormGroup>
-          <FormGroup $full>
-            <Label>Tags (comma-separated)</Label>
-            <Input value={tagsStr} onChange={(e) => setTagsStr(e.target.value)} placeholder="nba, theme-night, hello-kitty" />
-          </FormGroup>
-        </FormGrid>
+        <FieldGrid>
+          <Field $full>
+            <FieldLabel>Title</FieldLabel>
+            <FieldValue>{offer.title}</FieldValue>
+          </Field>
+          <Field $full>
+            <FieldLabel>Description</FieldLabel>
+            <FieldValue>{offer.description || '-'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Organization</FieldLabel>
+            <FieldValue>
+              {offer.organization_id ? (
+                <OrgLink to={`/organizations/${offer.organization_id}`}>
+                  {offer.organization_name || offer.organization_id}
+                </OrgLink>
+              ) : (
+                '-'
+              )}
+            </FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Tags</FieldLabel>
+            <FieldValue>
+              {tags.length > 0 ? tags.join(', ') : '-'}
+            </FieldValue>
+          </Field>
+          <Field $full>
+            <FieldLabel>Checkout URL</FieldLabel>
+            <FieldValue>
+              {offer.checkout_url ? (
+                <ExternalLink href={offer.checkout_url} target="_blank" rel="noopener noreferrer">
+                  {offer.checkout_url}
+                </ExternalLink>
+              ) : (
+                '-'
+              )}
+            </FieldValue>
+          </Field>
+        </FieldGrid>
       </Card>
 
+      {/* Media */}
       <Card>
         <SectionTitle>Media</SectionTitle>
-        <FormGrid>
-          <FormGroup $full>
-            <Label>Image URL</Label>
-            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-          </FormGroup>
-          <FormGroup $full>
-            <Label>Video URL</Label>
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." />
-          </FormGroup>
-        </FormGrid>
+        <FieldGrid>
+          <Field>
+            <FieldLabel>Image</FieldLabel>
+            <FieldValue>
+              {offer.image_url ? (
+                <Thumbnail src={offer.image_url} alt={offer.title} />
+              ) : (
+                '-'
+              )}
+            </FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Video URL</FieldLabel>
+            <FieldValue>
+              {offer.video_url ? (
+                <ExternalLink href={offer.video_url} target="_blank" rel="noopener noreferrer">
+                  {offer.video_url}
+                </ExternalLink>
+              ) : (
+                '-'
+              )}
+            </FieldValue>
+          </Field>
+        </FieldGrid>
       </Card>
 
+      {/* Pricing */}
       <Card>
         <SectionTitle>Pricing &amp; Availability</SectionTitle>
-        <FormGrid>
-          <FormGroup>
-            <Label>Min Price</Label>
-            <Input type="number" step="0.01" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Max Price</Label>
-            <Input type="number" step="0.01" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Currency</Label>
-            <Input value={currency} onChange={(e) => setCurrency(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Availability</Label>
-            <SelectInput value={availability} onChange={(e) => setAvailability(e.target.value)}>
-              <option value="available">Available</option>
-              <option value="limited">Limited</option>
-              <option value="sold_out">Sold Out</option>
-            </SelectInput>
-          </FormGroup>
-        </FormGrid>
+        <FieldGrid>
+          <Field>
+            <FieldLabel>Price Range</FieldLabel>
+            <FieldValue>{formatPriceRange(offer.price_min, offer.price_max)}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Currency</FieldLabel>
+            <FieldValue>{offer.currency || 'USD'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Availability</FieldLabel>
+            <FieldValue>{offer.availability || '-'}</FieldValue>
+          </Field>
+          {offer.tickets_available != null && (
+            <Field>
+              <FieldLabel>Tickets Available</FieldLabel>
+              <FieldValue>{offer.tickets_available}</FieldValue>
+            </Field>
+          )}
+        </FieldGrid>
       </Card>
 
+      {/* Event & Venue */}
       <Card>
         <SectionTitle>Event &amp; Venue</SectionTitle>
-        <FormGrid>
-          <FormGroup $full>
-            <Label>Date (ISO format)</Label>
-            <Input value={date} onChange={(e) => setDate(e.target.value)} placeholder="2026-04-15T19:00:00Z" />
-          </FormGroup>
-          <FormGroup>
-            <Label>Venue Name</Label>
-            <Input value={venueName} onChange={(e) => setVenueName(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Venue City</Label>
-            <Input value={venueCity} onChange={(e) => setVenueCity(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Venue State</Label>
-            <Input value={venueState} onChange={(e) => setVenueState(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Checkout URL</Label>
-            <Input value={checkoutUrl} onChange={(e) => setCheckoutUrl(e.target.value)} />
-          </FormGroup>
-        </FormGrid>
+        <FieldGrid>
+          <Field>
+            <FieldLabel>Date</FieldLabel>
+            <FieldValue>{offer.date ? formatDateTime(offer.date) : '-'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Venue Name</FieldLabel>
+            <FieldValue>{offer.venue_name || '-'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>City</FieldLabel>
+            <FieldValue>{offer.venue_city || '-'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>State</FieldLabel>
+            <FieldValue>{offer.venue_state || '-'}</FieldValue>
+          </Field>
+        </FieldGrid>
       </Card>
 
-      <ButtonRow>
-        <Button variant="secondary" onClick={() => navigate('/offers')}>Cancel</Button>
-        <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
-      </ButtonRow>
+      {/* Distribution */}
+      <Card>
+        <SectionTitle>Distribution</SectionTitle>
+        {distribution ? (
+          <>
+            <DistributionToggle
+              offerId={distribution.offerId}
+              enabled={distribution.distributionEnabled}
+              onChange={handleDistributionToggle}
+              offerStatus={distribution.offerStatus}
+              loading={updating}
+            />
+            <LastUpdated>
+              Last updated: {formatDateTime(distribution.lastUpdatedAt)} by{' '}
+              {distribution.lastUpdatedBy}
+            </LastUpdated>
+          </>
+        ) : (
+          <FieldValue>Distribution status unavailable</FieldValue>
+        )}
+      </Card>
+
+      {/* Metadata */}
+      <Card>
+        <SectionTitle>Metadata</SectionTitle>
+        <FieldGrid>
+          <Field>
+            <FieldLabel>Internal ID</FieldLabel>
+            <FieldValue><MonoValue>{offer.id}</MonoValue></FieldValue>
+          </Field>
+          {offer.fevo_offer_id && (
+            <Field>
+              <FieldLabel>FEVO Offer ID</FieldLabel>
+              <FieldValue><MonoValue>{offer.fevo_offer_id}</MonoValue></FieldValue>
+            </Field>
+          )}
+          <Field>
+            <FieldLabel>Source</FieldLabel>
+            <FieldValue>{offer.source || 'manual'}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Created</FieldLabel>
+            <FieldValue>{formatDateTime(offer.created_at)}</FieldValue>
+          </Field>
+          <Field>
+            <FieldLabel>Updated</FieldLabel>
+            <FieldValue>{formatDateTime(offer.updated_at)}</FieldValue>
+          </Field>
+          {offer.fevo_synced_at && (
+            <Field>
+              <FieldLabel>Last Synced</FieldLabel>
+              <FieldValue>{formatDateTime(offer.fevo_synced_at)}</FieldValue>
+            </Field>
+          )}
+        </FieldGrid>
+      </Card>
     </Container>
   );
 };

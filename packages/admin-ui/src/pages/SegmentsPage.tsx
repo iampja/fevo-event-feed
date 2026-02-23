@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { spacings } from '@/theme/tokens';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -45,6 +46,7 @@ type SegmentRow = Segment & Record<string, unknown>;
 const ITEMS_PER_PAGE = 10;
 
 export const SegmentsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -248,6 +250,7 @@ export const SegmentsPage: React.FC = () => {
       <Table<SegmentRow>
         columns={columns}
         data={paginatedSegments as SegmentRow[]}
+        onRowClick={(row) => navigate(`/segments/${row.slug}`)}
         emptyMessage={loading ? 'Loading segments...' : 'No segments found'}
       />
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '@/api/client';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -95,7 +96,17 @@ const InfoBanner = styled.div`
   font-size: ${typography.fontSize.sm};
 `;
 
+const TableRow = styled.tr`
+  cursor: pointer;
+  transition: background 0.1s ease;
+
+  &:hover {
+    background: ${colors.surface.neutral.bgSubtle};
+  }
+`;
+
 export const OrganizationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -150,7 +161,7 @@ export const OrganizationsPage: React.FC = () => {
             </thead>
             <tbody>
               {orgs.map((org) => (
-                <tr key={org.id}>
+                <TableRow key={org.id} onClick={() => navigate(`/organizations/${org.id}`)}>
                   <Td>
                     {org.logo_url ? (
                       <Logo src={org.logo_url} alt={org.name} />
@@ -161,7 +172,7 @@ export const OrganizationsPage: React.FC = () => {
                   <Td style={{ fontWeight: 500 }}>{org.name}</Td>
                   <Td>{org.fevo_org_id || '-'}</Td>
                   <Td>{new Date(org.created_at).toLocaleDateString()}</Td>
-                </tr>
+                </TableRow>
               ))}
             </tbody>
           </Table>

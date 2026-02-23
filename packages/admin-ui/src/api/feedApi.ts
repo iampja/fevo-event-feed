@@ -104,6 +104,11 @@ export interface Offer {
   tags: string;
   status: 'active' | 'inactive' | 'sold_out' | 'deleted';
   distribution_enabled: boolean;
+  source?: string;
+  video_url?: string | null;
+  tickets_available?: number | null;
+  fevo_offer_id?: string | null;
+  fevo_synced_at?: string | null;
   created_at: string;
   updated_at: string;
 }
