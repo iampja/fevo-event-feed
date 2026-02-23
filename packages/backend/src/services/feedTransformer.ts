@@ -1,11 +1,12 @@
 import db from '../db/connection';
-import { Offer, FeedOffer, OfferSource } from '../models/types';
+import { Offer, FeedOffer, FeedReward, OfferSource } from '../models/types';
+import { getRewardsByOfferIds } from './rewardService';
 
 /**
  * Transform a flat DB offer row into the nested FEVO-shaped JSON
  * that the widget expects.
  */
-export function transformOffer(offer: Offer, orgLogoUrl?: string | null): FeedOffer {
+export function transformOffer(offer: Offer, orgLogoUrl?: string | null, reward?: FeedReward): FeedOffer {
   let tags: string[] = [];
   if (offer.tags) {
     try {
@@ -67,6 +68,7 @@ export function transformOffer(offer: Offer, orgLogoUrl?: string | null): FeedOf
       image_url: offer.image_url,
       video_url: offer.video_url ?? null,
     },
+    ...(reward ? { reward } : {}),
     source: (offer.source as OfferSource) || 'manual',
     created_at: offer.created_at,
     updated_at: offer.updated_at,
@@ -93,7 +95,15 @@ export async function transformOffers(offers: Offer[]): Promise<FeedOffer[]> {
     }
   }
 
+  // Batch-fetch reward programs for these offers
+  const offerIds = offers.map((o) => o.id);
+  const rewardsByOffer = await getRewardsByOfferIds(offerIds);
+
   return offers.map((offer) =>
-    transformOffer(offer, offer.organization_id ? orgLogos[offer.organization_id] : null)
+    transformOffer(
+      offer,
+      offer.organization_id ? orgLogos[offer.organization_id] : null,
+      rewardsByOffer[offer.id]
+    )
   );
 }

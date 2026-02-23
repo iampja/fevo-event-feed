@@ -27,6 +27,13 @@ import {
   addOfferToSegment,
   removeOfferFromSegment,
 } from '../services/segmentService';
+import {
+  listRewards,
+  getRewardByOfferId,
+  createReward,
+  updateReward,
+  deleteReward,
+} from '../services/rewardService';
 import { listOffers, getOfferById, getOfferStats } from '../services/offerService';
 import { triggerFeedRefresh } from '../jobs/feedRefresh';
 import db from '../db/connection';
@@ -581,6 +588,143 @@ router.put('/offers/:offerId', async (req: Request, res: Response) => {
     res.json({ data: updated });
   } catch (err) {
     console.error('PUT /offers/:offerId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REWARD PROGRAM ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── GET /rewards ────────────────────────────────────────────────────────────
+
+router.get('/rewards', async (_req: Request, res: Response) => {
+  try {
+    const rewards = await listRewards();
+    res.json({ data: rewards });
+  } catch (err) {
+    console.error('GET /rewards error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /offers/:offerId/reward ─────────────────────────────────────────────
+
+router.get('/offers/:offerId/reward', async (req: Request, res: Response) => {
+  try {
+    const reward = await getRewardByOfferId(req.params.offerId);
+    if (!reward) {
+      res.status(404).json({ error: 'No reward program found for this offer' });
+      return;
+    }
+    res.json({ data: reward });
+  } catch (err) {
+    console.error('GET /offers/:offerId/reward error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── POST /offers/:offerId/reward ────────────────────────────────────────────
+
+const milestoneSchema = z.object({
+  tier: z.number().int().min(1),
+  threshold: z.number().int().min(1),
+  label: z.string().min(1).max(100),
+  reward: z.string().min(1).max(255),
+  description: z.string().max(1000).optional(),
+  image_url: z.string().url().optional(),
+});
+
+const createRewardSchema = z.object({
+  type: z.enum(['money', 'points', 'discount', 'merchandise', 'custom']),
+  headline: z.string().min(1).max(255),
+  rule: z.object({
+    amount: z.number().min(0),
+    unit: z.string().min(1),
+    per: z.string().min(1),
+  }),
+  milestones: z.array(milestoneSchema).min(1).max(10),
+});
+
+router.post('/offers/:offerId/reward', async (req: Request, res: Response) => {
+  try {
+    const parsed = createRewardSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const reward = await createReward({
+      offer_id: req.params.offerId,
+      ...parsed.data,
+    });
+
+    res.status(201).json({ data: reward });
+  } catch (err: any) {
+    if (err.message?.includes('already exists')) {
+      res.status(409).json({ error: err.message });
+      return;
+    }
+    if (err.message?.includes('not found')) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    console.error('POST /offers/:offerId/reward error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── PUT /offers/:offerId/reward ─────────────────────────────────────────────
+
+const updateRewardSchema = z.object({
+  type: z.enum(['money', 'points', 'discount', 'merchandise', 'custom']).optional(),
+  headline: z.string().min(1).max(255).optional(),
+  rule: z.object({
+    amount: z.number().min(0),
+    unit: z.string().min(1),
+    per: z.string().min(1),
+  }).optional(),
+  milestones: z.array(milestoneSchema).min(1).max(10).optional(),
+});
+
+router.put('/offers/:offerId/reward', async (req: Request, res: Response) => {
+  try {
+    const parsed = updateRewardSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const reward = await updateReward(req.params.offerId, parsed.data);
+    res.json({ data: reward });
+  } catch (err: any) {
+    if (err.message?.includes('not found')) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    console.error('PUT /offers/:offerId/reward error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── DELETE /offers/:offerId/reward ──────────────────────────────────────────
+
+router.delete('/offers/:offerId/reward', async (req: Request, res: Response) => {
+  try {
+    await deleteReward(req.params.offerId);
+    res.json({ data: { message: 'Reward program deleted successfully' } });
+  } catch (err: any) {
+    if (err.message?.includes('not found')) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    console.error('DELETE /offers/:offerId/reward error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -34,9 +34,9 @@ export const MOCK_PROGRAMS: UserProgramProgress[] = [
     rewards_earned: 35,
     current_tier: 1,
     milestones: [
-      { tier: 1, threshold: 5, label: 'Bronze', reward: '5 pts per ticket sold' },
-      { tier: 2, threshold: 15, label: 'Silver', reward: '8 pts per ticket + Priority Access' },
-      { tier: 3, threshold: 30, label: 'Gold', reward: '12 pts per ticket + VIP Experience' },
+      { tier: 1, threshold: 5, label: 'Bronze', reward: '25 reward points' },
+      { tier: 2, threshold: 15, label: 'Silver', reward: '120 reward points' },
+      { tier: 3, threshold: 30, label: 'Gold', reward: '360 reward points' },
     ],
     recent_referrals: [
       { name: 'Jordan M.', tickets: 4, date: '2026-02-18' },
@@ -53,9 +53,9 @@ export const MOCK_PROGRAMS: UserProgramProgress[] = [
     rewards_earned: 27,
     current_tier: 2,
     milestones: [
-      { tier: 1, threshold: 3, label: 'Fan', reward: 'Sticker pack per 5 referrals' },
-      { tier: 2, threshold: 10, label: 'Superfan', reward: 'Exclusive merch per 5 referrals' },
-      { tier: 3, threshold: 25, label: 'Ambassador', reward: 'VIP merch bundle + Meet & Greet' },
+      { tier: 1, threshold: 3, label: 'Fan', reward: 'Sticker pack' },
+      { tier: 2, threshold: 10, label: 'Superfan', reward: 'Exclusive tee' },
+      { tier: 3, threshold: 25, label: 'Ambassador', reward: 'VIP merch bundle' },
     ],
     recent_referrals: [
       { name: 'Morgan S.', tickets: 3, date: '2026-02-17' },
@@ -72,8 +72,8 @@ export const MOCK_PROGRAMS: UserProgramProgress[] = [
     current_tier: 1,
     milestones: [
       { tier: 1, threshold: 5, label: 'Opener', reward: '10% off next ticket' },
-      { tier: 2, threshold: 15, label: 'Headliner', reward: '25% off + Early entry' },
-      { tier: 3, threshold: 30, label: 'Legend', reward: '50% off + Backstage pass' },
+      { tier: 2, threshold: 15, label: 'Headliner', reward: '25% off next ticket' },
+      { tier: 3, threshold: 30, label: 'Legend', reward: '50% off next ticket' },
     ],
     recent_referrals: [
       { name: 'Jamie W.', tickets: 2, date: '2026-02-12' },
@@ -88,9 +88,9 @@ export const MOCK_PROGRAMS: UserProgramProgress[] = [
     rewards_earned: 12,
     current_tier: 2,
     milestones: [
-      { tier: 1, threshold: 5, label: 'Rookie', reward: '3 pts per referral' },
-      { tier: 2, threshold: 12, label: 'Starter', reward: '6 pts per referral + Courtside Raffle' },
-      { tier: 3, threshold: 25, label: 'All-Star', reward: '10 pts per referral + Jersey' },
+      { tier: 1, threshold: 5, label: 'Rookie', reward: '15 reward points' },
+      { tier: 2, threshold: 12, label: 'Starter', reward: '72 reward points' },
+      { tier: 3, threshold: 25, label: 'All-Star', reward: '250 reward points' },
     ],
     recent_referrals: [
       { name: 'Dana T.', tickets: 3, date: '2026-02-19' },

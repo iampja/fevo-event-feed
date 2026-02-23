@@ -93,6 +93,52 @@ export interface SyncLog {
   status: SyncStatus;
 }
 
+// ── Reward Program ──────────────────────────────────────────────────────────
+
+export type RewardType = 'money' | 'points' | 'discount' | 'merchandise' | 'custom';
+
+export interface RewardProgram {
+  id: string;
+  offer_id: string;
+  type: RewardType;
+  headline: string;
+  rule_amount: number;
+  rule_unit: string;
+  rule_per: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Reward Milestone ────────────────────────────────────────────────────────
+
+export interface RewardMilestone {
+  id: string;
+  program_id: string;
+  tier: number;
+  threshold: number;
+  label: string;
+  reward: string;
+  description: string | null;
+  image_url: string | null;
+}
+
+// ── Reward (nested shape for feed response) ─────────────────────────────────
+
+export interface FeedReward {
+  program_id: string;
+  type: RewardType;
+  headline: string;
+  rule: { amount: number; unit: string; per: string };
+  milestones: {
+    tier: number;
+    threshold: number;
+    label: string;
+    reward: string;
+    description?: string;
+    image_url?: string;
+  }[];
+}
+
 // ── Feed Offer (nested FEVO-shaped response) ─────────────────────────────────
 
 export interface FeedOffer {
@@ -108,6 +154,7 @@ export interface FeedOffer {
   checkout_url: string | null;
   tags: string[];
   media: { image_url: string | null; video_url: string | null };
+  reward?: FeedReward;
   source: OfferSource;
   created_at: string;
   updated_at: string;
