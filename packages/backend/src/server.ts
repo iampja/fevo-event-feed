@@ -101,11 +101,12 @@ async function bootstrap(): Promise<void> {
     await db.migrate.latest();
     console.log('Database migrations complete');
 
-    // Run seeds if tables are empty (first boot)
+    // Run seeds if tables are empty (first boot) or RESEED is set
+    const forceReseed = process.env.RESEED === 'true';
     const offerCount = await db('offers').count('id as count').first();
-    if (offerCount && Number(offerCount.count) === 0) {
+    if (forceReseed || (offerCount && Number(offerCount.count) === 0)) {
       await db.seed.run();
-      console.log('Database seeded with sample data');
+      console.log(forceReseed ? 'Database reseeded (RESEED=true)' : 'Database seeded with sample data');
     }
 
     // Build initial feed index
