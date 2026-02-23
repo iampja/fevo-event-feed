@@ -97,12 +97,35 @@ const EmptyState = styled.div`
   color: ${colors.text.neutral.tertiary};
 `;
 
+const AutoSyncBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${spacings.md};
+  padding: ${spacings.md} ${spacings.lg};
+  border-radius: ${radius.cornerRadiusMd};
+  margin-bottom: ${spacings.xl};
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.medium};
+`;
+
+const StatusDot = styled.span`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+`;
+
 export const SyncDashboardPage: React.FC = () => {
   const [logs, setLogs] = useState<SyncLogEntry[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [autoSyncStatus, setAutoSyncStatus] = useState<{ autoSync: boolean; intervalSeconds: number } | null>(null);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -122,10 +145,20 @@ export const SyncDashboardPage: React.FC = () => {
     }
   }, []);
 
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const res = await apiClient.get<{ autoSync: boolean; intervalSeconds: number }>('/admin/sync/status');
+      setAutoSyncStatus(res.data);
+    } catch {
+      // Silently fail
+    }
+  }, []);
+
   useEffect(() => {
     fetchLogs();
     fetchOrgs();
-  }, [fetchLogs, fetchOrgs]);
+    fetchSyncStatus();
+  }, [fetchLogs, fetchOrgs, fetchSyncStatus]);
 
   const handleSyncOrg = async () => {
     if (!selectedOrgId) return;
@@ -183,6 +216,13 @@ export const SyncDashboardPage: React.FC = () => {
       <PageHeader title="FEVO Sync Dashboard" />
 
       {message && <StatusMessage $type={message.type}>{message.text}</StatusMessage>}
+
+      {autoSyncStatus?.autoSync && (
+        <AutoSyncBanner>
+          <StatusDot />
+          Auto-sync active &mdash; every {autoSyncStatus.intervalSeconds} seconds
+        </AutoSyncBanner>
+      )}
 
       <Card>
         <SectionTitle>Trigger Sync</SectionTitle>

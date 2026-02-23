@@ -8,6 +8,7 @@ import path from 'path';
 import routes from './routes';
 import db from './db/connection';
 import { startFeedRefreshJob, stopFeedRefreshJob } from './jobs/feedRefresh';
+import { startAutoSyncJob, stopAutoSyncJob } from './jobs/autoSync';
 import { buildFeedIndex } from './services/feedService';
 
 const app = express();
@@ -113,8 +114,9 @@ async function bootstrap(): Promise<void> {
     const feedCount = await buildFeedIndex();
     console.log(`Initial feed index built with ${feedCount} offers`);
 
-    // Start cron job
+    // Start cron jobs
     startFeedRefreshJob();
+    startAutoSyncJob();
 
     // Start server
     app.listen(PORT, () => {
@@ -136,6 +138,7 @@ if (require.main === module) {
       console.log(`\n${signal} received. Shutting down gracefully...`);
       try {
         stopFeedRefreshJob();
+        stopAutoSyncJob();
         await db.destroy();
         console.log('Database connection closed. Goodbye.');
       } catch (err) {

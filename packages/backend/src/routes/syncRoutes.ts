@@ -44,6 +44,12 @@ router.post('/sync/all', async (_req: Request, res: Response) => {
   }
 });
 
+// ── GET /sync/status — auto-sync status ─────────────────────────────────────
+
+router.get('/sync/status', (_req: Request, res: Response) => {
+  res.json({ autoSync: true, intervalSeconds: 60 });
+});
+
 // ── GET /sync/log — list recent sync operations ─────────────────────────────
 
 const syncLogSchema = z.object({
