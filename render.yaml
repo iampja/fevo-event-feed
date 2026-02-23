@@ -27,8 +27,6 @@ services:
         sync: false
       - key: FEVO_WEBHOOK_SECRET
         sync: false
-      - key: RESEED
-        value: "true"
 
   # ── Admin UI (Static Site) ─────────────────────────────────────────────────
   - type: web
