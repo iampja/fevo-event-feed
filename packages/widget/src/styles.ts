@@ -1784,6 +1784,205 @@ export const WIDGET_STYLES = `
   color: var(--fevo-ef-text-secondary);
 }
 
+/* ===== Tier-Aware Stat Cards ===== */
+.fevo-ef-dash-stat-icon {
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.fevo-ef-dash-stat-cash .fevo-ef-dash-stat-value { color: #16a34a; }
+.fevo-ef-dash-stat-merch .fevo-ef-dash-stat-value { color: #ea580c; }
+.fevo-ef-dash-stat-exp .fevo-ef-dash-stat-value { color: #7c3aed; }
+
+/* ===== Tier Ladder ===== */
+.fevo-ef-dash-tier-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+.fevo-ef-dash-tier-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--fevo-ef-border);
+  position: relative;
+  opacity: 0.5;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.fevo-ef-dash-tier-step.reached {
+  opacity: 1;
+}
+
+.fevo-ef-dash-tier-step.current {
+  opacity: 1;
+  background: rgba(255, 204, 0, 0.08);
+}
+
+.fevo-ef-dash-tier-step[data-tier-level="1"].reached { border-left-color: #16a34a; }
+.fevo-ef-dash-tier-step[data-tier-level="2"].reached { border-left-color: #ea580c; }
+.fevo-ef-dash-tier-step[data-tier-level="3"].reached { border-left-color: #7c3aed; }
+
+.fevo-ef-dash-tier-step-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.fevo-ef-dash-tier-step-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fevo-ef-dash-tier-step-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-dash-tier-step-reward {
+  font-size: 11px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-dash-tier-step-threshold {
+  font-size: 10px;
+  color: var(--fevo-ef-text-secondary);
+  opacity: 0.8;
+}
+
+.fevo-ef-dash-tier-step-check {
+  font-size: 14px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* ===== New Status Badges ===== */
+.fevo-ef-dash-status-deposited {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+.fevo-ef-dash-status-shipped {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.fevo-ef-dash-status-booked {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+}
+
+/* ===== My Rewards Tab ===== */
+.fevo-ef-dash-reward-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.fevo-ef-dash-reward-summary-card {
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  border-top: 4px solid var(--fevo-ef-border);
+}
+
+.fevo-ef-dash-reward-summary-card[data-reward-type="cash"] { border-top-color: #16a34a; }
+.fevo-ef-dash-reward-summary-card[data-reward-type="merchandise"] { border-top-color: #ea580c; }
+.fevo-ef-dash-reward-summary-card[data-reward-type="experience"] { border-top-color: #7c3aed; }
+
+.fevo-ef-dash-reward-summary-icon {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.fevo-ef-dash-reward-summary-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--fevo-ef-text);
+  margin-bottom: 2px;
+}
+
+.fevo-ef-dash-reward-summary-label {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+  font-weight: 500;
+}
+
+.fevo-ef-dash-reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.fevo-ef-dash-reward-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 10px;
+}
+
+.fevo-ef-dash-reward-item-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.fevo-ef-dash-reward-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fevo-ef-dash-reward-item-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin-bottom: 2px;
+}
+
+.fevo-ef-dash-reward-item-meta {
+  font-size: 12px;
+  color: var(--fevo-ef-text-secondary);
+}
+
+/* ===== Reward Type Icon (inline) ===== */
+.fevo-ef-dash-reward-type-icon {
+  margin-right: 4px;
+}
+
+/* ===== Type Pill with reward-type data attr ===== */
+.fevo-ef-dash-type-pill[data-reward-type="cash"] {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.fevo-ef-dash-type-pill[data-reward-type="merchandise"] {
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+}
+
+.fevo-ef-dash-type-pill[data-reward-type="experience"] {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+}
+
+@media (max-width: 640px) {
+  .fevo-ef-dash-reward-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== Dashboard Mobile ===== */
 @media (max-width: 640px) {
   .fevo-ef-dash-content {

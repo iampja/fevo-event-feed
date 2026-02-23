@@ -3,7 +3,7 @@
 import { useState } from 'preact/hooks';
 import { OverviewTab } from './OverviewTab';
 import { HistoryTab } from './HistoryTab';
-import { RedeemTab } from './PayoutsTab';
+import { MyRewardsTab } from './PayoutsTab';
 import {
   MOCK_USER,
   MOCK_STATS,
@@ -17,7 +17,7 @@ import {
   LEADERBOARD_ALL_TIME,
 } from '../../data/mockRewardsData';
 
-type Tab = 'overview' | 'history' | 'redeem';
+type Tab = 'overview' | 'history' | 'myrewards';
 
 type RewardsDashboardProps = {
   theme?: 'light' | 'dark';
@@ -25,8 +25,6 @@ type RewardsDashboardProps = {
 
 export function RewardsDashboard({ theme = 'light' }: RewardsDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-
-  const availableRewards = MOCK_STATS.total_rewards - MOCK_STATS.redeemed - MOCK_STATS.pending;
 
   return (
     <div class="fevo-ef-root fevo-ef-dash-page" data-theme={theme}>
@@ -56,10 +54,10 @@ export function RewardsDashboard({ theme = 'light' }: RewardsDashboardProps) {
           History
         </button>
         <button
-          class={`fevo-ef-dash-tab ${activeTab === 'redeem' ? 'active' : ''}`}
-          onClick={() => setActiveTab('redeem')}
+          class={`fevo-ef-dash-tab ${activeTab === 'myrewards' ? 'active' : ''}`}
+          onClick={() => setActiveTab('myrewards')}
         >
-          Redeem
+          My Rewards
         </button>
       </div>
 
@@ -79,12 +77,8 @@ export function RewardsDashboard({ theme = 'light' }: RewardsDashboardProps) {
         {activeTab === 'history' && (
           <HistoryTab earnings={MOCK_EARNINGS} />
         )}
-        {activeTab === 'redeem' && (
-          <RedeemTab
-            availableRewards={availableRewards}
-            pending={MOCK_STATS.pending}
-            redemptions={MOCK_REDEMPTIONS}
-          />
+        {activeTab === 'myrewards' && (
+          <MyRewardsTab rewards={MOCK_REDEMPTIONS} />
         )}
       </div>
     </div>

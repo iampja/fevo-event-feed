@@ -2,6 +2,8 @@ export type DateValue = string | { utc: string | null; timezone: string | null; 
 
 export type RewardType = 'money' | 'points' | 'discount' | 'merchandise' | 'custom';
 
+export type TierRewardType = 'cash' | 'merchandise' | 'experience';
+
 export type RewardMilestone = {
   tier: number;
   threshold: number;
@@ -9,6 +11,7 @@ export type RewardMilestone = {
   reward: string;
   description?: string;
   image_url?: string;
+  reward_type?: TierRewardType;
 };
 
 export type Reward = {
@@ -71,9 +74,9 @@ export type AnalyticsEvent = {
 /* ===== Rewards Dashboard Types ===== */
 
 export type UserLifetimeStats = {
-  total_rewards: number;
-  pending: number;
-  redeemed: number;
+  cash_earned: number;
+  merch_items: number;
+  experiences: number;
   active_programs: number;
   total_referrals: number;
   total_tickets_sold: number;
@@ -104,7 +107,8 @@ export type EarningHistoryEntry = {
   referral_name: string;
   tickets: number;
   reward: string;
-  status: 'pending' | 'confirmed' | 'redeemed';
+  reward_type: TierRewardType;
+  status: 'pending' | 'confirmed' | 'deposited' | 'shipped' | 'booked';
 };
 
 export type MonthlyEarning = {
@@ -116,8 +120,8 @@ export type RedemptionEntry = {
   id: string;
   date: string;
   reward: string;
-  type: 'discount' | 'merchandise' | 'experience' | 'credit';
-  status: 'processing' | 'completed' | 'failed';
+  type: TierRewardType;
+  status: 'processing' | 'deposited' | 'shipped' | 'booked' | 'failed';
   reference: string;
 };
 

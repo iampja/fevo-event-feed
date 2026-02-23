@@ -1,61 +1,59 @@
 /** @jsxImportSource preact */
 
-import type { RedemptionEntry } from '../../types';
+import type { RedemptionEntry, TierRewardType } from '../../types';
 
-type RedeemTabProps = {
-  availableRewards: number;
-  pending: number;
-  redemptions: RedemptionEntry[];
+const TIER_ICONS: Record<TierRewardType, string> = { cash: '💵', merchandise: '👕', experience: '⭐' };
+
+type MyRewardsTabProps = {
+  rewards: RedemptionEntry[];
 };
 
-export function RedeemTab({ availableRewards, pending, redemptions }: RedeemTabProps) {
+export function MyRewardsTab({ rewards }: MyRewardsTabProps) {
+  const cashCount = rewards.filter((r) => r.type === 'cash').length;
+  const merchCount = rewards.filter((r) => r.type === 'merchandise').length;
+  const expCount = rewards.filter((r) => r.type === 'experience').length;
+
   return (
     <div class="fevo-ef-dash-redeem">
-      {/* Balance Card */}
-      <div class="fevo-ef-dash-balance-card">
-        <div class="fevo-ef-dash-balance-row">
-          <div>
-            <div class="fevo-ef-dash-balance-label">Available Rewards</div>
-            <div class="fevo-ef-dash-balance-value">{availableRewards}</div>
-            {pending > 0 && (
-              <div class="fevo-ef-dash-balance-pending">
-                + {pending} pending
-              </div>
-            )}
-          </div>
-          <button class="fevo-ef-dash-payout-btn">Redeem Rewards</button>
+      {/* Reward Summary Cards */}
+      <div class="fevo-ef-dash-reward-summary">
+        <div class="fevo-ef-dash-reward-summary-card" data-reward-type="cash">
+          <div class="fevo-ef-dash-reward-summary-icon">💵</div>
+          <div class="fevo-ef-dash-reward-summary-value">{cashCount}</div>
+          <div class="fevo-ef-dash-reward-summary-label">Cash Rewards</div>
+        </div>
+        <div class="fevo-ef-dash-reward-summary-card" data-reward-type="merchandise">
+          <div class="fevo-ef-dash-reward-summary-icon">👕</div>
+          <div class="fevo-ef-dash-reward-summary-value">{merchCount}</div>
+          <div class="fevo-ef-dash-reward-summary-label">Merch Rewards</div>
+        </div>
+        <div class="fevo-ef-dash-reward-summary-card" data-reward-type="experience">
+          <div class="fevo-ef-dash-reward-summary-icon">⭐</div>
+          <div class="fevo-ef-dash-reward-summary-value">{expCount}</div>
+          <div class="fevo-ef-dash-reward-summary-label">Experiences</div>
         </div>
       </div>
 
-      {/* Redeem Options */}
+      {/* Fulfillment List */}
       <div class="fevo-ef-dash-section">
-        <h3 class="fevo-ef-dash-section-title">Redeem For</h3>
-        <div class="fevo-ef-dash-redeem-options">
-          <div class="fevo-ef-dash-redeem-option">
-            <span class="fevo-ef-dash-redeem-option-icon">🎟️</span>
-            <div class="fevo-ef-dash-redeem-option-info">
-              <div class="fevo-ef-dash-redeem-option-title">Ticket Discounts</div>
-              <div class="fevo-ef-dash-redeem-option-desc">Apply rewards toward your next ticket purchase</div>
+        <h3 class="fevo-ef-dash-section-title">Your Rewards</h3>
+        <div class="fevo-ef-dash-reward-list">
+          {rewards.map((r) => (
+            <div key={r.id} class="fevo-ef-dash-reward-item">
+              <span class="fevo-ef-dash-reward-item-icon">{TIER_ICONS[r.type]}</span>
+              <div class="fevo-ef-dash-reward-item-info">
+                <div class="fevo-ef-dash-reward-item-name">{r.reward}</div>
+                <div class="fevo-ef-dash-reward-item-meta">{r.date} · {r.reference}</div>
+              </div>
+              <span class={`fevo-ef-dash-status fevo-ef-dash-status-${r.status}`}>
+                {r.status}
+              </span>
             </div>
-          </div>
-          <div class="fevo-ef-dash-redeem-option">
-            <span class="fevo-ef-dash-redeem-option-icon">👕</span>
-            <div class="fevo-ef-dash-redeem-option-info">
-              <div class="fevo-ef-dash-redeem-option-title">Exclusive Merchandise</div>
-              <div class="fevo-ef-dash-redeem-option-desc">Unlock limited-edition event merch</div>
-            </div>
-          </div>
-          <div class="fevo-ef-dash-redeem-option">
-            <span class="fevo-ef-dash-redeem-option-icon">⭐</span>
-            <div class="fevo-ef-dash-redeem-option-info">
-              <div class="fevo-ef-dash-redeem-option-title">VIP Experiences</div>
-              <div class="fevo-ef-dash-redeem-option-desc">Backstage passes, meet & greets, priority entry</div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Redemption History */}
+      {/* Redemption History Table */}
       <div class="fevo-ef-dash-section">
         <h3 class="fevo-ef-dash-section-title">Redemption History</h3>
         <div class="fevo-ef-dash-table-wrap">
@@ -70,12 +68,12 @@ export function RedeemTab({ availableRewards, pending, redemptions }: RedeemTabP
               </tr>
             </thead>
             <tbody>
-              {redemptions.map((r) => (
+              {rewards.map((r) => (
                 <tr key={r.id}>
                   <td>{r.date}</td>
                   <td>{r.reward}</td>
                   <td>
-                    <span class="fevo-ef-dash-type-pill">{r.type}</span>
+                    <span class="fevo-ef-dash-type-pill" data-reward-type={r.type}>{r.type}</span>
                   </td>
                   <td class="fevo-ef-dash-ref">{r.reference}</td>
                   <td>

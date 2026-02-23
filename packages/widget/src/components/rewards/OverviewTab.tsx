@@ -8,6 +8,7 @@ import type {
   MonthlyEarning,
   Achievement,
   LeaderboardEntry,
+  TierRewardType,
 } from '../../types';
 
 type OverviewTabProps = {
@@ -35,6 +36,8 @@ export function OverviewTab({
   const leaderboard = lbPeriod === 'month' ? leaderboardMonth : leaderboardAllTime;
   const maxMonthly = Math.max(...monthlyRewards.map((m) => m.amount), 1);
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
+
+  const TIER_ICONS: Record<TierRewardType, string> = { cash: '💵', merchandise: '👕', experience: '⭐' };
 
   // Feature the first program as "highlighted"
   const featuredProgram = programs[0];
@@ -104,19 +107,23 @@ export function OverviewTab({
 
       {/* Stats Row */}
       <div class="fevo-ef-dash-stats">
-        <div class="fevo-ef-dash-stat-card">
-          <div class="fevo-ef-dash-stat-value fevo-ef-dash-stat-total">{stats.total_rewards}</div>
-          <div class="fevo-ef-dash-stat-label">Total Rewards</div>
+        <div class="fevo-ef-dash-stat-card fevo-ef-dash-stat-cash">
+          <div class="fevo-ef-dash-stat-icon">💵</div>
+          <div class="fevo-ef-dash-stat-value">${stats.cash_earned}</div>
+          <div class="fevo-ef-dash-stat-label">Cash Earned</div>
+        </div>
+        <div class="fevo-ef-dash-stat-card fevo-ef-dash-stat-merch">
+          <div class="fevo-ef-dash-stat-icon">👕</div>
+          <div class="fevo-ef-dash-stat-value">{stats.merch_items}</div>
+          <div class="fevo-ef-dash-stat-label">Merch Items</div>
+        </div>
+        <div class="fevo-ef-dash-stat-card fevo-ef-dash-stat-exp">
+          <div class="fevo-ef-dash-stat-icon">⭐</div>
+          <div class="fevo-ef-dash-stat-value">{stats.experiences}</div>
+          <div class="fevo-ef-dash-stat-label">Experiences</div>
         </div>
         <div class="fevo-ef-dash-stat-card">
-          <div class="fevo-ef-dash-stat-value fevo-ef-dash-stat-pending">{stats.pending}</div>
-          <div class="fevo-ef-dash-stat-label">Pending</div>
-        </div>
-        <div class="fevo-ef-dash-stat-card">
-          <div class="fevo-ef-dash-stat-value fevo-ef-dash-stat-redeemed">{stats.redeemed}</div>
-          <div class="fevo-ef-dash-stat-label">Redeemed</div>
-        </div>
-        <div class="fevo-ef-dash-stat-card">
+          <div class="fevo-ef-dash-stat-icon"> </div>
           <div class="fevo-ef-dash-stat-value">{stats.active_programs}</div>
           <div class="fevo-ef-dash-stat-label">Active Programs</div>
         </div>
@@ -148,7 +155,8 @@ export function OverviewTab({
           <div class="fevo-ef-dash-featured-info">
             <div class="fevo-ef-dash-featured-name">{featuredProgram.program_name}</div>
             <div class="fevo-ef-dash-featured-meta">
-              {featuredProgram.tickets_sold} tickets sold · {featuredProgram.rewards_earned} rewards earned · {featuredMilestone?.label ?? 'Tier ' + featuredProgram.current_tier} tier
+              {featuredMilestone?.reward_type && TIER_ICONS[featuredMilestone.reward_type]}{' '}
+              {featuredProgram.tickets_sold} tickets sold · {featuredMilestone?.label ?? 'Tier ' + featuredProgram.current_tier} tier · {featuredMilestone?.reward}
             </div>
           </div>
         </div>
@@ -159,43 +167,40 @@ export function OverviewTab({
         <h3 class="fevo-ef-dash-section-title">Active Programs</h3>
         {programs.map((prog) => {
           const nextMilestone = prog.milestones.find((m) => m.tier === prog.current_tier + 1);
-          const currentMilestone = prog.milestones.find((m) => m.tier === prog.current_tier);
-          const prevThreshold = prog.milestones.find((m) => m.tier === prog.current_tier - 1)?.threshold ?? 0;
-          const nextThreshold = nextMilestone?.threshold ?? prog.referrals;
-          const progressPct = nextMilestone
-            ? Math.min(100, ((prog.referrals - prevThreshold) / (nextThreshold - prevThreshold)) * 100)
-            : 100;
-
-          const REWARD_TYPE_LABELS: Record<string, string> = {
-            points: 'Points',
-            merchandise: 'Merch',
-            discount: 'Discounts',
-            money: 'Cash',
-          };
 
           return (
             <div key={prog.program_id} class="fevo-ef-dash-program">
               <div class="fevo-ef-dash-program-header">
                 <div class="fevo-ef-dash-program-name">{prog.program_name}</div>
-                <span class="fevo-ef-dash-reward-type-badge">{REWARD_TYPE_LABELS[prog.reward_type] ?? prog.reward_type}</span>
-              </div>
-              <div class="fevo-ef-dash-program-tier">
-                <span class="fevo-ef-dash-tier-badge">{currentMilestone?.label ?? `Tier ${prog.current_tier}`}</span>
                 <span class="fevo-ef-dash-program-refs">{prog.referrals} referrals · {prog.tickets_sold} tickets</span>
               </div>
-              <div class="fevo-ef-dash-program-progress">
-                <div class="fevo-ef-dash-program-progress-track">
-                  <div
-                    class="fevo-ef-dash-program-progress-fill"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                {nextMilestone && (
-                  <div class="fevo-ef-dash-program-progress-label">
-                    {nextThreshold - prog.referrals} more referrals to {nextMilestone.label} — <em>{nextMilestone.reward}</em>
-                  </div>
-                )}
+              <div class="fevo-ef-dash-tier-ladder">
+                {prog.milestones.map((ms) => {
+                  const reached = ms.tier <= prog.current_tier;
+                  const isCurrent = ms.tier === prog.current_tier;
+                  const icon = ms.reward_type ? TIER_ICONS[ms.reward_type] : '🎁';
+                  return (
+                    <div
+                      key={ms.tier}
+                      class={`fevo-ef-dash-tier-step${reached ? ' reached' : ''}${isCurrent ? ' current' : ''}`}
+                      data-tier-level={ms.tier}
+                    >
+                      <span class="fevo-ef-dash-tier-step-icon">{icon}</span>
+                      <div class="fevo-ef-dash-tier-step-info">
+                        <div class="fevo-ef-dash-tier-step-label">{ms.label}</div>
+                        <div class="fevo-ef-dash-tier-step-reward">{ms.reward}</div>
+                        <div class="fevo-ef-dash-tier-step-threshold">{ms.threshold} referrals</div>
+                      </div>
+                      {reached && <span class="fevo-ef-dash-tier-step-check">✓</span>}
+                    </div>
+                  );
+                })}
               </div>
+              {nextMilestone && (
+                <div class="fevo-ef-dash-program-progress-label">
+                  {nextMilestone.threshold - prog.referrals} more referrals to unlock {nextMilestone.reward_type ? TIER_ICONS[nextMilestone.reward_type] : ''} {nextMilestone.reward}
+                </div>
+              )}
             </div>
           );
         })}

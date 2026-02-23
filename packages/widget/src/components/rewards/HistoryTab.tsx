@@ -1,6 +1,8 @@
 /** @jsxImportSource preact */
 
-import type { EarningHistoryEntry } from '../../types';
+import type { EarningHistoryEntry, TierRewardType } from '../../types';
+
+const TIER_ICONS: Record<TierRewardType, string> = { cash: '💵', merchandise: '👕', experience: '⭐' };
 
 type HistoryTabProps = {
   earnings: EarningHistoryEntry[];
@@ -30,7 +32,10 @@ export function HistoryTab({ earnings }: HistoryTabProps) {
                   <td>{entry.event}</td>
                   <td>{entry.referral_name}</td>
                   <td>{entry.tickets}</td>
-                  <td class="fevo-ef-dash-reward-cell">{entry.reward}</td>
+                  <td class="fevo-ef-dash-reward-cell">
+                    <span class="fevo-ef-dash-reward-type-icon">{TIER_ICONS[entry.reward_type]}</span>
+                    {entry.reward}
+                  </td>
                   <td>
                     <span class={`fevo-ef-dash-status fevo-ef-dash-status-${entry.status}`}>
                       {entry.status}
