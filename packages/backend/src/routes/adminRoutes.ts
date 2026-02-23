@@ -21,6 +21,9 @@ import {
   updateApiKeyRateLimit,
 } from '../services/apiKeyService';
 import {
+  listSegments,
+  getSegmentBySlug,
+  getSegmentOffers,
   createSegment,
   updateSegment,
   deleteSegment,
@@ -367,6 +370,33 @@ router.put('/api-keys/:keyId/rate-limit', async (req: Request, res: Response) =>
 // SEGMENT MANAGEMENT ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ── GET /segments (admin-accessible list) ────────────────────────────────────
+
+router.get('/segments', async (_req: Request, res: Response) => {
+  try {
+    const segments = await listSegments();
+    res.json({ data: segments });
+  } catch (err) {
+    console.error('GET /admin/segments error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/segments/:slug', async (req: Request, res: Response) => {
+  try {
+    const segment = await getSegmentBySlug(req.params.slug);
+    if (!segment) {
+      res.status(404).json({ error: 'Segment not found' });
+      return;
+    }
+    const offers = await getSegmentOffers(segment.id);
+    res.json({ data: { ...segment, offers } });
+  } catch (err) {
+    console.error('GET /admin/segments/:slug error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ── POST /segments ───────────────────────────────────────────────────────────
 
 const createSegmentSchema = z.object({
@@ -503,6 +533,19 @@ router.delete('/segments/:segmentId/offers/:offerId', async (req: Request, res: 
       return;
     }
     console.error('DELETE /segments/:segmentId/offers/:offerId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── POST /reseed ────────────────────────────────────────────────────────────
+
+router.post('/reseed', async (_req: Request, res: Response) => {
+  try {
+    const db = (await import('../db/connection')).default;
+    await db.seed.run();
+    res.json({ message: 'Database reseeded with stub data' });
+  } catch (err) {
+    console.error('POST /reseed error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

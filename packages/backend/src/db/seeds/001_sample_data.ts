@@ -11,6 +11,13 @@ const segmentIds = {
   helloKitty: 'seg-hello-kitty-nights-001',
   nycEvents: 'seg-nyc-events-002',
   nbaTheme: 'seg-nba-theme-nights-003',
+  mlbClassics: 'seg-mlb-classics-004',
+  concertsLive: 'seg-concerts-live-005',
+  familyFriendly: 'seg-family-friendly-006',
+  premiumVip: 'seg-premium-vip-007',
+  summerEvents: 'seg-summer-2026-008',
+  msgVenue: 'seg-msg-venue-009',
+  brooklynNights: 'seg-brooklyn-nights-010',
 };
 
 const API_KEY_RAW = 'efeed_test_key_abc123';
@@ -563,38 +570,115 @@ export async function seed(knex: Knex): Promise<void> {
   // Insert offers
   await knex('offers').insert(sampleOffers);
 
-  // Insert segments
+  // Insert segments (annotated as [Test] stub data)
   await knex('event_feed_segments').insert([
     {
       id: segmentIds.helloKitty,
-      name: 'Hello Kitty Nights',
+      name: '[Test] Hello Kitty Nights',
       slug: 'hello-kitty-nights',
       type: 'theme',
       rules: JSON.stringify({ tags_include: ['hello-kitty'] }),
       is_curated: true,
-      created_by: 'admin',
+      created_by: 'admin (stub)',
       created_at: now,
       updated_at: now,
     },
     {
       id: segmentIds.nycEvents,
-      name: 'NYC Events',
+      name: '[Test] NYC Events',
       slug: 'nyc-events',
       type: 'geography',
       rules: JSON.stringify({ venue_state: 'NY' }),
       is_curated: false,
-      created_by: 'admin',
+      created_by: 'admin (stub)',
       created_at: now,
       updated_at: now,
     },
     {
       id: segmentIds.nbaTheme,
-      name: 'NBA Theme Nights',
+      name: '[Test] NBA Theme Nights',
       slug: 'nba-theme-nights',
       type: 'theme',
       rules: JSON.stringify({ tags_include: ['nba', 'theme-night'] }),
       is_curated: true,
-      created_by: 'admin',
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.mlbClassics,
+      name: '[Test] MLB Classics',
+      slug: 'mlb-classics',
+      type: 'theme',
+      rules: JSON.stringify({ tags_include: ['mlb'] }),
+      is_curated: true,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.concertsLive,
+      name: '[Test] Concerts & Live Music',
+      slug: 'concerts-live',
+      type: 'theme',
+      rules: JSON.stringify({ tags_include: ['concert'] }),
+      is_curated: true,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.familyFriendly,
+      name: '[Test] Family Friendly',
+      slug: 'family-friendly',
+      type: 'custom',
+      rules: JSON.stringify({ tags_include: ['family'] }),
+      is_curated: true,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.premiumVip,
+      name: '[Test] Premium & VIP',
+      slug: 'premium-vip',
+      type: 'custom',
+      rules: JSON.stringify({ price_min_gte: 100 }),
+      is_curated: true,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.summerEvents,
+      name: '[Test] Summer 2026',
+      slug: 'summer-2026',
+      type: 'theme',
+      rules: JSON.stringify({ tags_include: ['summer'] }),
+      is_curated: false,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.msgVenue,
+      name: '[Test] MSG Entertainment',
+      slug: 'msg-entertainment',
+      type: 'partner',
+      rules: JSON.stringify({ organization_id: 'org-msg-001' }),
+      is_curated: true,
+      created_by: 'admin (stub)',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: segmentIds.brooklynNights,
+      name: '[Test] Brooklyn Nights',
+      slug: 'brooklyn-nights',
+      type: 'geography',
+      rules: JSON.stringify({ venue_city: 'Brooklyn' }),
+      is_curated: true,
+      created_by: 'admin (stub)',
       created_at: now,
       updated_at: now,
     },
@@ -602,16 +686,38 @@ export async function seed(knex: Knex): Promise<void> {
 
   // Link offers to segments
   await knex('event_feed_segment_offers').insert([
-    {
-      segment_id: segmentIds.helloKitty,
-      offer_id: offerIds[0], // Hello Kitty Night at MSG
-      added_at: now,
-    },
-    {
-      segment_id: segmentIds.helloKitty,
-      offer_id: offerIds[1], // Knicks vs Lakers - Hello Kitty Night
-      added_at: now,
-    },
+    // Hello Kitty Nights — 2 offers
+    { segment_id: segmentIds.helloKitty, offer_id: offerIds[0], added_at: now },
+    { segment_id: segmentIds.helloKitty, offer_id: offerIds[1], added_at: now },
+    // NBA Theme Nights — 4 offers (all NBA-tagged)
+    { segment_id: segmentIds.nbaTheme, offer_id: offerIds[0], added_at: now },
+    { segment_id: segmentIds.nbaTheme, offer_id: offerIds[1], added_at: now },
+    { segment_id: segmentIds.nbaTheme, offer_id: offerIds[2], added_at: now },
+    { segment_id: segmentIds.nbaTheme, offer_id: offerIds[9], added_at: now },
+    // MLB Classics — 2 offers (Yankees, Mets)
+    { segment_id: segmentIds.mlbClassics, offer_id: offerIds[4], added_at: now },
+    { segment_id: segmentIds.mlbClassics, offer_id: offerIds[5], added_at: now },
+    // Concerts & Live Music — 3 offers
+    { segment_id: segmentIds.concertsLive, offer_id: offerIds[3], added_at: now },
+    { segment_id: segmentIds.concertsLive, offer_id: offerIds[7], added_at: now },
+    { segment_id: segmentIds.concertsLive, offer_id: offerIds[11], added_at: now },
+    // Family Friendly — 2 offers
+    { segment_id: segmentIds.familyFriendly, offer_id: offerIds[5], added_at: now },
+    { segment_id: segmentIds.familyFriendly, offer_id: offerIds[8], added_at: now },
+    // Premium & VIP — 3 offers (high-price events)
+    { segment_id: segmentIds.premiumVip, offer_id: offerIds[7], added_at: now },
+    { segment_id: segmentIds.premiumVip, offer_id: offerIds[4], added_at: now },
+    { segment_id: segmentIds.premiumVip, offer_id: offerIds[9], added_at: now },
+    // MSG Entertainment — 5 offers (all MSG)
+    { segment_id: segmentIds.msgVenue, offer_id: offerIds[0], added_at: now },
+    { segment_id: segmentIds.msgVenue, offer_id: offerIds[1], added_at: now },
+    { segment_id: segmentIds.msgVenue, offer_id: offerIds[6], added_at: now },
+    { segment_id: segmentIds.msgVenue, offer_id: offerIds[10], added_at: now },
+    { segment_id: segmentIds.msgVenue, offer_id: offerIds[14], added_at: now },
+    // Brooklyn Nights — 3 offers (Brooklyn venue)
+    { segment_id: segmentIds.brooklynNights, offer_id: offerIds[2], added_at: now },
+    { segment_id: segmentIds.brooklynNights, offer_id: offerIds[11], added_at: now },
+    { segment_id: segmentIds.brooklynNights, offer_id: offerIds[16], added_at: now },
   ]);
 
   // Insert sample API key

@@ -203,7 +203,7 @@ export interface UpdateSegmentPayload {
 
 export async function getSegments(): Promise<Segment[]> {
   const response = await apiClient.get<{ data: Segment[] }>(
-    '/event-feed/segments',
+    '/admin/segments',
   );
   return response.data.data;
 }
@@ -212,7 +212,7 @@ export async function getSegmentBySlug(
   slug: string,
 ): Promise<SegmentWithOffers> {
   const response = await apiClient.get<{ data: SegmentWithOffers }>(
-    `/event-feed/segments/${slug}`,
+    `/admin/segments/${slug}`,
   );
   return response.data.data;
 }
