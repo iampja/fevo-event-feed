@@ -161,6 +161,16 @@ export const AllOffersPage: React.FC = () => {
       ),
     },
     {
+      header: 'Source',
+      accessor: 'source',
+      width: '100px',
+      render: (row) => (
+        <Badge variant={row.source === 'fevo' ? 'success' : 'warning'}>
+          {row.source === 'fevo' ? 'Live' : 'Seed'}
+        </Badge>
+      ),
+    },
+    {
       header: 'Created',
       accessor: 'created_at',
       width: '160px',
