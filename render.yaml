@@ -36,7 +36,7 @@ services:
     staticPublishPath: packages/admin-ui/dist
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://fevo-event-feed-api.onrender.com/api/v1/event-feed
     routes:
       - type: rewrite
         source: /*
