@@ -380,40 +380,6 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-    put:
-      tags: [Admin - Offers]
-      summary: Update offer (enrichment)
-      description: |
-        Enrich or edit offer fields. Only provided fields are updated.
-        Useful for adding editorial content, correcting data, or overriding
-        synced values.
-      security:
-        - InternalAuth: []
-      parameters:
-        - name: offerId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OfferUpdate"
-      responses:
-        "200":
-          description: Updated offer
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Offer"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
   # ──────────────────────────────────────────────────────────────────────────
   # ADMIN — DISTRIBUTION
   # ──────────────────────────────────────────────────────────────────────────
@@ -1400,68 +1366,6 @@ components:
         updated_at:
           type: string
           format: date-time
-
-    OfferUpdate:
-      type: object
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 500
-        description:
-          type: string
-          maxLength: 5000
-          nullable: true
-        image_url:
-          type: string
-          format: uri
-          nullable: true
-        price_min:
-          type: number
-          minimum: 0
-          nullable: true
-        price_max:
-          type: number
-          minimum: 0
-          nullable: true
-        currency:
-          type: string
-          minLength: 1
-          maxLength: 10
-        date:
-          type: string
-          nullable: true
-        venue_name:
-          type: string
-          maxLength: 255
-          nullable: true
-        venue_city:
-          type: string
-          maxLength: 255
-          nullable: true
-        venue_state:
-          type: string
-          maxLength: 50
-          nullable: true
-        availability:
-          type: string
-          enum: [available, limited, sold_out]
-        checkout_url:
-          type: string
-          nullable: true
-        tags:
-          type: array
-          items:
-            type: string
-          nullable: true
-        video_url:
-          type: string
-          format: uri
-          nullable: true
-        tickets_available:
-          type: integer
-          minimum: 0
-          nullable: true
 
     # ── Distribution ─────────────────────────────────────────────────────
     DistributionStatus:

@@ -554,69 +554,6 @@ router.post('/feed/refresh', async (_req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// OFFER UPDATE ROUTE (enrichment for synced offers)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const updateOfferSchema = z.object({
-  title: z.string().min(1).max(500).optional(),
-  description: z.string().max(5000).nullable().optional(),
-  image_url: z.string().url().nullable().optional(),
-  price_min: z.number().min(0).nullable().optional(),
-  price_max: z.number().min(0).nullable().optional(),
-  currency: z.string().min(1).max(10).optional(),
-  date: z.string().nullable().optional(),
-  venue_name: z.string().max(255).nullable().optional(),
-  venue_city: z.string().max(255).nullable().optional(),
-  venue_state: z.string().max(50).nullable().optional(),
-  availability: z.enum(['available', 'limited', 'sold_out']).optional(),
-  checkout_url: z.string().nullable().optional(),
-  tags: z.array(z.string()).nullable().optional(),
-  video_url: z.string().url().nullable().optional(),
-  tickets_available: z.number().int().min(0).nullable().optional(),
-});
-
-router.put('/offers/:offerId', async (req: Request, res: Response) => {
-  try {
-    const parsed = updateOfferSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Invalid request body',
-        details: parsed.error.flatten().fieldErrors,
-      });
-      return;
-    }
-
-    const offer = await getOfferById(req.params.offerId);
-    if (!offer) {
-      res.status(404).json({ error: 'Offer not found' });
-      return;
-    }
-
-    const updates: Record<string, any> = { ...parsed.data, updated_at: new Date().toISOString() };
-
-    // Serialize tags array to JSON string if provided
-    if (updates.tags !== undefined) {
-      updates.tags = updates.tags ? JSON.stringify(updates.tags) : null;
-    }
-
-    // Update is_sold_out based on availability
-    if (updates.availability === 'sold_out') {
-      updates.is_sold_out = true;
-    } else if (updates.availability) {
-      updates.is_sold_out = false;
-    }
-
-    await db('offers').where('id', req.params.offerId).update(updates);
-    const updated = await getOfferById(req.params.offerId);
-
-    res.json({ data: updated });
-  } catch (err) {
-    console.error('PUT /offers/:offerId error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // ORGANIZATION ROUTES (read-only — orgs are synced from FEVO)
 // ═══════════════════════════════════════════════════════════════════════════════
 

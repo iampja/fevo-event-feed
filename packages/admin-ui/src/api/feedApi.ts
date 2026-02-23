@@ -308,21 +308,6 @@ export async function updateApiKeyRateLimit(
 }
 
 // ========================
-// OFFER UPDATE
-// ========================
-
-export async function updateOffer(
-  offerId: string,
-  payload: Partial<Offer>,
-): Promise<Offer> {
-  const response = await apiClient.put<{ data: Offer }>(
-    `/admin/offers/${offerId}`,
-    payload,
-  );
-  return response.data.data;
-}
-
-// ========================
 // ORGANIZATION TYPES & METHODS
 // ========================
 
