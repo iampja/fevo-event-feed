@@ -358,7 +358,14 @@
     }
     .co-qty-btn:hover { background: #f3f4f6; }
     .co-qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .co-qty-val { font-size: 16px; font-weight: 700; min-width: 24px; text-align: center; }
+    .co-qty-val {
+      font-size: 16px; font-weight: 700; width: 40px; text-align: center;
+      border: 1px solid #e5e7eb; border-radius: 6px; padding: 2px 0;
+      -moz-appearance: textfield; font-family: inherit;
+    }
+    .co-qty-val::-webkit-outer-spin-button,
+    .co-qty-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .co-qty-val:focus { outline: 2px solid #FFCC00; border-color: #FFCC00; }
 
     .co-summary-line {
       display: flex;
@@ -727,7 +734,7 @@
           <span class="co-qty-label">Quantity</span>
           <div class="co-qty-controls">
             <button class="co-qty-btn" id="co-qty-minus" disabled>&minus;</button>
-            <span class="co-qty-val" id="co-qty-val">1</span>
+            <input type="number" class="co-qty-val" id="co-qty-val" value="1" min="1" max="10">
             <button class="co-qty-btn" id="co-qty-plus">+</button>
           </div>
         </div>
@@ -1190,7 +1197,7 @@
       document.getElementById('co-sum-facility').textContent = '$' + facility.toFixed(2);
       document.getElementById('co-sum-total').textContent = '$' + total.toFixed(2);
 
-      document.getElementById('co-qty-val').textContent = coState.qty;
+      document.getElementById('co-qty-val').value = coState.qty;
       document.getElementById('co-qty-minus').disabled = coState.qty <= 1;
     }
 
@@ -1200,6 +1207,13 @@
     };
     document.getElementById('co-qty-plus').onclick = function() {
       if (coState.qty < 10) { coState.qty++; coUpdateSummary(); }
+    };
+    document.getElementById('co-qty-val').oninput = function() {
+      var v = parseInt(this.value, 10);
+      if (isNaN(v) || v < 1) v = 1;
+      if (v > 10) v = 10;
+      coState.qty = v;
+      coUpdateSummary();
     };
 
     // Proceed to Payment
