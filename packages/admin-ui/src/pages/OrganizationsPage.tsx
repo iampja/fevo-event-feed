@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '@/api/client';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Badge } from '@/components/ui/Badge';
 import { colors, spacings, typography, radius, shadows } from '@/theme/tokens';
 
 interface Organization {
@@ -156,6 +157,7 @@ export const OrganizationsPage: React.FC = () => {
                 <Th></Th>
                 <Th>Name</Th>
                 <Th>FEVO Org ID</Th>
+                <Th>Source</Th>
                 <Th>Created</Th>
               </tr>
             </thead>
@@ -171,6 +173,11 @@ export const OrganizationsPage: React.FC = () => {
                   </Td>
                   <Td style={{ fontWeight: 500 }}>{org.name}</Td>
                   <Td>{org.fevo_org_id || '-'}</Td>
+                  <Td>
+                    <Badge variant={org.id.startsWith('org-') ? 'warning' : 'success'}>
+                      {org.id.startsWith('org-') ? 'Seed' : 'Live'}
+                    </Badge>
+                  </Td>
                   <Td>{new Date(org.created_at).toLocaleDateString()}</Td>
                 </TableRow>
               ))}
