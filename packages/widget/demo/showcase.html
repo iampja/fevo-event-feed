@@ -576,6 +576,24 @@
       display: inline-block;
       margin-bottom: 20px;
     }
+    .co-share-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.12s;
+      margin-bottom: 12px;
+    }
+    .co-share-link:hover { background: #e5e7eb; }
+    .co-share-link.copied { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .co-share-link svg { width: 15px; height: 15px; }
     .co-done-btn {
       display: inline-block;
       padding: 10px 28px;
@@ -949,7 +967,12 @@
         <h2>You're Going!</h2>
         <p id="co-conf-msg">Your tickets have been reserved.</p>
         <div class="co-conf-num" id="co-conf-num">FEVO-000000</div>
-        <br/><br/>
+        <br/>
+        <button class="co-share-link" id="co-share-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share with Friends
+        </button>
+        <br/>
         <button class="co-done-btn" id="co-done-btn">Done</button>
       </div>
     </div>
@@ -1392,6 +1415,26 @@
       document.querySelectorAll('#co-body > .co-card').forEach(c => c.style.display = 'none');
       document.getElementById('co-confirmation').classList.add('visible');
       document.getElementById('co-body').scrollTop = 0;
+    };
+
+    // Share button (after confirmation)
+    document.getElementById('co-share-btn').onclick = function() {
+      var offer = findOffer(coState.offerId);
+      var shareText = "I'm going to " + (offer ? offer.title : 'an event') + "! Get your tickets and join me on FEVO.";
+      var shareUrl = offer ? window.location.origin + offer.checkout_url : window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: offer ? offer.title : 'FEVO Event', text: shareText, url: shareUrl }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(shareText + ' ' + shareUrl).then(function() {
+          var btn = document.getElementById('co-share-btn');
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="20 6 9 17 4 12"/></svg> Link Copied!';
+          btn.classList.add('copied');
+          setTimeout(function() {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share with Friends';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      }
     };
 
     // Done button (after confirmation)
