@@ -1417,11 +1417,16 @@
       document.getElementById('co-body').scrollTop = 0;
     };
 
+    // Generate personal URL (purl) for sharing
+    function generatePUrl(offerId) {
+      return 'https://fevo.com/p/alex-' + offerId.replace('mlb-', '');
+    }
+
     // Share button (after confirmation)
     document.getElementById('co-share-btn').onclick = function() {
       var offer = findOffer(coState.offerId);
       var shareText = "I'm going to " + (offer ? offer.title : 'an event') + "! Get your tickets and join me on FEVO.";
-      var shareUrl = offer ? window.location.origin + offer.checkout_url : window.location.href;
+      var shareUrl = generatePUrl(coState.offerId);
       if (navigator.share) {
         navigator.share({ title: offer ? offer.title : 'FEVO Event', text: shareText, url: shareUrl }).catch(function() {});
       } else {
