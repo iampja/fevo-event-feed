@@ -458,6 +458,38 @@
     }
     .co-checkout-btn:hover { background: #e6b800; }
 
+    .co-payment-methods {
+      margin-top: 14px;
+      text-align: center;
+    }
+    .co-payment-label {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .co-payment-icons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .co-payment-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      padding: 0 8px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #374151;
+      letter-spacing: -0.01em;
+    }
+    .co-payment-icon svg { height: 16px; width: auto; }
+
     .co-powered {
       text-align: center;
       font-size: 11px;
@@ -865,6 +897,32 @@
           <span id="co-sum-total">$0.00</span>
         </div>
         <button class="co-checkout-btn" id="co-pay-btn">Proceed to Payment</button>
+        <div class="co-payment-methods">
+          <div class="co-payment-label">Accepted Payment Methods</div>
+          <div class="co-payment-icons">
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#1A1F71"/><path d="M19.5 21h-3.2L18.5 11h3.2L19.5 21z" fill="#fff"/><path d="M30.2 11.3c-.6-.3-1.6-.5-2.8-.5-3.1 0-5.3 1.6-5.3 4 0 1.7 1.6 2.7 2.8 3.3 1.2.6 1.6 1 1.6 1.5 0 .8-1 1.2-1.9 1.2-1.3 0-1.9-.2-3-.7l-.4-.2-.4 2.6c.7.3 2.1.6 3.5.6 3.3 0 5.4-1.6 5.4-4.1 0-1.4-.8-2.4-2.7-3.3-1.1-.6-1.8-.9-1.8-1.5 0-.5.6-1 1.8-1 1 0 1.8.2 2.4.5l.3.1.5-2.5z" fill="#fff"/><path d="M35.5 11H33c-.8 0-1.4.2-1.7 1l-4.9 11h3.3l.7-1.8h4c.1.4.4 1.8.4 1.8H38L35.5 11zm-3.7 6.8c.3-.7 1.3-3.3 1.3-3.3l.4-1 .2 1s.6 3 .8 3.3h-2.7z" fill="#fff"/><path d="M15.3 11l-3 6.8-.3-1.6c-.6-1.8-2.3-3.8-4.2-4.8l2.8 10.6h3.3L18.7 11h-3.4z" fill="#fff"/><path d="M10.3 11H5l-.1.3c4 1 6.6 3.4 7.7 6.3L11.4 12c-.2-.8-.8-1-1.1-1z" fill="#F9A533"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#252525"/><circle cx="19" cy="16" r="9" fill="#EB001B"/><circle cx="29" cy="16" r="9" fill="#F79E1B"/><path d="M24 9.2a9 9 0 0 1 3.4 6.8 9 9 0 0 1-3.4 6.8 9 9 0 0 1-3.4-6.8A9 9 0 0 1 24 9.2z" fill="#FF5F00"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#016FD0"/><path d="M24 22.4l-2.7-5h-5.7V22l-3-4.6h-3l-3.6 8h2.3l.7-1.7h3.6l.7 1.7H17l.1-.1V25.4h3l2.4-4 2.3 4h3.1v-8l3.6 8h2l3.6-8v8H40v-8h-2.6l-3 5.3-2.9-5.3h-2.7V25l-3.3-7.6h-2.7L20.7 22h1l2.3-.1z" fill="#fff"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#F3F4F6"/><path d="M17.2 12.5c-.4-.5-1.2-.7-2.2-.7H11v8.4h1.8v-3h2c1 0 1.7-.2 2.2-.7.5-.5.8-1.2.8-2s-.3-1.5-.6-2zm-1.3 3.1c-.3.2-.6.3-1.1.3h-1.7v-2.5h1.7c.5 0 .8.1 1.1.3.3.2.4.6.4 1s-.1.7-.4.9z" fill="#253B80"/><path d="M22.5 14.7c-.7 0-1.2.2-1.6.5l.1-.4h-1.6c-.1 0-.1.1-.1.1l-.7 4.6v.1h1.7l.2-1.3c.1-.4.3-.7.6-.9.3-.2.6-.2.9-.2.4 0 .6.1.8.3.2.2.2.5.2.9l-.3 1.5h1.7l.3-1.6c.1-.7 0-1.2-.3-1.6-.4-.6-1-1-1.9-1z" fill="#253B80"/><path d="M30.3 14.7c-.5 0-1 .1-1.4.4-.4.3-.7.7-.8 1.2h3.3c0-.5-.2-.9-.4-1.1-.3-.3-.4-.5-1-.5h.3zm-2.2 2.6c0 .5.2.9.5 1.2.3.3.8.4 1.3.4.6 0 1.2-.2 1.7-.5l-.3 1.3c-.5.2-1.1.4-1.7.4-1 0-1.7-.3-2.2-.8-.5-.5-.7-1.2-.7-2.1 0-.9.3-1.7.8-2.2.5-.6 1.3-.9 2.2-.9.8 0 1.4.3 1.8.8.4.5.5 1.1.4 2l-.1.4h-3.7z" fill="#253B80"/><path d="M34.5 12.2h-1.7l-1.1 7.4h1.7l1.1-7.4z" fill="#253B80"/><path d="M38 14.7c-.7 0-1.2.2-1.6.5l.1-.4h-1.6l-.8 4.8h1.7l.2-1.3c.1-.4.3-.7.6-.9.3-.2.6-.2.9-.2.4 0 .6.1.8.3.2.2.2.5.2.9l-.3 1.5h1.7l.3-1.6c.1-.7 0-1.2-.3-1.6-.3-.6-.9-1-1.9-1z" fill="#179BD7"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#000"/><path d="M15.5 20.5h-2l1.3-7.8h2l-1.3 7.8zm9.7-7.6c-.4-.2-1-.3-1.8-.3-2 0-3.4 1-3.4 2.5 0 1.1 1 1.7 1.8 2 .8.4 1.1.6 1.1 1 0 .5-.7.8-1.3.8-.8 0-1.3-.1-2-.5l-.3-.1-.3 1.7c.5.2 1.4.4 2.3.4 2.1 0 3.5-1 3.5-2.6 0-.9-.5-1.5-1.7-2.1-.7-.3-1.2-.6-1.2-1 0-.3.4-.7 1.2-.7.7 0 1.2.1 1.6.3l.2.1.3-1.5z" fill="#fff"/><path d="M29.2 12.7h-1.6c-.5 0-.9.1-1.1.6l-3.2 7.2h2.1l.4-1.2h2.6l.3 1.2h1.9l-1.4-7.8zm-2.4 5c.2-.4.8-2.1.8-2.1l.3-.6.1.6.5 2.1h-1.7z" fill="#fff"/><path d="M12.3 12.7l-2 5.3-.2-1c-.4-1.2-1.5-2.5-2.7-3.1l1.8 6.6h2.2l3.2-7.8h-2.3z" fill="#fff"/><path d="M8.9 12.7H5.6l0 .2c2.6.6 4.3 2.2 5 4.1l-.7-3.5c-.1-.5-.5-.8-.9-.8z" fill="#F9A533"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#000"/><path d="M9.3 16c0-2.2.8-4.2 2.1-5.6H9.8C7.1 12.2 5.5 14.9 5.5 18s1.6 5.8 4.3 7.6h1.6c-1.3-1.4-2.1-3.4-2.1-5.6V16z" fill="#fff"/><path d="M24 10.4c-1.5 0-2.8.5-3.8 1.3l2.8 2.2c.3-.2.7-.3 1-.3 1.3 0 2.3 1 2.3 2.3s-1 2.3-2.3 2.3c-.4 0-.7-.1-1-.3l-2.8 2.2c1 .8 2.3 1.3 3.8 1.3 3.3 0 5.9-2.5 5.9-5.5s-2.6-5.5-5.9-5.5z" fill="#fff"/><path d="M20.2 11.7L23 13.9c-.7.6-1.2 1.5-1.2 2.5V16c0 1 .5 1.9 1.2 2.5l-2.8 2.2C19 19.4 18 17.8 18 16v-.4c0-1.6 1-3.1 2.2-3.9z" fill="#fff"/><path d="M38.7 16c0-2.2-.8-4.2-2.1-5.6h1.6c2.7 1.8 4.3 4.5 4.3 7.6s-1.6 5.8-4.3 7.6h-1.6c1.3-1.4 2.1-3.4 2.1-5.6V16z" fill="#fff"/></svg>
+            </span>
+            <span class="co-payment-icon">
+              <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="32" rx="4" fill="#F3F4F6"/><path d="M22.3 10.8h3.4v10.4h-3.4z" fill="#5F6368"/><path d="M22.5 16c0-2.1 1-4 2.5-5.2a6.6 6.6 0 1 0 0 10.4c-1.5-1.2-2.5-3.1-2.5-5.2z" fill="#EB4335"/><path d="M35.7 16A6.6 6.6 0 0 1 25 21.2c1.5-1.2 2.5-3.1 2.5-5.2S26.5 12 25 10.8A6.6 6.6 0 0 1 35.7 16z" fill="#F9AB00"/><path d="M35.3 20.5v.7h.2v-.3l.2.3h.2l-.2-.3c.1 0 .2-.1.2-.2s-.1-.2-.3-.2h-.3zm.2.1h.1c.1 0 .2 0 .2.1 0 0-.1.1-.2.1h-.1v-.2z" fill="#F9AB00"/><path d="M35.9 20.8a.4.4 0 1 0 0-.8.4.4 0 0 0 0 .8zm0-.7c.2 0 .3.1.3.3s-.1.3-.3.3-.3-.1-.3-.3.1-.3.3-.3z" fill="#F9AB00"/></svg>
+            </span>
+          </div>
+        </div>
         <div class="co-powered">Powered by <span>FEVO</span></div>
       </div>
 
