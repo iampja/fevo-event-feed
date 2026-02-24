@@ -5,6 +5,9 @@ export interface Organization {
   name: string;
   logo_url: string | null;
   fevo_org_id: string | null;
+  distribution_enabled: boolean;
+  distribution_enabled_at: string | null;
+  distribution_disabled_at: string | null;
   created_at: string;
   updated_at: string;
 }

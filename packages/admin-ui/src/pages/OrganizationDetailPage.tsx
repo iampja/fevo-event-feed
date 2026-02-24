@@ -10,9 +10,12 @@ import { Badge } from '@/components/ui/Badge';
 import {
   getOrganization,
   getOffers,
+  getOrgDistributionStatus,
+  updateOrgDistribution,
   Organization,
   Offer,
   OffersMeta,
+  OrgDistributionStatus,
 } from '@/api/feedApi';
 import {
   formatDateTime,
@@ -20,6 +23,9 @@ import {
   getStatusBadgeVariant,
   formatPriceRange,
 } from '@/utils/formatters';
+import { Switch } from '@/components/ui/Switch';
+import { FormLabel } from '@/components/ui/FormLabel';
+import { HelperText } from '@/components/ui/HelperText';
 
 const Container = styled.div`
   max-width: 1000px;
@@ -107,6 +113,23 @@ const MonoValue = styled.span`
   color: ${colors.text.neutral.secondary};
 `;
 
+const ToggleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${spacings.xl};
+`;
+
+const LabelSection = styled.div`
+  flex: 1;
+`;
+
+const AffectedOffersText = styled.div`
+  margin-top: ${spacings.lg};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.neutral.secondary};
+`;
+
 type OfferRow = Offer & Record<string, unknown>;
 
 const PER_PAGE = 25;
@@ -120,13 +143,15 @@ export const OrganizationDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [distStatus, setDistStatus] = useState<OrgDistributionStatus | null>(null);
+  const [distLoading, setDistLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgId) return;
     try {
       setLoading(true);
       setError(null);
-      const [orgData, offersData] = await Promise.all([
+      const [orgData, offersData, distData] = await Promise.all([
         getOrganization(orgId),
         getOffers({
           organization_id: orgId,
@@ -135,10 +160,12 @@ export const OrganizationDetailPage: React.FC = () => {
           sort_by: 'created_at',
           sort_dir: 'desc',
         }),
+        getOrgDistributionStatus(orgId),
       ]);
       setOrg(orgData);
       setOffers(offersData.data);
       setOffersMeta(offersData.meta);
+      setDistStatus(distData);
     } catch {
       setError('Failed to load organization');
     } finally {
@@ -165,6 +192,29 @@ export const OrganizationDetailPage: React.FC = () => {
       </Container>
     );
   }
+
+  const handleDistributionToggle = async (enabled: boolean) => {
+    if (!orgId) return;
+    try {
+      setDistLoading(true);
+      const updated = await updateOrgDistribution(orgId, enabled);
+      setDistStatus(updated);
+      // Refresh offers to reflect cascaded distribution changes
+      const offersData = await getOffers({
+        organization_id: orgId,
+        page,
+        per_page: PER_PAGE,
+        sort_by: 'created_at',
+        sort_dir: 'desc',
+      });
+      setOffers(offersData.data);
+      setOffersMeta(offersData.meta);
+    } catch {
+      // silently fail — status remains unchanged
+    } finally {
+      setDistLoading(false);
+    }
+  };
 
   const offerColumns: Column<OfferRow>[] = [
     {
@@ -223,7 +273,7 @@ export const OrganizationDetailPage: React.FC = () => {
       <PageHeader title={org.name} />
 
       <InfoBanner>
-        Organizations are synced from FEVO and are read-only.
+        Organization details are synced from FEVO. Distribution settings can be managed below.
       </InfoBanner>
 
       {/* Org Info */}
@@ -260,6 +310,34 @@ export const OrganizationDetailPage: React.FC = () => {
             </Field>
           </OrgFields>
         </OrgInfoRow>
+      </Card>
+
+      {/* Distribution */}
+      <Card>
+        <SectionTitle>Distribution</SectionTitle>
+        <ToggleRow>
+          <LabelSection>
+            <FormLabel htmlFor={`org-dist-toggle-${org.id}`}>
+              Distribute offers from this organization
+            </FormLabel>
+            <HelperText>
+              When enabled, active offers from this organization will be eligible for the Event Feed.
+            </HelperText>
+          </LabelSection>
+          <Switch
+            id={`org-dist-toggle-${org.id}`}
+            checked={distStatus?.distributionEnabled ?? false}
+            onChange={handleDistributionToggle}
+            disabled={distLoading}
+          />
+        </ToggleRow>
+        {distStatus && (
+          <AffectedOffersText>
+            {distStatus.distributionEnabled
+              ? `Distribution is enabled for ${distStatus.activeOfferCount} active offer${distStatus.activeOfferCount !== 1 ? 's' : ''}.`
+              : `Enabling will distribute ${distStatus.activeOfferCount} active offer${distStatus.activeOfferCount !== 1 ? 's' : ''} from this organization.`}
+          </AffectedOffersText>
+        )}
       </Card>
 
       {/* Offers */}

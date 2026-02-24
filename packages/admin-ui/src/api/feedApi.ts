@@ -273,8 +273,18 @@ export interface Organization {
   name: string;
   logo_url: string | null;
   fevo_org_id: string | null;
+  distribution_enabled: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface OrgDistributionStatus {
+  orgId: string;
+  orgName: string;
+  distributionEnabled: boolean;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+  activeOfferCount: number;
 }
 
 export async function getOrganizations(): Promise<Organization[]> {
@@ -287,6 +297,26 @@ export async function getOrganizations(): Promise<Organization[]> {
 export async function getOrganization(orgId: string): Promise<Organization> {
   const response = await apiClient.get<{ data: Organization }>(
     `/admin/organizations/${orgId}`,
+  );
+  return response.data.data;
+}
+
+export async function getOrgDistributionStatus(
+  orgId: string,
+): Promise<OrgDistributionStatus> {
+  const response = await apiClient.get<{ data: OrgDistributionStatus }>(
+    `/admin/organizations/${orgId}/distribution`,
+  );
+  return response.data.data;
+}
+
+export async function updateOrgDistribution(
+  orgId: string,
+  enabled: boolean,
+): Promise<OrgDistributionStatus> {
+  const response = await apiClient.put<{ data: OrgDistributionStatus }>(
+    `/admin/organizations/${orgId}/distribution`,
+    { enabled },
   );
   return response.data.data;
 }

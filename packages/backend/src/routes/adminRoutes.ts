@@ -7,6 +7,10 @@ import {
   enableDistribution,
   disableDistribution,
   getDistributionStatus,
+  DistributionStatus,
+  getOrgDistributionStatus,
+  enableOrgDistribution,
+  disableOrgDistribution,
 } from '../services/distributionService';
 import {
   createApiKey,
@@ -35,6 +39,26 @@ const router = Router();
 router.use(internalAuth);
 router.use(adminRateLimiter);
 
+// ── Helper: map snake_case distribution status to camelCase for frontend ─────
+
+function mapDistributionStatus(status: DistributionStatus) {
+  const lastUpdatedAt =
+    status.distribution_enabled_at && status.distribution_disabled_at
+      ? status.distribution_enabled_at > status.distribution_disabled_at
+        ? status.distribution_enabled_at
+        : status.distribution_disabled_at
+      : status.distribution_enabled_at || status.distribution_disabled_at || '';
+
+  return {
+    offerId: status.offer_id,
+    offerName: status.offer_title,
+    offerStatus: status.offer_status,
+    distributionEnabled: status.distribution_enabled,
+    lastUpdatedAt,
+    lastUpdatedBy: 'admin',
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISTRIBUTION ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -61,7 +85,7 @@ router.put('/offers/:offerId/distribution', async (req: Request, res: Response) 
       ? await enableDistribution(offerId)
       : await disableDistribution(offerId);
 
-    res.json({ data: status });
+    res.json({ data: mapDistributionStatus(status) });
   } catch (err: any) {
     if (err.message?.startsWith('Offer not found')) {
       res.status(404).json({ error: err.message });
@@ -85,7 +109,7 @@ router.get('/offers/:offerId/distribution', async (req: Request, res: Response) 
       return;
     }
 
-    res.json({ data: status });
+    res.json({ data: mapDistributionStatus(status) });
   } catch (err) {
     console.error('GET /offers/:offerId/distribution error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -439,6 +463,83 @@ router.post('/feed/refresh', async (_req: Request, res: Response) => {
   } catch (err) {
     console.error('POST /feed/refresh error:', err);
     res.status(500).json({ error: 'Failed to rebuild feed cache' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORGANIZATION DISTRIBUTION ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/organizations/:orgId/distribution', async (req: Request, res: Response) => {
+  try {
+    const status = await getOrgDistributionStatus(req.params.orgId);
+
+    if (!status) {
+      res.status(404).json({ error: 'Organization not found' });
+      return;
+    }
+
+    res.json({
+      data: {
+        orgId: status.org_id,
+        orgName: status.org_name,
+        distributionEnabled: status.distribution_enabled,
+        lastUpdatedAt:
+          status.distribution_enabled_at && status.distribution_disabled_at
+            ? status.distribution_enabled_at > status.distribution_disabled_at
+              ? status.distribution_enabled_at
+              : status.distribution_disabled_at
+            : status.distribution_enabled_at || status.distribution_disabled_at || '',
+        lastUpdatedBy: 'admin',
+        activeOfferCount: status.active_offer_count,
+      },
+    });
+  } catch (err) {
+    console.error('GET /organizations/:orgId/distribution error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/organizations/:orgId/distribution', async (req: Request, res: Response) => {
+  try {
+    const parsed = distributionToggleSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const { orgId } = req.params;
+    const { enabled } = parsed.data;
+
+    const status = enabled
+      ? await enableOrgDistribution(orgId)
+      : await disableOrgDistribution(orgId);
+
+    res.json({
+      data: {
+        orgId: status.org_id,
+        orgName: status.org_name,
+        distributionEnabled: status.distribution_enabled,
+        lastUpdatedAt:
+          status.distribution_enabled_at && status.distribution_disabled_at
+            ? status.distribution_enabled_at > status.distribution_disabled_at
+              ? status.distribution_enabled_at
+              : status.distribution_disabled_at
+            : status.distribution_enabled_at || status.distribution_disabled_at || '',
+        lastUpdatedBy: 'admin',
+        activeOfferCount: status.active_offer_count,
+      },
+    });
+  } catch (err: any) {
+    if (err.message?.startsWith('Organization not found')) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    console.error('PUT /organizations/:orgId/distribution error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
