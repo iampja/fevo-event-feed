@@ -466,6 +466,56 @@
     }
     .co-powered span { font-weight: 600; color: #6b7280; }
 
+    /* ===== Embed code blocks ===== */
+    .embed-code {
+      margin-top: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #1e1e1e;
+    }
+    .embed-code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3a3a3a;
+    }
+    .embed-code-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .embed-copy-btn {
+      height: 26px;
+      padding: 0 12px;
+      background: #3a3a3a;
+      border: 1px solid #4b5563;
+      border-radius: 5px;
+      color: #e5e7eb;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .embed-copy-btn:hover { background: #4b5563; }
+    .embed-copy-btn.copied { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .embed-code pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .embed-code code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e5e7eb;
+      white-space: pre;
+    }
+
     .co-confirmation {
       display: none;
       text-align: center;
@@ -558,6 +608,19 @@
           <div class="fevo-event-feed" data-theme="light" data-columns="1" data-max-cards="3" data-geo="auto" id="widget-sidebar"></div>
         </div>
       </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-theme="light"
+     data-columns="1"
+     data-max-cards="3"
+     data-geo="auto"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
     </div>
 
     <!-- ===== Card Embed ===== -->
@@ -598,6 +661,19 @@
           <div class="fevo-event-feed" data-theme="light" data-columns="2" data-max-cards="4" data-geo="auto" id="widget-card"></div>
         </div>
       </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-theme="light"
+     data-columns="2"
+     data-max-cards="4"
+     data-geo="auto"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
     </div>
 
     <!-- ===== Dark Theme ===== -->
@@ -637,6 +713,19 @@
         <div class="widget-frame-body">
           <div class="fevo-event-feed" data-theme="dark" data-columns="2" data-max-cards="4" data-geo="auto" id="widget-dark"></div>
         </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-theme="dark"
+     data-columns="2"
+     data-max-cards="4"
+     data-geo="auto"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
       </div>
     </div>
 
@@ -690,6 +779,18 @@
         <div class="widget-frame-body">
           <div class="fevo-event-feed" data-theme="light" data-columns="3" data-geo="auto" id="widget-fullpage"></div>
         </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-theme="light"
+     data-columns="3"
+     data-geo="auto"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
       </div>
     </div>
   </div>
@@ -1279,6 +1380,22 @@
       updateCount('dark-count', null, null, null, 4);
       updateCount('fp-count', null, null, null);
     }, 100);
+
+    // ===== Copy embed code to clipboard =====
+    document.querySelectorAll('.embed-copy-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var code = btn.closest('.embed-code').querySelector('code');
+        if (!code) return;
+        navigator.clipboard.writeText(code.textContent).then(function() {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function() {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+    });
   </script>
 
   <script src="/src/index.ts" type="module"></script>
