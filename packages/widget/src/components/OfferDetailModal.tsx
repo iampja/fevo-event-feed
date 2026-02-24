@@ -6,7 +6,6 @@ import type { Offer, WidgetConfig } from '../types';
 import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { trackOfferClicked } from '../analytics';
 import { formatDate } from '../utils/formatDate';
-import { formatPrice } from '../utils/formatPrice';
 import { RewardSection } from './RewardSection';
 
 const AVAILABILITY_LABELS: Record<string, string> = {
@@ -128,10 +127,6 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
             </svg>
             {offer.venue.name} &middot; {offer.venue.city}, {offer.venue.state}
           </p>
-
-          <div class="fevo-ef-modal-price">
-            {formatPrice(offer.price)}
-          </div>
 
           <span class="fevo-ef-availability">
             <span

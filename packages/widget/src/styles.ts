@@ -150,13 +150,6 @@ export const WIDGET_STYLES = `
   opacity: 0.6;
 }
 
-.fevo-ef-card-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--fevo-ef-text);
-  margin: 8px 0;
-}
-
 /* ===== Reward Callout (Card Body) ===== */
 .fevo-ef-rw-card-callout {
   background: #FFFDF0;
@@ -614,13 +607,6 @@ export const WIDGET_STYLES = `
   width: 16px;
   height: 16px;
   opacity: 0.6;
-}
-
-.fevo-ef-modal-price {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--fevo-ef-text);
-  margin: 12px 0;
 }
 
 .fevo-ef-modal-description {

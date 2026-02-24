@@ -6,7 +6,6 @@ import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { trackOfferViewed, trackOfferClicked } from '../analytics';
 import { buildCheckoutUrl } from '../utils/buildCheckoutUrl';
 import { formatDate } from '../utils/formatDate';
-import { formatPrice } from '../utils/formatPrice';
 import { RewardBadge } from './RewardBadge';
 
 type OfferCardProps = {
@@ -106,10 +105,6 @@ export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
           </svg>
           {offer.venue.name} &middot; {offer.venue.city}, {offer.venue.state}
         </p>
-
-        <div class="fevo-ef-card-price">
-          {formatPrice(offer.price)}
-        </div>
 
         {offer.reward && (
           <div class="fevo-ef-rw-card-callout">
