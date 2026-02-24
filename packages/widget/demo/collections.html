@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FEVO Widget Collections</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f5f7;
+      color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Top nav ===== */
+    .nav {
+      background: #1a1a1a;
+      padding: 0 32px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 5px;
+      letter-spacing: -0.5px;
+    }
+    .nav-title { color: #fff; font-size: 15px; font-weight: 700; }
+    .nav-links { display: flex; gap: 6px; }
+    .nav-links a {
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: all 0.12s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-links a.active { color: #FFCC00; background: rgba(255,204,0,0.1); }
+
+    /* ===== Page layout ===== */
+    .page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+    .page-header { margin-bottom: 48px; }
+    .page-header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .page-header p { color: #6b7280; font-size: 15px; line-height: 1.6; max-width: 600px; }
+
+    /* ===== Section ===== */
+    .section { margin-bottom: 56px; }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .section-header h2 { font-size: 18px; font-weight: 700; }
+    .section-meta {
+      font-size: 12px;
+      color: #9ca3af;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      background: #f0f0f0;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .section-desc {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    /* ===== Widget containers ===== */
+    .widget-frame {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .widget-frame-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+    .widget-frame-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .widget-frame-size {
+      font-size: 11px;
+      color: #d1d5db;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+    .widget-frame-body { padding: 20px; }
+
+    /* Dark frame */
+    .widget-frame.dark { background: #111827; border-color: #374151; }
+    .widget-frame.dark .widget-frame-header { background: #1f2937; border-color: #374151; }
+    .widget-frame.dark .widget-frame-label { color: #6b7280; }
+    .widget-frame.dark .widget-frame-size { color: #4b5563; }
+
+    /* ===== Embed code blocks ===== */
+    .embed-code {
+      margin-top: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #1e1e1e;
+    }
+    .embed-code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3a3a3a;
+    }
+    .embed-code-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .embed-copy-btn {
+      height: 26px;
+      padding: 0 12px;
+      background: #3a3a3a;
+      border: 1px solid #4b5563;
+      border-radius: 5px;
+      color: #e5e7eb;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .embed-copy-btn:hover { background: #4b5563; }
+    .embed-copy-btn.copied { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .embed-code pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .embed-code code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e5e7eb;
+      white-space: pre;
+    }
+
+    /* ===== Analytics log ===== */
+    .analytics-log {
+      background: #1a1a1a;
+      color: #22c55e;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 40px;
+    }
+    .analytics-log p { margin: 2px 0; }
+    .analytics-log .label { color: #eab308; }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">FEVO</div>
+      <div class="nav-title">Segment Collections</div>
+    </div>
+    <div class="nav-links">
+      <a href="/showcase.html">Showcase</a>
+      <a href="/">MLB Demo</a>
+      <a href="/collections.html" class="active">Collections</a>
+      <a href="/rewards-demo.html">Rewards</a>
+      <a href="/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Segment-Based Collections</h1>
+      <p>Each widget below is backed by a different <code>data-segment</code>, returning a unique curated collection of offers. This demonstrates the segment &rarr; collection &rarr; widget pattern.</p>
+    </div>
+
+    <!-- ===== NBA Theme Nights ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>NBA Theme Nights</h2>
+        <span class="section-meta">segment: nba-theme-nights</span>
+      </div>
+      <p class="section-desc">Basketball games and themed entertainment nights at NBA arenas.</p>
+      <div class="widget-frame">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">3 columns &middot; light</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-segment="nba-theme-nights" data-columns="3" data-max-cards="4"></div>
+        </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-segment="nba-theme-nights"
+     data-columns="3"
+     data-max-cards="4"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+    </div>
+
+    <!-- ===== Concerts & Live Music ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Concerts &amp; Live Music</h2>
+        <span class="section-meta">segment: concerts-live</span>
+      </div>
+      <p class="section-desc">Live concerts, music festivals, and performance events.</p>
+      <div class="widget-frame dark">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">2 columns &middot; dark</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-segment="concerts-live" data-columns="2" data-theme="dark" data-max-cards="4"></div>
+        </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-segment="concerts-live"
+     data-columns="2"
+     data-theme="dark"
+     data-max-cards="4"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+    </div>
+
+    <!-- ===== Family Friendly ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Family Friendly</h2>
+        <span class="section-meta">segment: family-friendly</span>
+      </div>
+      <p class="section-desc">Family-oriented events, kids activities, and all-ages entertainment.</p>
+      <div class="widget-frame">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">3 columns &middot; light</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-segment="family-friendly" data-columns="3" data-max-cards="4"></div>
+        </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-segment="family-friendly"
+     data-columns="3"
+     data-max-cards="4"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+    </div>
+
+    <!-- ===== Premium VIP ===== -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Premium VIP Experiences</h2>
+        <span class="section-meta">segment: premium-vip</span>
+      </div>
+      <p class="section-desc">High-end VIP packages, exclusive access, and luxury event experiences.</p>
+      <div class="widget-frame">
+        <div class="widget-frame-header">
+          <span class="widget-frame-label">Preview</span>
+          <span class="widget-frame-size">2 columns &middot; light</span>
+        </div>
+        <div class="widget-frame-body">
+          <div class="fevo-event-feed" data-segment="premium-vip" data-columns="2" data-max-cards="4"></div>
+        </div>
+      </div>
+      <div class="embed-code">
+        <div class="embed-code-header">
+          <span class="embed-code-label">Embed Code</span>
+          <button class="embed-copy-btn">Copy</button>
+        </div>
+        <pre><code>&lt;div class="fevo-event-feed"
+     data-segment="premium-vip"
+     data-columns="2"
+     data-max-cards="4"&gt;
+&lt;/div&gt;
+&lt;script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+    </div>
+
+    <!-- ===== Analytics Event Log ===== -->
+    <div class="section">
+      <h2 style="font-size:14px; text-transform:uppercase; letter-spacing:0.05em; color:#6b7280; margin-bottom:16px;">Analytics Event Log</h2>
+      <div id="analytics-log" class="analytics-log">
+        <p><span class="label">[info]</span> Listening for fevo:analytics events...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segment-aware mock API -->
+  <script>
+    // Segment-specific offer collections — each segment returns unique offers
+    var SEGMENT_OFFERS = {
+      'nba-theme-nights': [
+        { offer_id:'seg-nba-001', title:'Knicks vs Lakers - 90s Night', description:'Throwback jerseys, classic hip-hop, and 90s trivia all game long.', image_url:'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop', price:{min:85,max:280,currency:'USD'}, date:'2026-03-14T19:30:00Z', venue:{name:'Madison Square Garden',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nyk',name:'NY Knicks'}, checkout_url:'/demo/checkout.html?offer=seg-nba-001', tags:['basketball','theme-night'], created_at:'2026-01-10T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-nba-002', title:'Celtics Star Wars Night', description:'May the force be with you — costumes encouraged, lightsaber giveaway.', image_url:'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&h=400&fit=crop', price:{min:65,max:210,currency:'USD'}, date:'2026-04-04T19:00:00Z', venue:{name:'TD Garden',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-bos',name:'Boston Celtics'}, checkout_url:'/demo/checkout.html?offer=seg-nba-002', tags:['basketball','theme-night'], created_at:'2026-01-12T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-nba-003', title:'Bulls Pride Night', description:'Celebrating diversity with special halftime performances and giveaways.', image_url:'https://images.unsplash.com/photo-1519861531473-9200262188bf?w=600&h=400&fit=crop', price:{min:55,max:190,currency:'USD'}, date:'2026-04-18T20:00:00Z', venue:{name:'United Center',city:'Chicago',state:'IL'}, availability:'available', organization:{id:'org-chi',name:'Chicago Bulls'}, checkout_url:'/demo/checkout.html?offer=seg-nba-003', tags:['basketball','theme-night'], created_at:'2026-01-15T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-nba-004', title:'Warriors Filipino Heritage Night', description:'Cultural performances, themed merch, and post-game fireworks.', image_url:'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=600&h=400&fit=crop', price:{min:70,max:250,currency:'USD'}, date:'2026-05-02T19:30:00Z', venue:{name:'Chase Center',city:'San Francisco',state:'CA'}, availability:'limited', organization:{id:'org-gsw',name:'Golden State Warriors'}, checkout_url:'/demo/checkout.html?offer=seg-nba-004', tags:['basketball','theme-night'], created_at:'2026-01-20T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      ],
+      'concerts-live': [
+        { offer_id:'seg-con-001', title:'Indie Rock Rooftop Sessions', description:'Intimate rooftop concert series featuring rising indie artists.', image_url:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop', price:{min:45,max:95,currency:'USD'}, date:'2026-03-22T20:00:00Z', venue:{name:'Brooklyn Steel',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-bkl',name:'Brooklyn Live'}, checkout_url:'/demo/checkout.html?offer=seg-con-001', tags:['concerts','indie'], created_at:'2026-01-08T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-con-002', title:'Jazz Under the Stars', description:'Open-air jazz festival with legendary and emerging artists.', image_url:'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&h=400&fit=crop', price:{min:60,max:150,currency:'USD'}, date:'2026-06-14T18:30:00Z', venue:{name:'Hollywood Bowl',city:'Los Angeles',state:'CA'}, availability:'available', organization:{id:'org-hb',name:'Hollywood Bowl'}, checkout_url:'/demo/checkout.html?offer=seg-con-002', tags:['concerts','jazz'], created_at:'2026-01-14T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-con-003', title:'Latin Music Mega Festival', description:'Three stages of reggaeton, salsa, and bachata headliners.', image_url:'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&h=400&fit=crop', price:{min:80,max:225,currency:'USD'}, date:'2026-07-19T16:00:00Z', venue:{name:'Bayfront Park',city:'Miami',state:'FL'}, availability:'available', organization:{id:'org-mia',name:'Miami Live'}, checkout_url:'/demo/checkout.html?offer=seg-con-003', tags:['concerts','latin','festival'], created_at:'2026-01-18T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-con-004', title:'Country Music Lakeside', description:'Nashville hits performed lakeside with BBQ and craft beer.', image_url:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=400&fit=crop', price:{min:55,max:130,currency:'USD'}, date:'2026-08-09T17:00:00Z', venue:{name:'Lakefront Arena',city:'Nashville',state:'TN'}, availability:'available', organization:{id:'org-nsh',name:'Nashville Live'}, checkout_url:'/demo/checkout.html?offer=seg-con-004', tags:['concerts','country'], created_at:'2026-01-22T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-con-005', title:'Electronic Dance Night', description:'Top DJs, immersive visuals, and a late-night dance experience.', image_url:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&h=400&fit=crop', price:{min:70,max:180,currency:'USD'}, date:'2026-05-30T21:00:00Z', venue:{name:'Avant Gardner',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-bkl',name:'Brooklyn Live'}, checkout_url:'/demo/checkout.html?offer=seg-con-005', tags:['concerts','electronic'], created_at:'2026-01-25T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      ],
+      'family-friendly': [
+        { offer_id:'seg-fam-001', title:'Kids Day at the Ballpark', description:'Face painting, mascot meet & greet, and a mini home run derby.', image_url:'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=400&fit=crop', price:{min:25,max:60,currency:'USD'}, date:'2026-04-12T11:00:00Z', venue:{name:'Citi Field',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-nym',name:'NY Mets'}, checkout_url:'/demo/checkout.html?offer=seg-fam-001', tags:['family','kids','baseball'], created_at:'2026-01-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-fam-002', title:'Disney on Ice: Frozen Adventure', description:'Elsa, Anna, and friends glide across the ice in this magical show.', image_url:'https://images.unsplash.com/photo-1567706054688-7e249e22a77b?w=600&h=400&fit=crop', price:{min:35,max:85,currency:'USD'}, date:'2026-03-29T14:00:00Z', venue:{name:'Barclays Center',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-doi',name:'Disney on Ice'}, checkout_url:'/demo/checkout.html?offer=seg-fam-002', tags:['family','kids','entertainment'], created_at:'2026-01-09T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-fam-003', title:'Science Fair Spectacular', description:'Hands-on experiments, robotics demos, and a planetarium show.', image_url:'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop', price:{min:20,max:45,currency:'USD'}, date:'2026-05-17T10:00:00Z', venue:{name:'Museum of Science',city:'Boston',state:'MA'}, availability:'available', organization:{id:'org-mos',name:'Museum of Science'}, checkout_url:'/demo/checkout.html?offer=seg-fam-003', tags:['family','education','kids'], created_at:'2026-01-11T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-fam-004', title:'Zoo Safari Family Pack', description:'Guided safari tour, animal encounters, and all-day ride passes.', image_url:'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=600&h=400&fit=crop', price:{min:40,max:110,currency:'USD'}, date:'2026-06-07T09:00:00Z', venue:{name:'Bronx Zoo',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-zoo',name:'Bronx Zoo'}, checkout_url:'/demo/checkout.html?offer=seg-fam-004', tags:['family','outdoors','kids'], created_at:'2026-01-16T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      ],
+      'premium-vip': [
+        { offer_id:'seg-vip-001', title:'Courtside Club - Knicks Playoffs', description:'Floor seats, private lounge, complimentary dining and open bar.', image_url:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&h=400&fit=crop', price:{min:500,max:1500,currency:'USD'}, date:'2026-05-10T19:30:00Z', venue:{name:'Madison Square Garden',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyk',name:'NY Knicks'}, checkout_url:'/demo/checkout.html?offer=seg-vip-001', tags:['vip','basketball','premium'], created_at:'2026-02-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-vip-002', title:'Skybox Suite - Yankees Opening Day', description:'Private luxury suite for 20 guests with catering and field access.', image_url:'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&h=400&fit=crop', price:{min:800,max:2500,currency:'USD'}, date:'2026-04-02T13:00:00Z', venue:{name:'Yankee Stadium',city:'New York',state:'NY'}, availability:'limited', organization:{id:'org-nyy',name:'NY Yankees'}, checkout_url:'/demo/checkout.html?offer=seg-vip-002', tags:['vip','baseball','premium'], created_at:'2026-02-03T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-vip-003', title:'Backstage Concert Pass - Summer Tour', description:'Meet the artists, watch soundcheck, and enjoy the show from VIP pit.', image_url:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop', price:{min:350,max:750,currency:'USD'}, date:'2026-07-25T18:00:00Z', venue:{name:'Radio City Music Hall',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-rcmh',name:'Radio City'}, checkout_url:'/demo/checkout.html?offer=seg-vip-003', tags:['vip','concerts','premium'], created_at:'2026-02-05T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+        { offer_id:'seg-vip-004', title:'Chef\'s Table Gala Dinner', description:'Seven-course tasting menu by Michelin-starred chefs with wine pairing.', image_url:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop', price:{min:450,max:900,currency:'USD'}, date:'2026-06-14T19:00:00Z', venue:{name:'The Plaza Hotel',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-plz',name:'The Plaza'}, checkout_url:'/demo/checkout.html?offer=seg-vip-004', tags:['vip','dining','premium'], created_at:'2026-02-07T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+      ],
+    };
+
+    // Default fallback for unknown segments
+    var DEFAULT_OFFERS = [
+      { offer_id:'seg-def-001', title:'Sample Event', description:'No segment-specific offers configured.', image_url:'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=600&h=400&fit=crop', price:{min:25,max:100,currency:'USD'}, date:'2026-04-01T19:00:00Z', venue:{name:'Demo Venue',city:'New York',state:'NY'}, availability:'available', organization:{id:'org-demo',name:'FEVO'}, checkout_url:'/demo/checkout.html?offer=seg-def-001', tags:['demo'], created_at:'2026-01-01T00:00:00Z', updated_at:'2026-02-15T00:00:00Z' },
+    ];
+
+    // Mock fetch intercept — reads segment query param and returns segment-specific offers
+    var _fetch = window.fetch;
+    window.fetch = function(url, opts) {
+      var u = typeof url === 'string' ? url : url.toString();
+      if (u.includes('/feed')) {
+        var params = new URL(u, window.location.origin).searchParams;
+        var segment = params.get('segment') || 'default';
+        var offers = SEGMENT_OFFERS[segment] || DEFAULT_OFFERS;
+
+        var perPage = parseInt(params.get('per_page')) || offers.length;
+        var sliced = offers.slice(0, perPage);
+
+        return Promise.resolve(new Response(JSON.stringify({
+          data: sliced,
+          meta: { page: 1, per_page: perPage, total: offers.length, total_pages: Math.ceil(offers.length / perPage) },
+          feed_updated_at: new Date().toISOString()
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+      return _fetch.apply(this, arguments);
+    };
+
+    // Listen for analytics events and log them
+    window.addEventListener('fevo:analytics', function(e) {
+      var log = document.getElementById('analytics-log');
+      if (log && e.detail) {
+        var p = document.createElement('p');
+        var label = document.createElement('span');
+        label.className = 'label';
+        label.textContent = '[' + e.detail.type + ']';
+        p.appendChild(label);
+        p.appendChild(document.createTextNode(' ' + JSON.stringify(e.detail.data)));
+        log.appendChild(p);
+        log.scrollTop = log.scrollHeight;
+      }
+    });
+
+    // Copy embed code to clipboard
+    document.querySelectorAll('.embed-copy-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var code = btn.closest('.embed-code').querySelector('code');
+        if (!code) return;
+        navigator.clipboard.writeText(code.textContent).then(function() {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function() {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+    });
+  </script>
+
+  <script src="/src/index.ts" type="module"></script>
+</body>
+</html>
