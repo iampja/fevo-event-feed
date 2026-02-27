@@ -213,6 +213,13 @@ export async function removeOfferFromSegment(
   await apiClient.delete(`/admin/segments/${segmentId}/offers/${offerId}`);
 }
 
+export async function getOfferSegments(offerId: string): Promise<Segment[]> {
+  const response = await apiClient.get<{ data: Segment[] }>(
+    `/admin/offers/${offerId}/segments`,
+  );
+  return response.data.data;
+}
+
 // ========================
 // API KEY TYPES & METHODS
 // ========================

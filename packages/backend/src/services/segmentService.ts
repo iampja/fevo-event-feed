@@ -159,6 +159,18 @@ export async function removeOfferFromSegment(segmentId: string, offerId: string)
 }
 
 /**
+ * Get all segments that contain a given offer.
+ */
+export async function getSegmentsByOfferId(offerId: string): Promise<Segment[]> {
+  const rows = await db('event_feed_segments')
+    .join('event_feed_segment_offers', 'event_feed_segments.id', 'event_feed_segment_offers.segment_id')
+    .where('event_feed_segment_offers.offer_id', offerId)
+    .select('event_feed_segments.*')
+    .orderBy('event_feed_segments.name', 'asc');
+  return rows.map((r: any) => ({ ...r, is_curated: !!r.is_curated }));
+}
+
+/**
  * Get all offers in a segment.
  */
 export async function getSegmentOffers(segmentId: string): Promise<any[]> {

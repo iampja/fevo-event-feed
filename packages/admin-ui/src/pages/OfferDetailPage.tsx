@@ -1,7 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { getOffer, getDistributionStatus, updateDistribution, Offer, DistributionStatus } from '@/api/feedApi';
+import {
+  getOffer,
+  getDistributionStatus,
+  updateDistribution,
+  getSegments,
+  getOfferSegments,
+  addOfferToSegment,
+  removeOfferFromSegment,
+  Offer,
+  DistributionStatus,
+  Segment,
+} from '@/api/feedApi';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Badge } from '@/components/ui/Badge';
@@ -107,6 +118,84 @@ const LastUpdated = styled.div`
   color: ${colors.text.neutral.secondary};
 `;
 
+const CollectionChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${spacings.sm};
+  margin-bottom: ${spacings.xl};
+`;
+
+const CollectionChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${spacings.sm};
+  padding: ${spacings.sm} ${spacings.md};
+  background: ${colors.surface.neutral.bgSubtle};
+  border: 1px solid ${colors.border.neutral.primary};
+  border-radius: ${radius.cornerRadiusMd};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.neutral.primary};
+`;
+
+const ChipSlug = styled.span`
+  color: ${colors.text.neutral.secondary};
+  font-size: ${typography.fontSize.xs};
+`;
+
+const ChipRemove = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 16px;
+  line-height: 1;
+  color: ${colors.text.neutral.secondary};
+  &:hover {
+    color: ${colors.text.neutral.primary};
+  }
+`;
+
+const AddCollectionRow = styled.div`
+  display: flex;
+  gap: ${spacings.md};
+  align-items: center;
+`;
+
+const CollectionSelect = styled.select`
+  flex: 1;
+  padding: ${spacings.sm} ${spacings.md};
+  border: 1px solid ${colors.border.neutral.primary};
+  border-radius: ${radius.cornerRadiusMd};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.neutral.primary};
+  background: white;
+`;
+
+const AddButton = styled.button`
+  padding: ${spacings.sm} ${spacings.lg};
+  background: ${colors.surface.neutral.primary};
+  color: white;
+  border: none;
+  border-radius: ${radius.cornerRadiusMd};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.medium};
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover {
+    opacity: 0.9;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const EmptyText = styled.div`
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.neutral.secondary};
+  margin-bottom: ${spacings.xl};
+`;
+
 function parseTags(tags: string | null | undefined): string[] {
   if (!tags) return [];
   try {
@@ -124,18 +213,26 @@ export const OfferDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allSegments, setAllSegments] = useState<Segment[]>([]);
+  const [offerSegments, setOfferSegments] = useState<Segment[]>([]);
+  const [selectedSegmentId, setSelectedSegmentId] = useState('');
+  const [addingSegment, setAddingSegment] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!offerId) return;
     try {
       setLoading(true);
       setError(null);
-      const [offerData, distData] = await Promise.all([
+      const [offerData, distData, allSegs, offerSegs] = await Promise.all([
         getOffer(offerId),
         getDistributionStatus(offerId).catch(() => null),
+        getSegments().catch(() => [] as Segment[]),
+        getOfferSegments(offerId).catch(() => [] as Segment[]),
       ]);
       setOffer(offerData);
       setDistribution(distData);
+      setAllSegments(allSegs);
+      setOfferSegments(offerSegs);
     } catch {
       setError('Failed to load offer');
     } finally {
@@ -162,6 +259,39 @@ export const OfferDetailPage: React.FC = () => {
       showError('Failed to update distribution');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const availableSegments = allSegments.filter(
+    (s) => !offerSegments.some((os) => os.id === s.id),
+  );
+
+  const handleAddToSegment = async () => {
+    if (!offerId || !selectedSegmentId) return;
+    try {
+      setAddingSegment(true);
+      await addOfferToSegment(selectedSegmentId, offerId);
+      const added = allSegments.find((s) => s.id === selectedSegmentId);
+      if (added) {
+        setOfferSegments((prev) => [...prev, added].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      setSelectedSegmentId('');
+      showSuccess('Offer added to collection');
+    } catch {
+      showError('Failed to add offer to collection');
+    } finally {
+      setAddingSegment(false);
+    }
+  };
+
+  const handleRemoveFromSegment = async (segmentId: string) => {
+    if (!offerId) return;
+    try {
+      await removeOfferFromSegment(segmentId, offerId);
+      setOfferSegments((prev) => prev.filter((s) => s.id !== segmentId));
+      showSuccess('Offer removed from collection');
+    } catch {
+      showError('Failed to remove offer from collection');
     }
   };
 
@@ -346,6 +476,53 @@ export const OfferDetailPage: React.FC = () => {
         ) : (
           <FieldValue>Distribution status unavailable</FieldValue>
         )}
+      </Card>
+
+      {/* Collections */}
+      <Card>
+        <SectionTitle>Collections</SectionTitle>
+        {offerSegments.length > 0 ? (
+          <CollectionChips>
+            {offerSegments.map((seg) => (
+              <CollectionChip key={seg.id}>
+                {seg.name}
+                <ChipSlug>({seg.slug})</ChipSlug>
+                <ChipRemove
+                  title={`Remove from ${seg.name}`}
+                  onClick={() => handleRemoveFromSegment(seg.id)}
+                >
+                  &times;
+                </ChipRemove>
+              </CollectionChip>
+            ))}
+          </CollectionChips>
+        ) : (
+          <EmptyText>This offer is not in any collections.</EmptyText>
+        )}
+        <AddCollectionRow>
+          <CollectionSelect
+            value={selectedSegmentId}
+            onChange={(e) => setSelectedSegmentId(e.target.value)}
+            disabled={availableSegments.length === 0}
+          >
+            <option value="">
+              {availableSegments.length === 0
+                ? 'No collections available'
+                : 'Select a collection...'}
+            </option>
+            {availableSegments.map((seg) => (
+              <option key={seg.id} value={seg.id}>
+                {seg.name} ({seg.slug})
+              </option>
+            ))}
+          </CollectionSelect>
+          <AddButton
+            onClick={handleAddToSegment}
+            disabled={!selectedSegmentId || addingSegment}
+          >
+            {addingSegment ? 'Adding...' : 'Add'}
+          </AddButton>
+        </AddCollectionRow>
       </Card>
 
       {/* Metadata */}

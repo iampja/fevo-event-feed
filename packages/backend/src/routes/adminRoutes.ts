@@ -27,6 +27,7 @@ import {
   deleteSegment,
   addOfferToSegment,
   removeOfferFromSegment,
+  getSegmentsByOfferId,
 } from '../services/segmentService';
 
 import { listOffers, getOfferById, getOfferStats } from '../services/offerService';
@@ -178,6 +179,18 @@ router.get('/offers/:offerId', async (req: Request, res: Response) => {
     res.json({ data: offer });
   } catch (err) {
     console.error('GET /offers/:offerId error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /offers/:offerId/segments ─────────────────────────────────────────────
+
+router.get('/offers/:offerId/segments', async (req: Request, res: Response) => {
+  try {
+    const segments = await getSegmentsByOfferId(req.params.offerId);
+    res.json({ data: segments });
+  } catch (err) {
+    console.error('GET /offers/:offerId/segments error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
