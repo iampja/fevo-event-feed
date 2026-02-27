@@ -78,6 +78,7 @@ export interface OffersListParams {
   status?: string;
   distribution_enabled?: string;
   organization_id?: string;
+  segment_id?: string;
   search?: string;
   sort_by?: string;
   sort_dir?: 'asc' | 'desc';

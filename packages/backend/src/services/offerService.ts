@@ -7,6 +7,7 @@ export interface OfferListParams {
   status?: string;
   distribution_enabled?: boolean;
   organization_id?: string;
+  segment_id?: string;
   search?: string;
   sort_by?: string;
   sort_dir?: 'asc' | 'desc';
@@ -25,6 +26,7 @@ export async function listOffers(params: OfferListParams = {}): Promise<{
     status,
     distribution_enabled,
     organization_id,
+    segment_id,
     search,
     sort_by = 'created_at',
     sort_dir = 'desc',
@@ -32,6 +34,16 @@ export async function listOffers(params: OfferListParams = {}): Promise<{
 
   let query = db('offers');
   let countQuery = db('offers');
+
+  if (segment_id) {
+    query = query
+      .join('event_feed_segment_offers', 'offers.id', 'event_feed_segment_offers.offer_id')
+      .where('event_feed_segment_offers.segment_id', segment_id)
+      .select('offers.*');
+    countQuery = countQuery
+      .join('event_feed_segment_offers', 'offers.id', 'event_feed_segment_offers.offer_id')
+      .where('event_feed_segment_offers.segment_id', segment_id);
+  }
 
   if (status) {
     query = query.where('status', status);

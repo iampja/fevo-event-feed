@@ -13,9 +13,11 @@ import { showError } from '@/components/ui/Toast';
 import {
   getOffers,
   getOfferStats,
+  getSegments,
   Offer,
   OffersMeta,
   OfferStats,
+  Segment,
 } from '@/api/feedApi';
 import {
   formatDateTime,
@@ -68,6 +70,8 @@ export const AllOffersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [distributionFilter, setDistributionFilter] = useState('');
+  const [collectionFilter, setCollectionFilter] = useState('');
+  const [collections, setCollections] = useState<Segment[]>([]);
   const [page, setPage] = useState(1);
 
   const fetchOffers = useCallback(async () => {
@@ -82,6 +86,7 @@ export const AllOffersPage: React.FC = () => {
       if (searchQuery) params.search = searchQuery;
       if (statusFilter) params.status = statusFilter;
       if (distributionFilter) params.distribution_enabled = distributionFilter;
+      if (collectionFilter) params.segment_id = collectionFilter;
 
       const result = await getOffers(params as Parameters<typeof getOffers>[0]);
       setOffers(result.data);
@@ -91,7 +96,7 @@ export const AllOffersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, statusFilter, distributionFilter]);
+  }, [page, searchQuery, statusFilter, distributionFilter, collectionFilter]);
 
   useEffect(() => {
     fetchOffers();
@@ -100,6 +105,9 @@ export const AllOffersPage: React.FC = () => {
   useEffect(() => {
     getOfferStats()
       .then(setStats)
+      .catch(() => {});
+    getSegments()
+      .then(setCollections)
       .catch(() => {});
   }, []);
 
@@ -117,6 +125,16 @@ export const AllOffersPage: React.FC = () => {
     setDistributionFilter(value);
     setPage(1);
   }, []);
+
+  const handleCollectionChange = useCallback((value: string) => {
+    setCollectionFilter(value);
+    setPage(1);
+  }, []);
+
+  const collectionOptions = collections.map((s) => ({
+    value: s.id,
+    label: s.name,
+  }));
 
   const columns: Column<OfferRow>[] = [
     {
@@ -216,6 +234,12 @@ export const AllOffersPage: React.FC = () => {
             onChange={handleDistributionChange}
             options={distributionOptions}
             placeholder="All Distribution"
+          />
+          <Select
+            value={collectionFilter}
+            onChange={handleCollectionChange}
+            options={collectionOptions}
+            placeholder="All Collections"
           />
         </FilterGroup>
       </ToolbarRow>

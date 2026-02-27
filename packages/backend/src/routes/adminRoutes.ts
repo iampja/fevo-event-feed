@@ -141,6 +141,7 @@ const offerListSchema = z.object({
   status: z.enum(['active', 'inactive', 'sold_out', 'deleted']).optional(),
   distribution_enabled: z.coerce.boolean().optional(),
   organization_id: z.string().optional(),
+  segment_id: z.string().optional(),
   search: z.string().optional(),
   sort_by: z.string().optional(),
   sort_dir: z.enum(['asc', 'desc']).optional(),
