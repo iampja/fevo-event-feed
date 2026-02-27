@@ -25,7 +25,6 @@ import {
   formatDateTime,
   formatStatusLabel,
   getStatusBadgeVariant,
-  formatPriceRange,
 } from '@/utils/formatters';
 
 const StatsGrid = styled.div`
@@ -264,19 +263,7 @@ export const AllOffersPage: React.FC = () => {
         );
       },
     },
-    {
-      header: 'Date',
-      accessor: 'date',
-      width: '140px',
-      render: (row) => (row.date ? formatDateTime(row.date) : '-'),
-    },
-    {
-      header: 'Price',
-      accessor: 'price_min',
-      width: '130px',
-      render: (row) => formatPriceRange(row.price_min, row.price_max),
-    },
-    {
+{
       header: 'Status',
       accessor: 'status',
       width: '110px',
