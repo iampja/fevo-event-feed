@@ -65,7 +65,7 @@ export const SegmentsPage: React.FC = () => {
       const data = await getSegments();
       setSegments(data);
     } catch {
-      showError('Failed to load segments');
+      showError('Failed to load collections');
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ export const SegmentsPage: React.FC = () => {
   const handleCreate = useCallback(
     async (payload: CreateSegmentPayload) => {
       await createSegment(payload);
-      showSuccess('Segment created successfully');
+      showSuccess('Collection created successfully');
       fetchSegments();
     },
     [fetchSegments],
@@ -109,7 +109,7 @@ export const SegmentsPage: React.FC = () => {
   const handleUpdate = useCallback(
     async (segmentId: string, payload: UpdateSegmentPayload) => {
       await updateSegment(segmentId, payload);
-      showSuccess('Segment updated successfully');
+      showSuccess('Collection updated successfully');
       fetchSegments();
     },
     [fetchSegments],
@@ -118,7 +118,7 @@ export const SegmentsPage: React.FC = () => {
   const handleDelete = useCallback(
     async (segmentId: string) => {
       await deleteSegment(segmentId);
-      showSuccess('Segment deleted successfully');
+      showSuccess('Collection deleted successfully');
       fetchSegments();
     },
     [fetchSegments],
@@ -131,7 +131,7 @@ export const SegmentsPage: React.FC = () => {
       const data = await getSegmentBySlug(segment.slug);
       setSegmentWithOffers(data);
     } catch {
-      showError('Failed to load segment offers');
+      showError('Failed to load collection offers');
       setOffersTarget(null);
     } finally {
       setOffersLoading(false);
@@ -142,7 +142,7 @@ export const SegmentsPage: React.FC = () => {
     async (offerId: string) => {
       if (!offersTarget) return;
       await addOfferToSegment(offersTarget.id, offerId);
-      showSuccess('Offer added to segment');
+      showSuccess('Offer added to collection');
       const data = await getSegmentBySlug(offersTarget.slug);
       setSegmentWithOffers(data);
     },
@@ -153,7 +153,7 @@ export const SegmentsPage: React.FC = () => {
     async (offerId: string) => {
       if (!offersTarget) return;
       await removeOfferFromSegment(offersTarget.id, offerId);
-      showSuccess('Offer removed from segment');
+      showSuccess('Offer removed from collection');
       const data = await getSegmentBySlug(offersTarget.slug);
       setSegmentWithOffers(data);
     },
@@ -230,11 +230,11 @@ export const SegmentsPage: React.FC = () => {
   return (
     <>
       <PageHeader
-        title="Segments"
+        title="Collections"
         subtitle="Manage curated collections of offers"
         actions={
           <Button onClick={() => setShowCreateModal(true)}>
-            Create Segment
+            Create Collection
           </Button>
         }
       />
@@ -243,15 +243,15 @@ export const SegmentsPage: React.FC = () => {
         <SearchInput
           value={searchQuery}
           onChange={handleSearchChange}
-          placeholder="Search segments..."
+          placeholder="Search collections..."
         />
       </ToolbarRow>
 
       <Table<SegmentRow>
         columns={columns}
         data={paginatedSegments as SegmentRow[]}
-        onRowClick={(row) => navigate(`/segments/${row.slug}`)}
-        emptyMessage={loading ? 'Loading segments...' : 'No segments found'}
+        onRowClick={(row) => navigate(`/collections/${row.slug}`)}
+        emptyMessage={loading ? 'Loading collections...' : 'No collections found'}
       />
 
       {totalPages > 1 && (

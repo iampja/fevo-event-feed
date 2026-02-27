@@ -80,7 +80,7 @@ export const EditSegmentModal: React.FC<EditSegmentModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Edit Segment"
+      title="Edit Collection"
       confirmLabel="Save Changes"
       onConfirm={handleConfirm}
       onCancel={onClose}
@@ -118,7 +118,7 @@ export const EditSegmentModal: React.FC<EditSegmentModalProps> = ({
         <Switch
           checked={isCurated}
           onChange={setIsCurated}
-          label="Curated segment"
+          label="Curated collection"
         />
       </FormGroup>
     </Modal>

@@ -42,8 +42,8 @@ function App() {
                     <Route path="/" element={<Navigate to="/offers" replace />} />
                     <Route path="/offers" element={<AllOffersPage />} />
                     <Route path="/offers/:offerId" element={<OfferDetailPage />} />
-                    <Route path="/segments" element={<SegmentsPage />} />
-                    <Route path="/segments/:slug" element={<SegmentDetailPage />} />
+                    <Route path="/collections" element={<SegmentsPage />} />
+                    <Route path="/collections/:slug" element={<SegmentDetailPage />} />
                     <Route path="/organizations" element={<OrganizationsPage />} />
                     <Route path="/organizations/:orgId" element={<OrganizationDetailPage />} />
                     <Route path="/sync" element={<SyncDashboardPage />} />

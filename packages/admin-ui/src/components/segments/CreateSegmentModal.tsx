@@ -106,7 +106,7 @@ export const CreateSegmentModal: React.FC<CreateSegmentModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Create Segment"
+      title="Create Collection"
       confirmLabel="Create"
       onConfirm={handleConfirm}
       onCancel={handleCancel}
@@ -149,7 +149,7 @@ export const CreateSegmentModal: React.FC<CreateSegmentModalProps> = ({
         <Switch
           checked={isCurated}
           onChange={setIsCurated}
-          label="Curated segment"
+          label="Curated collection"
         />
       </FormGroup>
     </Modal>

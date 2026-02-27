@@ -165,7 +165,7 @@ export const Sidebar: React.FC = () => {
         </StyledNavLink>
 
         <SectionHeader>Content</SectionHeader>
-        <StyledNavLink to="/segments">
+        <StyledNavLink to="/collections">
           <NavIcon>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -180,7 +180,7 @@ export const Sidebar: React.FC = () => {
               <line x1="7" y1="7" x2="7.01" y2="7" />
             </svg>
           </NavIcon>
-          Segments
+          Collections
         </StyledNavLink>
         <StyledNavLink to="/organizations">
           <NavIcon>

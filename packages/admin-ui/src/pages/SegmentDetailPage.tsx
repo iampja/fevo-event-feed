@@ -124,7 +124,7 @@ export const SegmentDetailPage: React.FC = () => {
       const data = await getSegmentBySlug(slug);
       setSegment(data);
     } catch {
-      setError('Failed to load segment');
+      setError('Failed to load collection');
     } finally {
       setLoading(false);
     }
@@ -137,22 +137,22 @@ export const SegmentDetailPage: React.FC = () => {
   const handleUpdate = async (payload: UpdateSegmentPayload) => {
     if (!segment) return;
     await updateSegment(segment.id, payload);
-    showSuccess('Segment updated');
+    showSuccess('Collection updated');
     fetchSegment();
   };
 
   const handleDelete = async () => {
     if (!segment) return;
     await deleteSegment(segment.id);
-    showSuccess('Segment deleted');
-    navigate('/segments');
+    showSuccess('Collection deleted');
+    navigate('/collections');
   };
 
   const handleAddOffer = async () => {
     if (!segment || !addOfferId.trim()) return;
     try {
       await addOfferToSegment(segment.id, addOfferId.trim());
-      showSuccess('Offer added to segment');
+      showSuccess('Offer added to collection');
       setAddOfferId('');
       fetchSegment();
     } catch {
@@ -164,7 +164,7 @@ export const SegmentDetailPage: React.FC = () => {
     if (!segment) return;
     try {
       await removeOfferFromSegment(segment.id, offerId);
-      showSuccess('Offer removed from segment');
+      showSuccess('Offer removed from collection');
       fetchSegment();
     } catch {
       showError('Failed to remove offer');
@@ -182,7 +182,7 @@ export const SegmentDetailPage: React.FC = () => {
   if (error || !segment) {
     return (
       <Container>
-        <PageHeader title="Segment Not Found" />
+        <PageHeader title="Collection Not Found" />
       </Container>
     );
   }
@@ -235,7 +235,7 @@ export const SegmentDetailPage: React.FC = () => {
     <Container>
       <Breadcrumb
         items={[
-          { label: 'Segments', to: '/segments' },
+          { label: 'Collections', to: '/collections' },
           { label: segment.name },
         ]}
       />
@@ -255,7 +255,7 @@ export const SegmentDetailPage: React.FC = () => {
 
       {/* Segment Info */}
       <Card>
-        <SectionTitle>Segment Info</SectionTitle>
+        <SectionTitle>Collection Info</SectionTitle>
         <FieldGrid>
           <Field>
             <FieldLabel>Name</FieldLabel>
@@ -315,7 +315,7 @@ export const SegmentDetailPage: React.FC = () => {
           columns={offerColumns}
           data={segment.offers as OfferRow[]}
           onRowClick={(row) => navigate(`/offers/${row.id}`)}
-          emptyMessage="No offers in this segment"
+          emptyMessage="No offers in this collection"
         />
       </Card>
 

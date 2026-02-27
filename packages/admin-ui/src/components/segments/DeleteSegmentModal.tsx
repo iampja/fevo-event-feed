@@ -31,7 +31,7 @@ export const DeleteSegmentModal: React.FC<DeleteSegmentModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      title="Delete Segment"
+      title="Delete Collection"
       message={`Are you sure you want to delete "${segmentName}"? This will remove all offer associations and cannot be undone.`}
       confirmLabel="Delete"
       onConfirm={handleConfirm}

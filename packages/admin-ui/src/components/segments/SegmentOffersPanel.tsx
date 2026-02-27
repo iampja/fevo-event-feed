@@ -117,7 +117,7 @@ export const SegmentOffersPanel: React.FC<SegmentOffersPanelProps> = ({
       await onAddOffer(newOfferId.trim());
       setNewOfferId('');
     } catch {
-      showError('Failed to add offer to segment');
+      showError('Failed to add offer to collection');
     } finally {
       setAdding(false);
     }
@@ -128,7 +128,7 @@ export const SegmentOffersPanel: React.FC<SegmentOffersPanelProps> = ({
       setRemovingId(offerId);
       await onRemoveOffer(offerId);
     } catch {
-      showError('Failed to remove offer from segment');
+      showError('Failed to remove offer from collection');
     } finally {
       setRemovingId(null);
     }
@@ -145,7 +145,7 @@ export const SegmentOffersPanel: React.FC<SegmentOffersPanelProps> = ({
       {offersLoading ? (
         <LoadingText>Loading offers...</LoadingText>
       ) : offers.length === 0 ? (
-        <EmptyText>No offers in this segment yet.</EmptyText>
+        <EmptyText>No offers in this collection yet.</EmptyText>
       ) : (
         <OfferList>
           {offers.map((offer) => (
