@@ -24,10 +24,14 @@ const BrandSection = styled.div`
 `;
 
 const BrandName = styled.div`
+  display: inline-block;
   font-size: ${typography.fontSize['2xl']};
-  font-weight: ${typography.fontWeight.bold};
-  color: ${colors.text.neutral.primary};
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: ${colors.brand.onBrand};
+  background: ${colors.brand.primary};
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: -0.5px;
 `;
 
 const BrandSubtitle = styled.div`
@@ -75,8 +79,8 @@ const StyledNavLink = styled(NavLink)`
   }
 
   &.active {
-    background: #EFF6FF;
-    color: #2563EB;
+    background: ${colors.brand.subtle};
+    color: ${colors.brand.text};
     font-weight: ${typography.fontWeight.semibold};
   }
 `;

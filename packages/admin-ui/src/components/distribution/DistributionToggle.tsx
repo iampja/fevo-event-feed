@@ -52,7 +52,7 @@ const Spinner = styled.span`
   width: 16px;
   height: 16px;
   border: 2px solid ${colors.border.neutral.primary};
-  border-top-color: #3B82F6;
+  border-top-color: ${colors.brand.primary};
   border-radius: 50%;
   animation: ${spin} 0.6s linear infinite;
 `;

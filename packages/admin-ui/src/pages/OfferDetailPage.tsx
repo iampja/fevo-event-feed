@@ -93,18 +93,20 @@ const Thumbnail = styled.img`
 `;
 
 const OrgLink = styled(Link)`
-  color: #2563eb;
+  color: ${colors.brand.link};
   text-decoration: none;
   &:hover {
+    color: ${colors.brand.linkHover};
     text-decoration: underline;
   }
 `;
 
 const ExternalLink = styled.a`
-  color: #2563eb;
+  color: ${colors.brand.link};
   text-decoration: none;
   word-break: break-all;
   &:hover {
+    color: ${colors.brand.linkHover};
     text-decoration: underline;
   }
 `;

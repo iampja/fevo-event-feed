@@ -1,4 +1,16 @@
 export const colors = {
+  brand: {
+    primary: '#FFCC00',
+    hover: '#e6b800',
+    active: '#d4a800',
+    subtle: '#FFFDF0',
+    text: '#8a6d00',
+    onBrand: '#1A1A1A',
+    focus: '#FFCC00',
+    focusShadow: 'rgba(255, 204, 0, 0.25)',
+    link: '#b8960a',
+    linkHover: '#8a6d00',
+  },
   surface: {
     neutral: {
       primary: '#FFFFFF',

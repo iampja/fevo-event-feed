@@ -49,17 +49,17 @@ const sizeStyles = {
 
 const variantStyles = {
   primary: css`
-    background: #2563EB;
-    color: ${colors.text.onColor.primary};
-    border: 1px solid #2563EB;
+    background: ${colors.brand.primary};
+    color: ${colors.brand.onBrand};
+    border: 1px solid ${colors.brand.primary};
 
     &:hover:not(:disabled) {
-      background: #1D4ED8;
-      border-color: #1D4ED8;
+      background: ${colors.brand.hover};
+      border-color: ${colors.brand.hover};
     }
 
     &:active:not(:disabled) {
-      background: #1E40AF;
+      background: ${colors.brand.active};
     }
   `,
   secondary: css`
@@ -132,7 +132,7 @@ const StyledButton = styled.button<{
   }
 
   &:focus-visible {
-    outline: 2px solid #3B82F6;
+    outline: 2px solid ${colors.brand.focus};
     outline-offset: 2px;
   }
 `;

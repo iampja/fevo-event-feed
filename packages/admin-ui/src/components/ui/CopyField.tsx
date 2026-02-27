@@ -39,14 +39,15 @@ const CopyButton = styled.button<{ $copied: boolean }>`
   height: 40px;
   padding: ${spacings.md} ${spacings.xl};
   border: 1px solid ${({ $copied }) =>
-    $copied ? colors.surface.success.primary : '#2563EB'};
+    $copied ? colors.surface.success.primary : colors.brand.primary};
   border-radius: ${radius.cornerRadiusMd};
   font-size: ${typography.fontSize.sm};
   font-family: ${typography.fontFamily};
   font-weight: ${typography.fontWeight.medium};
-  color: ${colors.text.onColor.primary};
+  color: ${({ $copied }) =>
+    $copied ? colors.text.onColor.primary : colors.brand.onBrand};
   background: ${({ $copied }) =>
-    $copied ? colors.surface.success.primary : '#2563EB'};
+    $copied ? colors.surface.success.primary : colors.brand.primary};
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;

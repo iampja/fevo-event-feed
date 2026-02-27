@@ -52,8 +52,8 @@ const StyledInput = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: ${colors.brand.focus};
+    box-shadow: 0 0 0 3px ${colors.brand.focusShadow};
   }
 `;
 

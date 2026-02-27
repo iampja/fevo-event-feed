@@ -92,8 +92,8 @@ const InfoBanner = styled.div`
   padding: ${spacings.md} ${spacings.lg};
   border-radius: ${radius.cornerRadiusMd};
   margin-bottom: ${spacings.xl};
-  background: #eff6ff;
-  color: #1e40af;
+  background: ${colors.brand.subtle};
+  color: ${colors.brand.text};
   font-size: ${typography.fontSize.sm};
 `;
 

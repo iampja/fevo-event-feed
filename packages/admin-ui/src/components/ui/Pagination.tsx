@@ -28,17 +28,17 @@ const PageButton = styled.button<{ $active?: boolean }>`
   font-weight: ${({ $active }) =>
     $active ? typography.fontWeight.semibold : typography.fontWeight.regular};
   color: ${({ $active }) =>
-    $active ? colors.text.onColor.primary : colors.text.neutral.primary};
+    $active ? colors.brand.onBrand : colors.text.neutral.primary};
   background: ${({ $active }) =>
-    $active ? '#2563EB' : 'transparent'};
+    $active ? colors.brand.primary : 'transparent'};
   border: 1px solid ${({ $active }) =>
-    $active ? '#2563EB' : 'transparent'};
+    $active ? colors.brand.primary : 'transparent'};
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
     background: ${({ $active }) =>
-      $active ? '#1D4ED8' : colors.surface.neutral.bgSubtle};
+      $active ? colors.brand.hover : colors.surface.neutral.bgSubtle};
   }
 
   &:disabled {

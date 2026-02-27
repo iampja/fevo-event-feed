@@ -85,9 +85,9 @@ const StatusMessage = styled.div<{ $type: 'success' | 'error' | 'info' }>`
   border-radius: ${radius.cornerRadiusMd};
   margin-bottom: ${spacings.xl};
   background: ${(p) =>
-    p.$type === 'success' ? '#f0fdf4' : p.$type === 'error' ? '#fef2f2' : '#eff6ff'};
+    p.$type === 'success' ? '#f0fdf4' : p.$type === 'error' ? '#fef2f2' : colors.brand.subtle};
   color: ${(p) =>
-    p.$type === 'success' ? '#166534' : p.$type === 'error' ? '#991b1b' : '#1e40af'};
+    p.$type === 'success' ? '#166534' : p.$type === 'error' ? '#991b1b' : colors.brand.text};
   font-size: ${typography.fontSize.sm};
 `;
 

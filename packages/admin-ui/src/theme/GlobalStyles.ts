@@ -59,12 +59,12 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   ::selection {
-    background-color: #3B82F6;
-    color: #FFFFFF;
+    background-color: ${colors.brand.primary};
+    color: ${colors.brand.onBrand};
   }
 
   :focus-visible {
-    outline: 2px solid #3B82F6;
+    outline: 2px solid ${colors.brand.focus};
     outline-offset: 2px;
   }
 `;

@@ -35,7 +35,7 @@ const SwitchTrack = styled.button<{ $checked: boolean; $disabled: boolean }>`
   }
 
   &:focus-visible {
-    outline: 2px solid #3B82F6;
+    outline: 2px solid ${colors.brand.focus};
     outline-offset: 2px;
   }
 `;

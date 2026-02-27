@@ -30,10 +30,14 @@ const BrandSection = styled.div`
 `;
 
 const BrandName = styled.div`
+  display: inline-block;
   font-size: ${typography.fontSize['3xl']};
-  font-weight: ${typography.fontWeight.bold};
-  color: ${colors.text.neutral.primary};
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: ${colors.brand.onBrand};
+  background: ${colors.brand.primary};
+  padding: 6px 16px;
+  border-radius: 8px;
+  letter-spacing: -0.5px;
 `;
 
 const BrandSubtitle = styled.div`
@@ -59,8 +63,8 @@ const TextInput = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: ${colors.brand.focus};
+    box-shadow: 0 0 0 3px ${colors.brand.focusShadow};
   }
 
   &::placeholder {
