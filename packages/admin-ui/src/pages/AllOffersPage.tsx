@@ -9,11 +9,13 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Select } from '@/components/ui/Select';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
-import { showError } from '@/components/ui/Toast';
+import { showError, showSuccess } from '@/components/ui/Toast';
 import {
   getOffers,
   getOfferStats,
   getSegments,
+  addOfferToSegment,
+  removeOfferFromSegment,
   Offer,
   OffersMeta,
   OfferStats,
@@ -45,14 +47,16 @@ const FilterGroup = styled.div`
   gap: ${spacings.md};
 `;
 
-const CollectionTags = styled.div`
+const CollectionCell = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 4px;
 `;
 
-const CollectionTag = styled.span`
-  display: inline-block;
+const CollectionChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 2px 8px;
   background: ${colors.surface.neutral.bgSubtle};
   border: 1px solid ${colors.border.neutral.subtle};
@@ -60,6 +64,30 @@ const CollectionTag = styled.span`
   font-size: ${typography.fontSize.xs};
   color: ${colors.text.neutral.secondary};
   white-space: nowrap;
+`;
+
+const ChipRemove = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: ${colors.text.neutral.secondary};
+  &:hover {
+    color: ${colors.text.neutral.primary};
+  }
+`;
+
+const InlineSelect = styled.select`
+  padding: 2px 4px;
+  border: 1px solid ${colors.border.neutral.primary};
+  border-radius: ${radius.cornerRadiusSm};
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.neutral.primary};
+  background: white;
+  cursor: pointer;
+  max-width: 100%;
 `;
 
 type OfferRow = Offer & Record<string, unknown>;
@@ -153,6 +181,40 @@ export const AllOffersPage: React.FC = () => {
     label: s.name,
   }));
 
+  const handleInlineAdd = async (offerId: string, segmentId: string) => {
+    try {
+      await addOfferToSegment(segmentId, offerId);
+      const seg = collections.find((s) => s.id === segmentId);
+      setOffers((prev) =>
+        prev.map((o) =>
+          o.id === offerId
+            ? { ...o, collections: [...(o.collections || []), { id: segmentId, name: seg?.name || '', slug: seg?.slug || '' }] }
+            : o,
+        ),
+      );
+      showSuccess('Added to collection');
+    } catch {
+      showError('Failed to add to collection');
+    }
+  };
+
+  const handleInlineRemove = async (e: React.MouseEvent, offerId: string, segmentId: string) => {
+    e.stopPropagation();
+    try {
+      await removeOfferFromSegment(segmentId, offerId);
+      setOffers((prev) =>
+        prev.map((o) =>
+          o.id === offerId
+            ? { ...o, collections: (o.collections || []).filter((c) => c.id !== segmentId) }
+            : o,
+        ),
+      );
+      showSuccess('Removed from collection');
+    } catch {
+      showError('Failed to remove from collection');
+    }
+  };
+
   const columns: Column<OfferRow>[] = [
     {
       header: 'Title',
@@ -166,16 +228,39 @@ export const AllOffersPage: React.FC = () => {
     {
       header: 'Collections',
       accessor: 'collections' as any,
-      width: '180px',
+      width: '200px',
       render: (row) => {
-        const cols = row.collections || [];
-        if (cols.length === 0) return <span style={{ color: colors.text.neutral.secondary }}>-</span>;
+        const cols: { id: string; name: string }[] = row.collections || [];
+        const available = collections.filter(
+          (s) => !cols.some((c) => c.id === s.id),
+        );
         return (
-          <CollectionTags>
-            {cols.map((c: { id: string; name: string }) => (
-              <CollectionTag key={c.id}>{c.name}</CollectionTag>
+          <CollectionCell onClick={(e) => e.stopPropagation()}>
+            {cols.map((c) => (
+              <CollectionChip key={c.id}>
+                {c.name}
+                <ChipRemove
+                  title={`Remove from ${c.name}`}
+                  onClick={(e) => handleInlineRemove(e, row.id, c.id)}
+                >
+                  &times;
+                </ChipRemove>
+              </CollectionChip>
             ))}
-          </CollectionTags>
+            {available.length > 0 && (
+              <InlineSelect
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) handleInlineAdd(row.id, e.target.value);
+                }}
+              >
+                <option value="">+ Add...</option>
+                {available.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </InlineSelect>
+            )}
+          </CollectionCell>
         );
       },
     },
