@@ -61,6 +61,7 @@ export interface Offer {
   tickets_available?: number | null;
   fevo_offer_id?: string | null;
   fevo_synced_at?: string | null;
+  collections?: { id: string; name: string; slug: string }[];
   created_at: string;
   updated_at: string;
 }

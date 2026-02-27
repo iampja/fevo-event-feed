@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { spacings } from '@/theme/tokens';
+import { spacings, colors, typography, radius } from '@/theme/tokens';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Table, Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
@@ -43,6 +43,23 @@ const ToolbarRow = styled.div`
 const FilterGroup = styled.div`
   display: flex;
   gap: ${spacings.md};
+`;
+
+const CollectionTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+`;
+
+const CollectionTag = styled.span`
+  display: inline-block;
+  padding: 2px 8px;
+  background: ${colors.surface.neutral.bgSubtle};
+  border: 1px solid ${colors.border.neutral.subtle};
+  border-radius: ${radius.cornerRadiusSm};
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.neutral.secondary};
+  white-space: nowrap;
 `;
 
 type OfferRow = Offer & Record<string, unknown>;
@@ -145,6 +162,22 @@ export const AllOffersPage: React.FC = () => {
     {
       header: 'Organization',
       accessor: 'organization_name',
+    },
+    {
+      header: 'Collections',
+      accessor: 'collections' as any,
+      width: '180px',
+      render: (row) => {
+        const cols = row.collections || [];
+        if (cols.length === 0) return <span style={{ color: colors.text.neutral.secondary }}>-</span>;
+        return (
+          <CollectionTags>
+            {cols.map((c: { id: string; name: string }) => (
+              <CollectionTag key={c.id}>{c.name}</CollectionTag>
+            ))}
+          </CollectionTags>
+        );
+      },
     },
     {
       header: 'Date',

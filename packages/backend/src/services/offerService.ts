@@ -83,8 +83,33 @@ export async function listOffers(params: OfferListParams = {}): Promise<{
     .limit(per_page)
     .offset((page - 1) * per_page);
 
+  // Attach collection names to each offer
+  const offerIds = data.map((o: any) => o.id);
+  let segmentMap: Record<string, { id: string; name: string; slug: string }[]> = {};
+  if (offerIds.length > 0) {
+    const segRows = await db('event_feed_segment_offers')
+      .join('event_feed_segments', 'event_feed_segments.id', 'event_feed_segment_offers.segment_id')
+      .whereIn('event_feed_segment_offers.offer_id', offerIds)
+      .select(
+        'event_feed_segment_offers.offer_id',
+        'event_feed_segments.id as segment_id',
+        'event_feed_segments.name',
+        'event_feed_segments.slug',
+      )
+      .orderBy('event_feed_segments.name', 'asc');
+    for (const row of segRows) {
+      if (!segmentMap[row.offer_id]) segmentMap[row.offer_id] = [];
+      segmentMap[row.offer_id].push({ id: row.segment_id, name: row.name, slug: row.slug });
+    }
+  }
+
+  const enrichedData = data.map((o: any) => ({
+    ...o,
+    collections: segmentMap[o.id] || [],
+  }));
+
   return {
-    data,
+    data: enrichedData,
     meta: {
       total,
       page,
