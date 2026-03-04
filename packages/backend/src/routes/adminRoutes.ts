@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { z } from 'zod';
 
 import { internalAuth } from '../middleware/auth';
@@ -36,7 +37,47 @@ import db from '../db/connection';
 
 const router = Router();
 
-// All admin routes require internal auth
+// ── Login route (no auth middleware) ──────────────────────────────────────────
+
+const loginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
+router.post('/login', async (req: Request, res: Response) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Username and password are required' });
+    return;
+  }
+
+  const { username, password } = parsed.data;
+  const expectedUsername = process.env.ADMIN_USERNAME || 'admin';
+  const expectedPassword = process.env.ADMIN_PASSWORD || 'admin';
+
+  // Timing-safe comparison for both fields
+  const userBuf = Buffer.from(username, 'utf8');
+  const expectedUserBuf = Buffer.from(expectedUsername, 'utf8');
+  const passBuf = Buffer.from(password, 'utf8');
+  const expectedPassBuf = Buffer.from(expectedPassword, 'utf8');
+
+  const usernameMatch =
+    userBuf.length === expectedUserBuf.length &&
+    crypto.timingSafeEqual(userBuf, expectedUserBuf);
+  const passwordMatch =
+    passBuf.length === expectedPassBuf.length &&
+    crypto.timingSafeEqual(passBuf, expectedPassBuf);
+
+  if (!usernameMatch || !passwordMatch) {
+    res.status(401).json({ error: 'Invalid username or password' });
+    return;
+  }
+
+  const token = process.env.INTERNAL_AUTH_TOKEN || 'internal-dev-token';
+  res.json({ token });
+});
+
+// All other admin routes require internal auth
 router.use(internalAuth);
 router.use(adminRateLimiter);
 

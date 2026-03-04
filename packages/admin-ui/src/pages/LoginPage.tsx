@@ -79,7 +79,8 @@ const ErrorText = styled.p`
 `;
 
 export const LoginPage: React.FC = () => {
-  const [token, setToken] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -87,20 +88,20 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token.trim()) return;
+    if (!username.trim() || !password.trim()) return;
 
     setLoading(true);
     setError('');
 
     try {
-      // Validate the token by making a test API call
-      await apiClient.get('/admin/offers/stats', {
-        headers: { 'x-internal-auth': token.trim() },
+      const res = await apiClient.post('/admin/login', {
+        username: username.trim(),
+        password: password.trim(),
       });
-      login(token.trim());
+      login(res.data.token);
       navigate('/kills', { replace: true });
     } catch {
-      setError('Invalid authentication token. Please try again.');
+      setError('Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -116,16 +117,29 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <FormGroup>
-            <FormLabel htmlFor="auth-token" required>
-              Authentication Token
+            <FormLabel htmlFor="username" required>
+              Username
             </FormLabel>
             <TextInput
-              id="auth-token"
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Enter your internal auth token"
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               autoFocus
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <FormLabel htmlFor="password" required>
+              Password
+            </FormLabel>
+            <TextInput
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
             />
             {error && <ErrorText>{error}</ErrorText>}
           </FormGroup>
@@ -134,7 +148,7 @@ export const LoginPage: React.FC = () => {
             type="submit"
             fullWidth
             loading={loading}
-            disabled={!token.trim()}
+            disabled={!username.trim() || !password.trim()}
           >
             Sign In
           </Button>
