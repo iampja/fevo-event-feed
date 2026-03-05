@@ -5,7 +5,9 @@ set -e
 DIST_DIR="$(dirname "$0")/../dist"
 
 # Copy demo pages
-cp "$(dirname "$0")/../demo/partner-mlb.html" "$DIST_DIR/index.html"
+cp "$(dirname "$0")/../demo/index.html" "$DIST_DIR/index.html"
+cp "$(dirname "$0")/../demo/partner-do512.html" "$DIST_DIR/partner-do512.html"
+cp "$(dirname "$0")/../demo/partner-embed-test.html" "$DIST_DIR/partner-embed-test.html"
 cp "$(dirname "$0")/../demo/checkout.html" "$DIST_DIR/checkout.html"
 cp "$(dirname "$0")/../demo/showcase.html" "$DIST_DIR/showcase.html"
 cp "$(dirname "$0")/../demo/rewards-demo.html" "$DIST_DIR/rewards-demo.html"

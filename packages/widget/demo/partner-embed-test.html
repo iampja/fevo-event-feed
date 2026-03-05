@@ -99,9 +99,62 @@
       font-size: 13px;
       border-top: 1px solid #e2e8f0;
     }
+
+    /* FEVO demo nav */
+    .fevo-demo-nav {
+      background: #1a1a1a;
+      border-bottom: 2px solid #FFCC00;
+      padding: 0 24px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .fevo-demo-nav-brand { display: flex; align-items: center; gap: 10px; }
+    .fevo-demo-nav-logo {
+      background: #FFCC00;
+      color: #1a1a1a;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: -0.5px;
+    }
+    .fevo-demo-nav-title { color: #fff; font-size: 13px; font-weight: 700; }
+    .fevo-demo-nav-links { display: flex; gap: 4px; }
+    .fevo-demo-nav-links a {
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 0.12s;
+      margin-left: 0;
+    }
+    .fevo-demo-nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .fevo-demo-nav-links a.active { color: #FFCC00; background: rgba(255,204,0,0.1); }
   </style>
 </head>
 <body>
+
+  <!-- FEVO demo nav -->
+  <nav class="fevo-demo-nav">
+    <div class="fevo-demo-nav-brand">
+      <div class="fevo-demo-nav-logo">FEVO</div>
+      <div class="fevo-demo-nav-title">Event Feed Widget</div>
+    </div>
+    <div class="fevo-demo-nav-links">
+      <a href="/showcase.html">Showcase</a>
+      <a href="/partner-do512.html">Do512 Demo</a>
+      <a href="/collections.html">Collections</a>
+      <a href="/rewards-demo.html">Rewards</a>
+      <a href="/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
+    </div>
+  </nav>
 
   <!-- Simulated partner site header -->
   <header>
