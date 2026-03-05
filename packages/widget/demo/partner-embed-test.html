@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Sports & Entertainment - Upcoming Events</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Partner site header */
+    header {
+      background: #0f172a;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: #3b82f6; }
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin-left: 24px;
+      transition: color 0.15s;
+    }
+    nav a:hover { color: #fff; }
+
+    /* Page content */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      padding: 60px 32px;
+      text-align: center;
+      color: #fff;
+    }
+    .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+    .hero p { font-size: 18px; color: #94a3b8; max-width: 600px; margin: 0 auto; }
+
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .section-subtitle {
+      font-size: 15px;
+      color: #6b7280;
+      margin-bottom: 32px;
+    }
+
+    /* Code snippet callout */
+    .embed-note {
+      margin-top: 64px;
+      padding: 24px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .embed-note h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .embed-note pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .embed-note .highlight { color: #FFCC00; }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: #94a3b8;
+      font-size: 13px;
+      border-top: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Simulated partner site header -->
+  <header>
+    <div class="logo">NYC <span>Events</span> Hub</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Schedule</a>
+      <a href="#">Tickets</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>Upcoming Events in New York</h1>
+    <p>Discover the best live events, concerts, and experiences happening near you.</p>
+  </div>
+
+  <div class="content">
+    <h2 class="section-title">Featured Events</h2>
+    <p class="section-subtitle">Powered by FEVO - browse and buy group tickets directly.</p>
+
+    <!--
+      THIS IS THE ENTIRE EMBED.
+      Two lines: one div, one script tag. That's it.
+    -->
+    <div class="fevo-event-feed"
+         data-theme="light"
+         data-columns="1"
+         data-max-cards="3"
+         data-geo="auto">
+    </div>
+
+    <!-- Show the stakeholder how simple the embed code is -->
+    <div class="embed-note">
+      <h3>How it works - just 2 lines of code</h3>
+      <pre><code>&lt;div class="<span class="highlight">fevo-event-feed</span>"
+     data-theme="light"
+     data-columns="1"
+     data-max-cards="3"&gt;
+&lt;/div&gt;
+&lt;script src="<span class="highlight">https://fevo-event-feed-widget.onrender.com/event-feed-widget.js</span>"&gt;&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 NYC Events Hub (demo partner site)
+  </footer>
+
+  <!-- Mock API so the demo works standalone without a backend -->
+  <script>
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+      const urlStr = typeof url === 'string' ? url : url.toString();
+      if (urlStr.includes('/api/v1/feed')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          data: [
+            {
+              offer_id: 'offer-001',
+              title: 'Hello Kitty Nights at Madison Square Garden',
+              description: 'A magical evening with Hello Kitty and friends featuring live performances, themed activities, and exclusive merchandise. Perfect for families and fans of all ages.',
+              image_url: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=600&h=400&fit=crop',
+              date: { utc: '2026-04-15T23:00:00Z', timezone: 'America/New_York', display: 'Apr 15, 2026 7:00 PM' },
+              venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
+              availability: 'available',
+              organization: { id: 'org-1', name: 'FEVO Events', logo_url: null },
+              checkout_url: 'https://fevo.com',
+              tags: ['entertainment', 'family'],
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-02-15T00:00:00Z',
+            },
+            {
+              offer_id: 'offer-002',
+              title: 'Summer Concert Series - Central Park Rock Festival',
+              description: 'Three days of amazing rock music from top artists. Food vendors, VIP areas, and group discounts available.',
+              image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop',
+              date: { utc: '2026-06-20T22:00:00Z', timezone: 'America/New_York', display: 'Jun 20, 2026 6:00 PM' },
+              venue: { name: 'Central Park SummerStage', city: 'New York', state: 'NY' },
+              availability: 'limited',
+              organization: { id: 'org-2', name: 'Live Nation', logo_url: null },
+              checkout_url: 'https://fevo.com',
+              tags: ['music', 'festival'],
+              created_at: '2026-01-10T00:00:00Z',
+              updated_at: '2026-02-14T00:00:00Z',
+            },
+            {
+              offer_id: 'offer-003',
+              title: 'NBA Playoffs - Knicks vs Celtics Game 3',
+              description: 'Witness the intensity of playoff basketball at The Garden. Group tickets available with exclusive fan experiences.',
+              image_url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop',
+              date: { utc: '2026-05-11T00:00:00Z', timezone: 'America/New_York', display: 'May 10, 2026 8:00 PM' },
+              venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
+              availability: 'available',
+              organization: { id: 'org-3', name: 'NBA', logo_url: null },
+              checkout_url: 'https://fevo.com',
+              tags: ['sports', 'basketball'],
+              created_at: '2026-02-01T00:00:00Z',
+              updated_at: '2026-02-15T00:00:00Z',
+            },
+          ],
+          meta: { page: 1, per_page: 3, total: 3, total_pages: 1 },
+          feed_updated_at: new Date().toISOString(),
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+      return originalFetch.apply(this, arguments);
+    };
+  </script>
+
+  <script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"></script>
+</body>
+</html>
