@@ -118,6 +118,25 @@ async function bootstrap(): Promise<void> {
     startFeedRefreshJob();
     startAutoSyncJob();
 
+    // Run initial sync if no offers exist yet (first boot)
+    if (offerCount && Number(offerCount.count) === 0) {
+      const { syncAllOrganizations } = await import('./services/fevoSyncService');
+      const { getFevoApiClient } = await import('./services/fevoApiClient');
+      const client = getFevoApiClient();
+      if (client.isConfigured()) {
+        console.log('[bootstrap] No offers found — triggering initial FEVO sync...');
+        syncAllOrganizations().then(async (results) => {
+          const created = results.reduce((sum, r) => sum + r.offers_created, 0);
+          const updated = results.reduce((sum, r) => sum + r.offers_updated, 0);
+          console.log(`[bootstrap] Initial sync complete: ${results.length} orgs, ${created} created, ${updated} updated`);
+          const count = await buildFeedIndex();
+          console.log(`[bootstrap] Feed index rebuilt with ${count} offers`);
+        }).catch((err) => {
+          console.error('[bootstrap] Initial sync failed:', err);
+        });
+      }
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log(`Event Feed API listening on http://localhost:${PORT}`);
