@@ -79,6 +79,7 @@ export async function listOffers(params: OfferListParams = {}): Promise<{
   const safeSortBy = allowedSorts.includes(sort_by) ? sort_by : 'created_at';
 
   const data = await query
+    .orderBy('distribution_enabled', 'desc')
     .orderBy(safeSortBy, sort_dir)
     .limit(per_page)
     .offset((page - 1) * per_page);
