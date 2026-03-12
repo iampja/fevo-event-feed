@@ -19,10 +19,8 @@ const CACHE_KEY = 'event_feed_main';
  */
 export async function buildFeedIndex(): Promise<number> {
   const offers: Offer[] = await db('offers')
-    .join('organizations', 'offers.organization_id', 'organizations.id')
     .where('offers.distribution_enabled', true)
     .where('offers.status', 'active')
-    .where('organizations.distribution_enabled', true)
     .select('offers.*')
     .orderBy('offers.date', 'asc');
 
@@ -66,10 +64,8 @@ export async function getFeed(
   } else {
     // Fallback: query directly
     allOffers = await db('offers')
-      .join('organizations', 'offers.organization_id', 'organizations.id')
       .where('offers.distribution_enabled', true)
       .where('offers.status', 'active')
-      .where('organizations.distribution_enabled', true)
       .select('offers.*')
       .orderBy('offers.date', 'asc');
     builtAt = new Date().toISOString();
