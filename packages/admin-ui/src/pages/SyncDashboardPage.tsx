@@ -300,7 +300,7 @@ export const SyncDashboardPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'success';
-      case 'running': return 'info';
+      case 'running': return 'warning';
       case 'failed': return 'danger';
       default: return 'neutral';
     }
