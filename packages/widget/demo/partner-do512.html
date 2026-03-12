@@ -489,11 +489,11 @@
       <div class="fevo-demo-nav-title">Event Feed Widget</div>
     </div>
     <div class="fevo-demo-nav-links">
-      <a href="/showcase.html">Showcase</a>
-      <a href="/partner-do512.html" class="active">Do512 Demo</a>
-      <a href="/collections.html">Collections</a>
-      <a href="/rewards-demo.html">Rewards</a>
-      <a href="/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
+      <a href="/demo/showcase.html">Showcase</a>
+      <a href="/demo/">Demo</a>
+      <a href="/demo/collections.html">Collections</a>
+      <a href="/demo/rewards-demo.html">Rewards</a>
+      <a href="/demo/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
     </div>
   </nav>
 
@@ -676,10 +676,10 @@
             A partner just drops in this div + the script tag. That's it.
           -->
           <div class="fevo-event-feed"
+               data-api-url="/api/v1/event-feed"
                data-theme="light"
                data-columns="1"
-               data-max-cards="3"
-               data-geo="auto">
+               data-max-cards="3">
           </div>
         </div>
       </div>
@@ -772,65 +772,6 @@
     </div>
   </footer>
 
-  <!-- Mock API so the widget renders standalone without a backend -->
-  <script>
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options) {
-      const urlStr = typeof url === 'string' ? url : url.toString();
-      if (urlStr.includes('/api/v1/feed')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          data: [
-            {
-              offer_id: 'offer-001',
-              title: 'SXSW 2026 - Group Experience Package',
-              description: 'Get the ultimate SXSW group experience. Includes priority entry to showcases, lounge access, and exclusive merch. Perfect for bringing your crew to the biggest week in Austin.',
-              image_url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&h=400&fit=crop',
-              date: { utc: '2026-03-13T17:00:00Z', timezone: 'America/Chicago', display: 'Mar 13, 2026 12:00 PM' },
-              venue: { name: 'Austin Convention Center', city: 'Austin', state: 'TX' },
-              availability: 'limited',
-              organization: { id: 'org-1', name: 'SXSW', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['music', 'festival'],
-              created_at: '2026-01-01T00:00:00Z',
-              updated_at: '2026-03-01T00:00:00Z',
-            },
-            {
-              offer_id: 'offer-002',
-              title: 'Austin FC vs. LA Galaxy - Group Night',
-              description: 'Rally the squad for Austin FC matchday at Q2 Stadium. Group discounts on premium sections with exclusive tailgate access.',
-              image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop',
-              date: { utc: '2026-03-21T00:30:00Z', timezone: 'America/Chicago', display: 'Mar 20, 2026 7:30 PM' },
-              venue: { name: 'Q2 Stadium', city: 'Austin', state: 'TX' },
-              availability: 'available',
-              organization: { id: 'org-2', name: 'Austin FC', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['sports', 'soccer'],
-              created_at: '2026-02-01T00:00:00Z',
-              updated_at: '2026-03-01T00:00:00Z',
-            },
-            {
-              offer_id: 'offer-003',
-              title: 'ACL Live: Khruangbin - Friends & Family',
-              description: 'Khruangbin at ACL Live with special group pricing. Grab 4+ tickets and unlock VIP lounge access and a meet & greet raffle entry.',
-              image_url: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop',
-              date: { utc: '2026-04-05T01:00:00Z', timezone: 'America/Chicago', display: 'Apr 4, 2026 8:00 PM' },
-              venue: { name: 'ACL Live at The Moody Theater', city: 'Austin', state: 'TX' },
-              availability: 'available',
-              organization: { id: 'org-3', name: 'C3 Presents', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['music', 'concert'],
-              created_at: '2026-02-15T00:00:00Z',
-              updated_at: '2026-03-01T00:00:00Z',
-            },
-          ],
-          meta: { page: 1, per_page: 3, total: 3, total_pages: 1 },
-          feed_updated_at: new Date().toISOString(),
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      }
-      return originalFetch.apply(this, arguments);
-    };
-  </script>
-
-  <script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"></script>
+  <script src="/src/index.ts" type="module"></script>
 </body>
 </html>

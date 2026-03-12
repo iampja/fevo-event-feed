@@ -23,6 +23,11 @@ export async function apiKeyAuth(req: Request, res: Response, next: NextFunction
   const apiKey = req.headers['x-api-key'] as string | undefined;
 
   if (!apiKey) {
+    // In development, allow unauthenticated feed access for widget demos
+    if (process.env.NODE_ENV !== 'production') {
+      next();
+      return;
+    }
     res.status(401).json({ error: 'Missing API key. Provide x-api-key header.' });
     return;
   }

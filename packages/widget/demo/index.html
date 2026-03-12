@@ -90,11 +90,11 @@
       <div class="nav-title">Event Feed Widget</div>
     </div>
     <div class="nav-links">
-      <a href="/showcase.html">Showcase</a>
-      <a href="/partner-do512.html" class="active">Do512 Demo</a>
-      <a href="/collections.html">Collections</a>
-      <a href="/rewards-demo.html">Rewards</a>
-      <a href="/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
+      <a href="/demo/showcase.html">Showcase</a>
+      <a href="/demo/" class="active">Demo</a>
+      <a href="/demo/collections.html">Collections</a>
+      <a href="/demo/rewards-demo.html">Rewards</a>
+      <a href="/demo/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
     </div>
   </nav>
 
@@ -104,13 +104,13 @@
 
   <div class="demo-section">
     <h2>Default (3 columns, light theme)</h2>
-    <div id="fevo-event-feed" data-segment="hello-kitty-nights" data-theme="light"></div>
+    <div id="fevo-event-feed" data-api-url="/api/v1/event-feed" data-api-key="efeed_test_key_abc123" data-theme="light"></div>
   </div>
 
   <div class="demo-section">
     <h2>Dark Theme (2 columns)</h2>
     <div class="dark-bg">
-      <div class="fevo-event-feed" data-segment="nyc-events" data-theme="dark" data-columns="2"></div>
+      <div class="fevo-event-feed" data-api-url="/api/v1/event-feed" data-api-key="efeed_test_key_abc123" data-theme="dark" data-columns="2"></div>
     </div>
   </div>
 
@@ -121,123 +121,7 @@
     </div>
   </div>
 
-  <!-- Mock API for demo purposes -->
   <script>
-    // Intercept fetch calls to /api/v1/feed and return mock data
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options) {
-      const urlStr = typeof url === 'string' ? url : url.toString();
-      if (urlStr.includes('/api/v1/feed')) {
-        return Promise.resolve(new Response(JSON.stringify(getMockFeedResponse(urlStr)), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }));
-      }
-      return originalFetch.apply(this, arguments);
-    };
-
-    function getMockFeedResponse(url) {
-      const segment = new URL(url, window.location.origin).searchParams.get('segment') || 'default';
-      const offers = [
-        {
-          offer_id: 'offer-001',
-          title: 'Hello Kitty Nights at Madison Square Garden',
-          description: 'A magical evening with Hello Kitty and friends.',
-          image_url: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=600&h=400&fit=crop',
-          price: { min: 45, max: 120, currency: 'USD' },
-          date: '2026-04-15T19:00:00Z',
-          venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
-          availability: 'available',
-          organization: { id: 'org-1', name: 'FEVO Events' },
-          checkout_url: '/demo/checkout.html?offer=offer-001',
-          tags: ['entertainment', 'family'],
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-02-15T00:00:00Z',
-        },
-        {
-          offer_id: 'offer-002',
-          title: 'Summer Concert Series - Rock Festival',
-          description: 'Three days of amazing rock music.',
-          image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop',
-          price: { min: 75, max: 250, currency: 'USD' },
-          date: '2026-06-20T18:00:00Z',
-          venue: { name: 'Central Park', city: 'New York', state: 'NY' },
-          availability: 'limited',
-          organization: { id: 'org-1', name: 'FEVO Events' },
-          checkout_url: '/demo/checkout.html?offer=offer-002',
-          tags: ['music', 'festival'],
-          created_at: '2026-01-10T00:00:00Z',
-          updated_at: '2026-02-14T00:00:00Z',
-        },
-        {
-          offer_id: 'offer-003',
-          title: 'NBA Playoffs - Knicks vs Celtics Game 3',
-          description: 'Witness the intensity of playoff basketball.',
-          image_url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop',
-          price: { min: 150, max: 500, currency: 'USD' },
-          date: '2026-05-10T20:00:00Z',
-          venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
-          availability: 'available',
-          organization: { id: 'org-2', name: 'NBA' },
-          checkout_url: '/demo/checkout.html?offer=offer-003',
-          tags: ['sports', 'basketball'],
-          created_at: '2026-02-01T00:00:00Z',
-          updated_at: '2026-02-15T00:00:00Z',
-        },
-        {
-          offer_id: 'offer-004',
-          title: 'Broadway: Hamilton - Special Group Rate',
-          description: 'Experience the hit musical at a special group price.',
-          image_url: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&h=400&fit=crop',
-          price: { min: 89, max: 89, currency: 'USD' },
-          date: '2026-03-28T19:30:00Z',
-          venue: { name: 'Richard Rodgers Theatre', city: 'New York', state: 'NY' },
-          availability: 'available',
-          organization: { id: 'org-3', name: 'Broadway Shows' },
-          checkout_url: '/demo/checkout.html?offer=offer-004',
-          tags: ['theater', 'broadway'],
-          created_at: '2026-01-15T00:00:00Z',
-          updated_at: '2026-02-12T00:00:00Z',
-        },
-        {
-          offer_id: 'offer-005',
-          title: 'Food & Wine Festival 2026',
-          description: 'Taste the best cuisine from around the world.',
-          image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop',
-          price: { min: 65, max: 200, currency: 'USD' },
-          date: '2026-07-12T11:00:00Z',
-          venue: { name: 'Pier 17', city: 'New York', state: 'NY' },
-          availability: 'available',
-          organization: { id: 'org-4', name: 'NYC Festivals' },
-          checkout_url: '/demo/checkout.html?offer=offer-005',
-          tags: ['food', 'festival'],
-          created_at: '2026-02-05T00:00:00Z',
-          updated_at: '2026-02-15T00:00:00Z',
-        },
-        {
-          offer_id: 'offer-006',
-          title: 'Sold Out Example: Charity Gala Night',
-          description: 'Annual charity gala supporting local communities.',
-          image_url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop',
-          price: { min: 200, max: 500, currency: 'USD' },
-          date: '2026-04-01T19:00:00Z',
-          venue: { name: 'The Plaza Hotel', city: 'New York', state: 'NY' },
-          availability: 'sold_out',
-          organization: { id: 'org-5', name: 'NYC Charity Foundation' },
-          checkout_url: '/demo/checkout.html?offer=offer-006',
-          tags: ['charity', 'gala'],
-          created_at: '2026-01-20T00:00:00Z',
-          updated_at: '2026-02-10T00:00:00Z',
-        },
-      ];
-
-      return {
-        data: offers,
-        meta: { page: 1, per_page: 10, total: offers.length, total_pages: 1 },
-        feed_updated_at: new Date().toISOString(),
-      };
-    }
-
     // Listen for analytics events and log them
     window.addEventListener('fevo:analytics', function(e) {
       const log = document.getElementById('analytics-log');

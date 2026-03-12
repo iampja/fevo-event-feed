@@ -89,8 +89,9 @@ The FEVO Event Feed is a monorepo providing a complete event distribution system
 - **feedService** — Builds feed index cache, applies exclusions/filters, paginates, transforms to nested response format
 - **feedTransformer** — Converts DB rows to nested FEVO-shaped response (batch-fetches org logos and rewards)
 - **distributionService** — Enable/disable distribution at offer and org level (with transaction safety and exclusion management)
-- **fevoSyncService** — Syncs offers from FEVO external API, upserts offers/events, logs operations
-- **fevoApiClient** — Real client for FEVO API (`GM-Api-User-ID`/`GM-Api-Access-Key` headers) with MockFevoApiClient for development
+- **fevoTokenManager** — JWT auth lifecycle for FEVO staging/production API (login, token caching, auto-refresh)
+- **fevoSyncService** — Syncs outings from FEVO JWT API, upserts orgs/venues/events/offers with rich data, logs operations
+- **fevoApiClient** — JWT-authenticated client for FEVO API (Bearer token via fevoTokenManager) with MockFevoApiClient for development
 - **apiKeyService** — Generate, hash, create, list, revoke API keys (`efeed_` prefixed)
 - **offerService** — List/get offers with filters and stats
 - **segmentService** — Full CRUD for segments with offer linking
@@ -240,8 +241,8 @@ React Context with localStorage token. ProtectedRoute wrapper redirects to /logi
 | `DB_PATH` | SQLite path | data/eventfeed.db |
 | `INTERNAL_AUTH_TOKEN` | Admin auth | internal-dev-token |
 | `FEVO_API_BASE_URL` | FEVO API URL | — |
-| `FEVO_API_USER_ID` | FEVO API user | — |
-| `FEVO_API_ACCESS_KEY` | FEVO API key | — |
+| `FEVO_USERNAME` | FEVO account username | — |
+| `FEVO_PASSWORD` | FEVO account password | — |
 | `FEVO_WEBHOOK_SECRET` | Webhook signature | — |
 | `RESEED` | Force DB reseed | false |
 
@@ -277,7 +278,7 @@ npm test --workspaces # Run all tests
 
 **Widget Feed Request:** Partner widget → `GET /` with API key → apiKeyAuth → feedService.getFeed() → cache/DB query → apply exclusions → filter → paginate → feedTransformer → FeedResponse → widget renders cards
 
-**FEVO Sync:** Cron or manual trigger → fevoApiClient.fetchOffers(orgId) → upsert offers/events → log to sync_log → rebuild feed cache
+**FEVO Sync:** Cron or manual trigger → fevoTokenManager.getAccessToken() → fevoApiClient.fetchOutings() + fetchOutingDetail() → upsert orgs/venues/events/offers with rich data → log to sync_log → rebuild feed cache
 
 **Webhook:** FEVO POST → validate signature → create/update offer → rebuild feed cache
 

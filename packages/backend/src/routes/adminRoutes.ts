@@ -53,7 +53,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
   const { username, password } = parsed.data;
   const expectedUsername = process.env.ADMIN_USERNAME || 'admin';
-  const expectedPassword = process.env.ADMIN_PASSWORD || 'admin';
+  const expectedPassword = process.env.ADMIN_PASSWORD || '2293-edc';
 
   // Timing-safe comparison for both fields
   const userBuf = Buffer.from(username, 'utf8');
@@ -599,7 +599,7 @@ router.put('/organizations/:orgId/distribution', async (req: Request, res: Respo
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ORGANIZATION ROUTES (read-only — orgs are synced from FEVO)
+// ORGANIZATION ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ── GET /organizations ──────────────────────────────────────────────────────
@@ -611,6 +611,89 @@ router.get('/organizations', async (_req: Request, res: Response) => {
   } catch (err) {
     console.error('GET /organizations error:', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /organizations/search/fevo — Search FEVO platform for organizations ─
+
+router.get('/organizations/search/fevo', async (req: Request, res: Response) => {
+  try {
+    const query = (req.query.q as string || '').trim();
+    if (!query || query.length < 2) {
+      res.json({ data: [] });
+      return;
+    }
+
+    const { getFevoApiClient } = await import('../services/fevoApiClient');
+    const client = getFevoApiClient();
+
+    if (!client.isConfigured()) {
+      res.status(503).json({ error: 'FEVO API not configured' });
+      return;
+    }
+
+    const results = await client.searchOrganizations(query);
+
+    // Check which are already added locally
+    const fevoIds = results.map((r: any) => r.id);
+    const existing = await db('organizations')
+      .whereIn('fevo_org_id', fevoIds)
+      .select('fevo_org_id');
+    const existingSet = new Set(existing.map((e: any) => e.fevo_org_id));
+
+    const data = results.map((r: any) => ({
+      fevo_org_id: r.id,
+      name: r.name,
+      logo_url: r.logo_url || null,
+      league: r.league,
+      active_events: r.active_events,
+      active_outings: r.active_outings,
+      already_added: existingSet.has(r.id),
+    }));
+
+    res.json({ data });
+  } catch (err: any) {
+    console.error('GET /organizations/search/fevo error:', err);
+    res.status(500).json({ error: 'Search failed', message: err.message });
+  }
+});
+
+// ── POST /organizations/add — Add a FEVO organization ──────────────────────
+
+router.post('/organizations/add', async (req: Request, res: Response) => {
+  try {
+    const { fevo_org_id, name, logo_url } = req.body;
+    if (!fevo_org_id || !name) {
+      res.status(400).json({ error: 'Missing fevo_org_id or name' });
+      return;
+    }
+
+    // Check if already exists
+    const existing = await db('organizations').where('fevo_org_id', fevo_org_id).first();
+    if (existing) {
+      res.json({ data: existing, message: 'Organization already exists' });
+      return;
+    }
+
+    const { v4: uuidv4 } = await import('uuid');
+    const now = new Date().toISOString();
+    const id = uuidv4();
+
+    await db('organizations').insert({
+      id,
+      name,
+      logo_url: logo_url || null,
+      fevo_org_id,
+      distribution_enabled: false,
+      created_at: now,
+      updated_at: now,
+    });
+
+    const org = await db('organizations').where('id', id).first();
+    res.status(201).json({ data: org });
+  } catch (err: any) {
+    console.error('POST /organizations/add error:', err);
+    res.status(500).json({ error: 'Failed to add organization', message: err.message });
   }
 });
 

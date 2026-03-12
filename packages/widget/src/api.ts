@@ -1,6 +1,6 @@
 import type { FeedResponse, WidgetConfig } from './types';
 
-const DEFAULT_API_URL = '/api/v1/feed';
+const DEFAULT_API_URL = '/api/v1/event-feed';
 
 export class ApiError extends Error {
   constructor(

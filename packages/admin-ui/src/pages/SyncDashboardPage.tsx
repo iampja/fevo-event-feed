@@ -24,6 +24,19 @@ interface Organization {
   fevo_org_id: string | null;
 }
 
+interface SyncStatus {
+  autoSync: boolean;
+  intervalSeconds: number;
+  lastSync: {
+    started_at: string;
+    completed_at: string | null;
+    status: string;
+    offers_created: number;
+    offers_updated: number;
+    errors: string | null;
+  } | null;
+}
+
 const Card = styled.div`
   background: white;
   border-radius: ${radius.cornerRadiusLg};
@@ -97,26 +110,94 @@ const EmptyState = styled.div`
   color: ${colors.text.neutral.tertiary};
 `;
 
-const AutoSyncBanner = styled.div`
+// ── Sync Status Card styles ──────────────────────────────────────────────────
+
+const StatusGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: ${spacings.lg};
+  margin-bottom: ${spacings.xl};
+`;
+
+const StatBox = styled.div`
+  padding: ${spacings.lg};
+  background: ${colors.surface.neutral.bgSubtle};
+  border-radius: ${radius.cornerRadiusMd};
+`;
+
+const StatLabel = styled.div`
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.neutral.tertiary};
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: ${spacings.xs};
+`;
+
+const StatValue = styled.div`
+  font-size: ${typography.fontSize.xl};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.neutral.primary};
+`;
+
+const StatMeta = styled.div`
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.neutral.tertiary};
+  margin-top: ${spacings.xs};
+`;
+
+const SyncStatusRow = styled.div`
   display: flex;
   align-items: center;
-  gap: ${spacings.md};
-  padding: ${spacings.md} ${spacings.lg};
-  border-radius: ${radius.cornerRadiusMd};
-  margin-bottom: ${spacings.xl};
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
+  justify-content: space-between;
+  gap: ${spacings.lg};
+  flex-wrap: wrap;
+`;
+
+const SyncIndicator = styled.div<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${spacings.sm};
   font-size: ${typography.fontSize.sm};
+  color: ${(p) => (p.$active ? '#166534' : colors.text.neutral.tertiary)};
   font-weight: ${typography.fontWeight.medium};
 `;
 
-const StatusDot = styled.span`
+const Dot = styled.span<{ $color: string }>`
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #22c55e;
+  background: ${(p) => p.$color};
+`;
+
+const SyncButton = styled.button<{ $syncing?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: ${(p) => (p.$syncing ? '#e5e7eb' : '#1a1a1a')};
+  color: ${(p) => (p.$syncing ? '#6b7280' : '#fff')};
+  border: none;
+  border-radius: ${radius.cornerRadiusMd};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.semibold};
+  font-family: ${typography.fontFamily};
+  cursor: ${(p) => (p.$syncing ? 'not-allowed' : 'pointer')};
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #333;
+  }
+
+  svg {
+    animation: ${(p) => (p.$syncing ? 'spin 1s linear infinite' : 'none')};
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 `;
 
 export const SyncDashboardPage: React.FC = () => {
@@ -125,7 +206,7 @@ export const SyncDashboardPage: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [autoSyncStatus, setAutoSyncStatus] = useState<{ autoSync: boolean; intervalSeconds: number } | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -147,8 +228,8 @@ export const SyncDashboardPage: React.FC = () => {
 
   const fetchSyncStatus = useCallback(async () => {
     try {
-      const res = await apiClient.get<{ autoSync: boolean; intervalSeconds: number }>('/admin/sync/status');
-      setAutoSyncStatus(res.data);
+      const res = await apiClient.get<SyncStatus>('/admin/sync/status');
+      setSyncStatus(res.data);
     } catch {
       // Silently fail
     }
@@ -172,6 +253,7 @@ export const SyncDashboardPage: React.FC = () => {
         text: `Sync ${result.status}: ${result.offers_created} created, ${result.offers_updated} updated`,
       });
       fetchLogs();
+      fetchSyncStatus();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Sync failed' });
     } finally {
@@ -190,6 +272,7 @@ export const SyncDashboardPage: React.FC = () => {
         text: `Synced ${meta.organizations_synced} organizations: ${meta.total_created} created, ${meta.total_updated} updated`,
       });
       fetchLogs();
+      fetchSyncStatus();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Sync all failed' });
     } finally {
@@ -202,6 +285,18 @@ export const SyncDashboardPage: React.FC = () => {
     return new Date(iso).toLocaleString();
   };
 
+  const formatRelativeTime = (iso: string | null) => {
+    if (!iso) return 'Never';
+    const diff = Date.now() - new Date(iso).getTime();
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return new Date(iso).toLocaleDateString();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'success';
@@ -211,39 +306,85 @@ export const SyncDashboardPage: React.FC = () => {
     }
   };
 
+  const lastSync = syncStatus?.lastSync;
+  const lastSyncTime = lastSync?.completed_at || lastSync?.started_at || null;
+
   return (
     <div>
       <PageHeader title="FEVO Sync Dashboard" />
 
       {message && <StatusMessage $type={message.type}>{message.text}</StatusMessage>}
 
-      {autoSyncStatus?.autoSync && (
-        <AutoSyncBanner>
-          <StatusDot />
-          Auto-sync active &mdash; every {autoSyncStatus.intervalSeconds} seconds
-        </AutoSyncBanner>
-      )}
-
+      {/* ── Sync Status Card ── */}
       <Card>
-        <SectionTitle>Trigger Sync</SectionTitle>
+        <SyncStatusRow>
+          <div>
+            <SectionTitle style={{ marginBottom: spacings.sm }}>Sync Status</SectionTitle>
+            <SyncIndicator $active={!!syncStatus?.autoSync}>
+              <Dot $color={syncStatus?.autoSync ? '#22c55e' : '#d1d5db'} />
+              {syncStatus?.autoSync
+                ? `Auto-sync active \u2014 every ${Math.floor((syncStatus?.intervalSeconds || 900) / 60)} minutes`
+                : 'Auto-sync disabled'}
+            </SyncIndicator>
+          </div>
+          <SyncButton onClick={handleSyncAll} $syncing={syncing} disabled={syncing}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M13.65 2.35a8 8 0 0 0-12.73 1.3L0 2.5V6h3.5L2.17 4.67a6 6 0 0 1 10.24-.08L13.65 2.35z" fill="currentColor"/>
+              <path d="M16 10v3.5l-.92-1.15a8 8 0 0 1-12.73 1.3l1.24-2.24a6 6 0 0 0 10.24-.08L12.5 10H16z" fill="currentColor"/>
+            </svg>
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </SyncButton>
+        </SyncStatusRow>
+
+        <StatusGrid style={{ marginTop: spacings.xl }}>
+          <StatBox>
+            <StatLabel>Last Sync</StatLabel>
+            <StatValue>{formatRelativeTime(lastSyncTime)}</StatValue>
+            <StatMeta>{lastSyncTime ? formatDate(lastSyncTime) : 'No syncs yet'}</StatMeta>
+          </StatBox>
+          <StatBox>
+            <StatLabel>Status</StatLabel>
+            <StatValue>
+              {lastSync ? (
+                <Badge variant={getStatusColor(lastSync.status) as any}>{lastSync.status}</Badge>
+              ) : (
+                '-'
+              )}
+            </StatValue>
+            <StatMeta>{lastSync?.errors ? 'Has errors' : lastSync ? 'No errors' : ''}</StatMeta>
+          </StatBox>
+          <StatBox>
+            <StatLabel>Offers Created</StatLabel>
+            <StatValue>{lastSync?.offers_created ?? '-'}</StatValue>
+            <StatMeta>Last sync run</StatMeta>
+          </StatBox>
+          <StatBox>
+            <StatLabel>Offers Updated</StatLabel>
+            <StatValue>{lastSync?.offers_updated ?? '-'}</StatValue>
+            <StatMeta>Last sync run</StatMeta>
+          </StatBox>
+        </StatusGrid>
+      </Card>
+
+      {/* ── Trigger Org Sync ── */}
+      <Card>
+        <SectionTitle>Sync by Organization</SectionTitle>
         <SyncActions>
           <OrgSelect value={selectedOrgId} onChange={(e) => setSelectedOrgId(e.target.value)}>
             <option value="">Select organization...</option>
             {orgs.map((org) => (
               <option key={org.id} value={org.id}>
-                {org.name} {org.fevo_org_id ? `(FEVO: ${org.fevo_org_id})` : ''}
+                {org.name} {org.fevo_org_id ? `(FEVO: ${org.fevo_org_id.substring(0, 8)}...)` : ''}
               </option>
             ))}
           </OrgSelect>
           <Button onClick={handleSyncOrg} disabled={!selectedOrgId || syncing}>
             {syncing ? 'Syncing...' : 'Sync Organization'}
           </Button>
-          <Button variant="secondary" onClick={handleSyncAll} disabled={syncing}>
-            {syncing ? 'Syncing...' : 'Sync All'}
-          </Button>
         </SyncActions>
       </Card>
 
+      {/* ── Sync History ── */}
       <Card>
         <SectionTitle>Sync History</SectionTitle>
         {logs.length === 0 ? (

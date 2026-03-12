@@ -4,7 +4,7 @@ import { syncAllOrganizations } from '../services/fevoSyncService';
 let scheduledTask: cron.ScheduledTask | null = null;
 
 /**
- * Start the cron job that syncs all FEVO organizations every 60 seconds.
+ * Start the cron job that syncs all FEVO organizations every 15 minutes.
  */
 export function startAutoSyncJob(): void {
   if (scheduledTask) {
@@ -12,8 +12,8 @@ export function startAutoSyncJob(): void {
     return;
   }
 
-  // Every 60 seconds: "*/1 * * * *"
-  scheduledTask = cron.schedule('*/1 * * * *', async () => {
+  // Every 15 minutes: "*/15 * * * *"
+  scheduledTask = cron.schedule('*/15 * * * *', async () => {
     try {
       console.log('[auto-sync] Starting sync of all organizations...');
       const results = await syncAllOrganizations();
@@ -27,7 +27,7 @@ export function startAutoSyncJob(): void {
     }
   });
 
-  console.log('[auto-sync] Cron job scheduled: every 60 seconds');
+  console.log('[auto-sync] Cron job scheduled: every 15 minutes');
 }
 
 /**

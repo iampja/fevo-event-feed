@@ -69,7 +69,7 @@ router.post('/fevo/offer-created', async (req: Request, res: Response) => {
     }
 
     const now = new Date().toISOString();
-    const checkoutUrl = offer_url_code ? `https://fevo.com/edp/${offer_url_code}` : null;
+    const checkoutUrl = offer_url_code ? `${(process.env.FEVO_API_BASE_URL || 'https://www.gofevo.com').replace(/\/$/, '')}/event/${offer_url_code}?opencart=true` : null;
 
     // Upsert event if provided
     if (event_id) {
@@ -205,7 +205,7 @@ router.post('/fevo/offer-updated', async (req: Request, res: Response) => {
     if (updateFields.tickets_available !== undefined) updates.tickets_available = updateFields.tickets_available;
     if (updateFields.offer_url_code) {
       updates.fevo_url_code = updateFields.offer_url_code;
-      updates.checkout_url = `https://fevo.com/edp/${updateFields.offer_url_code}`;
+      updates.checkout_url = `${(process.env.FEVO_API_BASE_URL || 'https://www.gofevo.com').replace(/\/$/, '')}/event/${updateFields.offer_url_code}`;
     }
 
     await db('offers').where('id', existing.id).update(updates);

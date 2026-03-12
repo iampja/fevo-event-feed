@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { spacings, colors, typography, radius } from '@/theme/tokens';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Table, Column } from '@/components/ui/Table';
+import { Table, Column, SortState } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Select } from '@/components/ui/Select';
@@ -117,6 +117,7 @@ export const AllOffersPage: React.FC = () => {
   const [collectionFilter, setCollectionFilter] = useState('');
   const [collections, setCollections] = useState<Segment[]>([]);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<SortState>({ column: 'created_at', direction: 'desc' });
 
   const fetchOffers = useCallback(async () => {
     try {
@@ -124,8 +125,8 @@ export const AllOffersPage: React.FC = () => {
       const params: Record<string, unknown> = {
         page,
         per_page: PER_PAGE,
-        sort_by: 'created_at',
-        sort_dir: 'desc' as const,
+        sort_by: sort.column,
+        sort_dir: sort.direction,
       };
       if (searchQuery) params.search = searchQuery;
       if (statusFilter) params.status = statusFilter;
@@ -140,7 +141,7 @@ export const AllOffersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, statusFilter, distributionFilter, collectionFilter]);
+  }, [page, searchQuery, statusFilter, distributionFilter, collectionFilter, sort]);
 
   useEffect(() => {
     fetchOffers();
@@ -214,15 +215,22 @@ export const AllOffersPage: React.FC = () => {
     }
   };
 
+  const handleSort = useCallback((newSort: SortState) => {
+    setSort(newSort);
+    setPage(1);
+  }, []);
+
   const columns: Column<OfferRow>[] = [
     {
       header: 'Title',
       accessor: 'title',
+      sortable: true,
       render: (row) => <strong>{row.title}</strong>,
     },
     {
       header: 'Organization',
       accessor: 'organization_name',
+      sortable: true,
     },
     {
       header: 'Collections',
@@ -263,10 +271,11 @@ export const AllOffersPage: React.FC = () => {
         );
       },
     },
-{
+    {
       header: 'Status',
       accessor: 'status',
       width: '110px',
+      sortable: true,
       render: (row) => (
         <Badge variant={getStatusBadgeVariant(row.status)}>
           {formatStatusLabel(row.status)}
@@ -277,6 +286,7 @@ export const AllOffersPage: React.FC = () => {
       header: 'Distribution',
       accessor: 'distribution_enabled',
       width: '120px',
+      sortable: true,
       render: (row) => (
         <Badge variant={row.distribution_enabled ? 'success' : 'neutral'}>
           {row.distribution_enabled ? 'Enabled' : 'Disabled'}
@@ -287,9 +297,10 @@ export const AllOffersPage: React.FC = () => {
       header: 'Source',
       accessor: 'source',
       width: '100px',
+      sortable: true,
       render: (row) => (
-        <Badge variant={row.source === 'fevo' ? 'success' : 'warning'}>
-          {row.source === 'fevo' ? 'Live' : 'Seed'}
+        <Badge variant={row.source === 'fevo_sync' ? 'success' : 'neutral'}>
+          {row.source === 'fevo_sync' ? 'Stage' : 'Seed'}
         </Badge>
       ),
     },
@@ -297,6 +308,7 @@ export const AllOffersPage: React.FC = () => {
       header: 'Created',
       accessor: 'created_at',
       width: '160px',
+      sortable: true,
       render: (row) => formatDateTime(row.created_at),
     },
   ];
@@ -354,6 +366,8 @@ export const AllOffersPage: React.FC = () => {
         data={offers as OfferRow[]}
         onRowClick={(row) => navigate(`/offers/${row.id}`)}
         emptyMessage={loading ? 'Loading offers...' : 'No offers found'}
+        sort={sort}
+        onSort={handleSort}
       />
 
       {meta && meta.total_pages > 1 && (

@@ -18,5 +18,8 @@
   },
   "engines": {
     "node": "20.x"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
   }
 }

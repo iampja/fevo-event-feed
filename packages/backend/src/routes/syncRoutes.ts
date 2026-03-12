@@ -46,8 +46,26 @@ router.post('/sync/all', async (_req: Request, res: Response) => {
 
 // ── GET /sync/status — auto-sync status ─────────────────────────────────────
 
-router.get('/sync/status', (_req: Request, res: Response) => {
-  res.json({ autoSync: true, intervalSeconds: 60 });
+router.get('/sync/status', async (_req: Request, res: Response) => {
+  try {
+    // Get the most recent sync log for last-sync info
+    const lastSync = await getSyncLogs(1);
+    const last = lastSync[0] || null;
+    res.json({
+      autoSync: true,
+      intervalSeconds: 900,
+      lastSync: last ? {
+        started_at: last.started_at,
+        completed_at: last.completed_at,
+        status: last.status,
+        offers_created: last.offers_created,
+        offers_updated: last.offers_updated,
+        errors: last.errors,
+      } : null,
+    });
+  } catch {
+    res.json({ autoSync: true, intervalSeconds: 900, lastSync: null });
+  }
 });
 
 // ── GET /sync/log — list recent sync operations ─────────────────────────────

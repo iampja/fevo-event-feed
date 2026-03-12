@@ -75,7 +75,7 @@ export async function listOffers(params: OfferListParams = {}): Promise<{
   const countResult = await countQuery.count('id as count').first();
   const total = Number(countResult?.count || 0);
 
-  const allowedSorts = ['created_at', 'updated_at', 'date', 'title', 'price_min', 'status'];
+  const allowedSorts = ['created_at', 'updated_at', 'date', 'title', 'price_min', 'status', 'source', 'organization_name', 'distribution_enabled'];
   const safeSortBy = allowedSorts.includes(sort_by) ? sort_by : 'created_at';
 
   const data = await query

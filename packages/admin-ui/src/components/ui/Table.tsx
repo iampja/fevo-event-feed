@@ -7,6 +7,12 @@ export interface Column<T> {
   accessor: keyof T | string;
   render?: (row: T) => React.ReactNode;
   width?: string;
+  sortable?: boolean;
+}
+
+export interface SortState {
+  column: string;
+  direction: 'asc' | 'desc';
 }
 
 interface TableProps<T> {
@@ -14,6 +20,8 @@ interface TableProps<T> {
   data: T[];
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  sort?: SortState;
+  onSort?: (sort: SortState) => void;
 }
 
 const TableWrapper = styled.div`
@@ -34,7 +42,7 @@ const TableHead = styled.thead`
   border-bottom: 1px solid ${colors.border.neutral.primary};
 `;
 
-const TableHeaderCell = styled.th<{ $width?: string }>`
+const TableHeaderCell = styled.th<{ $width?: string; $sortable?: boolean }>`
   padding: ${spacings.lg} ${spacings.xl};
   text-align: left;
   font-size: ${typography.fontSize.sm};
@@ -44,6 +52,18 @@ const TableHeaderCell = styled.th<{ $width?: string }>`
   letter-spacing: 0.05em;
   white-space: nowrap;
   width: ${({ $width }) => $width || 'auto'};
+  cursor: ${({ $sortable }) => ($sortable ? 'pointer' : 'default')};
+  user-select: ${({ $sortable }) => ($sortable ? 'none' : 'auto')};
+
+  &:hover {
+    color: ${({ $sortable }) =>
+      $sortable ? colors.text.neutral.primary : colors.text.neutral.secondary};
+  }
+`;
+
+const SortIndicator = styled.span`
+  margin-left: 4px;
+  font-size: 10px;
 `;
 
 const TableBody = styled.tbody``;
@@ -91,7 +111,19 @@ export function Table<T extends Record<string, unknown>>({
   data,
   onRowClick,
   emptyMessage = 'No data to display',
+  sort,
+  onSort,
 }: TableProps<T>) {
+  const handleHeaderClick = (col: Column<T>) => {
+    if (!col.sortable || !onSort) return;
+    const accessor = col.accessor as string;
+    if (sort && sort.column === accessor) {
+      onSort({ column: accessor, direction: sort.direction === 'asc' ? 'desc' : 'asc' });
+    } else {
+      onSort({ column: accessor, direction: 'asc' });
+    }
+  };
+
   if (data.length === 0) {
     return (
       <TableWrapper>
@@ -106,8 +138,18 @@ export function Table<T extends Record<string, unknown>>({
         <TableHead>
           <tr>
             {columns.map((col, idx) => (
-              <TableHeaderCell key={idx} $width={col.width}>
+              <TableHeaderCell
+                key={idx}
+                $width={col.width}
+                $sortable={col.sortable}
+                onClick={() => handleHeaderClick(col)}
+              >
                 {col.header}
+                {col.sortable && sort && sort.column === (col.accessor as string) && (
+                  <SortIndicator>
+                    {sort.direction === 'asc' ? '\u25B2' : '\u25BC'}
+                  </SortIndicator>
+                )}
               </TableHeaderCell>
             ))}
           </tr>

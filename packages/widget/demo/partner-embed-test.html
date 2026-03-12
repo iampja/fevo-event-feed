@@ -148,11 +148,11 @@
       <div class="fevo-demo-nav-title">Event Feed Widget</div>
     </div>
     <div class="fevo-demo-nav-links">
-      <a href="/showcase.html">Showcase</a>
-      <a href="/partner-do512.html">Do512 Demo</a>
-      <a href="/collections.html">Collections</a>
-      <a href="/rewards-demo.html">Rewards</a>
-      <a href="/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
+      <a href="/demo/showcase.html">Showcase</a>
+      <a href="/demo/">Demo</a>
+      <a href="/demo/collections.html">Collections</a>
+      <a href="/demo/rewards-demo.html">Rewards</a>
+      <a href="/demo/myfevo.html" style="color:#FFCC00;font-weight:700;">My FEVO</a>
     </div>
   </nav>
 
@@ -181,10 +181,10 @@
       Two lines: one div, one script tag. That's it.
     -->
     <div class="fevo-event-feed"
+         data-api-url="/api/v1/event-feed"
          data-theme="light"
          data-columns="1"
-         data-max-cards="3"
-         data-geo="auto">
+         data-max-cards="3">
     </div>
 
     <!-- Show the stakeholder how simple the embed code is -->
@@ -203,65 +203,6 @@
     &copy; 2026 NYC Events Hub (demo partner site)
   </footer>
 
-  <!-- Mock API so the demo works standalone without a backend -->
-  <script>
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options) {
-      const urlStr = typeof url === 'string' ? url : url.toString();
-      if (urlStr.includes('/api/v1/feed')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          data: [
-            {
-              offer_id: 'offer-001',
-              title: 'Hello Kitty Nights at Madison Square Garden',
-              description: 'A magical evening with Hello Kitty and friends featuring live performances, themed activities, and exclusive merchandise. Perfect for families and fans of all ages.',
-              image_url: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=600&h=400&fit=crop',
-              date: { utc: '2026-04-15T23:00:00Z', timezone: 'America/New_York', display: 'Apr 15, 2026 7:00 PM' },
-              venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
-              availability: 'available',
-              organization: { id: 'org-1', name: 'FEVO Events', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['entertainment', 'family'],
-              created_at: '2026-01-01T00:00:00Z',
-              updated_at: '2026-02-15T00:00:00Z',
-            },
-            {
-              offer_id: 'offer-002',
-              title: 'Summer Concert Series - Central Park Rock Festival',
-              description: 'Three days of amazing rock music from top artists. Food vendors, VIP areas, and group discounts available.',
-              image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop',
-              date: { utc: '2026-06-20T22:00:00Z', timezone: 'America/New_York', display: 'Jun 20, 2026 6:00 PM' },
-              venue: { name: 'Central Park SummerStage', city: 'New York', state: 'NY' },
-              availability: 'limited',
-              organization: { id: 'org-2', name: 'Live Nation', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['music', 'festival'],
-              created_at: '2026-01-10T00:00:00Z',
-              updated_at: '2026-02-14T00:00:00Z',
-            },
-            {
-              offer_id: 'offer-003',
-              title: 'NBA Playoffs - Knicks vs Celtics Game 3',
-              description: 'Witness the intensity of playoff basketball at The Garden. Group tickets available with exclusive fan experiences.',
-              image_url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop',
-              date: { utc: '2026-05-11T00:00:00Z', timezone: 'America/New_York', display: 'May 10, 2026 8:00 PM' },
-              venue: { name: 'Madison Square Garden', city: 'New York', state: 'NY' },
-              availability: 'available',
-              organization: { id: 'org-3', name: 'NBA', logo_url: null },
-              checkout_url: 'https://fevo.com',
-              tags: ['sports', 'basketball'],
-              created_at: '2026-02-01T00:00:00Z',
-              updated_at: '2026-02-15T00:00:00Z',
-            },
-          ],
-          meta: { page: 1, per_page: 3, total: 3, total_pages: 1 },
-          feed_updated_at: new Date().toISOString(),
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      }
-      return originalFetch.apply(this, arguments);
-    };
-  </script>
-
-  <script src="https://fevo-event-feed-widget.onrender.com/event-feed-widget.js"></script>
+  <script src="/src/index.ts" type="module"></script>
 </body>
 </html>
