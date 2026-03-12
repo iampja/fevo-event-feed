@@ -1016,7 +1016,7 @@
     const _fetch = window.fetch;
     window.fetch = function(url, opts) {
       const u = typeof url === 'string' ? url : url.toString();
-      if (u.includes('/feed')) {
+      if (u.includes('event-feed')) {
         const params = new URL(u, window.location.origin).searchParams;
         let d = ALL_OFFERS;
 
@@ -1071,7 +1071,7 @@
       if (type) params.set('type', type);
       if (search) params.set('search', search);
       const qs = params.toString();
-      return qs ? '/api/v1/feed?' + qs : undefined;
+      return qs ? '/api/v1/event-feed?' + qs : undefined;
     }
 
     // ===== Generic re-render function =====

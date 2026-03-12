@@ -1079,7 +1079,7 @@
     var _fetch = window.fetch;
     window.fetch = function(url, opts) {
       var u = typeof url === 'string' ? url : url.toString();
-      if (u.includes('/feed')) {
+      if (u.includes('event-feed')) {
         var params = new URL(u, window.location.origin).searchParams;
         var d = ALL_OFFERS;
 
