@@ -1732,6 +1732,7 @@
 
   </script>
 
-  <!-- Rewards demo is self-contained with its own mock data and rendering. -->
+  <!-- Widget JS loaded AFTER mock fetch override so all API calls use mock data -->
+  <script src="/src/index.ts" type="module"></script>
 </body>
 </html>

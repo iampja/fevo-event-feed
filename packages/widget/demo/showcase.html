@@ -1505,7 +1505,7 @@
     });
   </script>
 
-  <!-- Showcase page is self-contained with its own mock data and rendering.
-       The widget JS is NOT loaded here to avoid conflicting with the custom UI. -->
+  <!-- Widget JS loaded AFTER mock fetch override so all API calls use mock data -->
+  <script src="/src/index.ts" type="module"></script>
 </body>
 </html>
