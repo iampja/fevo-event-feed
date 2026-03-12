@@ -14,19 +14,14 @@ cp "$(dirname "$0")/../demo/rewards-demo.html" "$DIST_DIR/rewards-demo.html"
 cp "$(dirname "$0")/../demo/myfevo.html" "$DIST_DIR/myfevo.html"
 cp "$(dirname "$0")/../demo/collections.html" "$DIST_DIR/collections.html"
 
-# Fix script src: /src/index.ts (dev) -> /event-feed-widget.js (prod)
-sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$DIST_DIR/index.html"
-sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$DIST_DIR/showcase.html"
-sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$DIST_DIR/rewards-demo.html"
-sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$DIST_DIR/myfevo.html"
-sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$DIST_DIR/collections.html"
-
-# Fix checkout path: /demo/checkout.html -> /checkout.html
-sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$DIST_DIR/index.html"
-sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$DIST_DIR/showcase.html"
-sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$DIST_DIR/rewards-demo.html"
-sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$DIST_DIR/myfevo.html"
-sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$DIST_DIR/collections.html"
+# Fix all paths in HTML files for production
+API_URL="${VITE_API_URL:-https://fevo-event-feed-api.onrender.com/api/v1/event-feed}"
+for f in "$DIST_DIR"/*.html; do
+  sed -i.bak 's|src="/src/index.ts" type="module"|src="/event-feed-widget.js"|g' "$f"
+  sed -i.bak 's|/demo/checkout.html|/checkout.html|g' "$f"
+  sed -i.bak "s|data-api-url=\"/api/v1/event-feed\"|data-api-url=\"${API_URL}\"|g" "$f"
+  sed -i.bak 's|href="/demo/|href="/|g' "$f"
+done
 
 # Clean up sed backup files
 rm -f "$DIST_DIR"/*.bak

@@ -32,7 +32,7 @@ services:
       - key: ADMIN_PASSWORD
         value: 2293-edc
       - key: RESEED
-        value: "true"
+        value: "false"
 
   # ── Admin UI (Static Site) ─────────────────────────────────────────────────
   - type: web

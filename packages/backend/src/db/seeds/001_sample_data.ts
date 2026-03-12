@@ -9,29 +9,23 @@ function hashKey(raw: string): string {
 }
 
 /**
- * Seed file: creates only the test API key.
- * Offer/org/venue data comes from FEVO API sync, not seed data.
+ * Seed file: ensures the test API key exists.
+ * Does NOT delete existing data — offer/org/venue data comes from FEVO sync.
  */
 export async function seed(knex: Knex): Promise<void> {
-  // Clean tables in dependency order
-  await knex('event_feed_segment_offers').del();
-  await knex('event_feed_segments').del();
-  await knex('feed_exclusions').del();
-  await knex('feed_cache').del();
-  await knex('api_keys').del();
-  await knex('sync_log').del();
-  await knex('offers').del();
-  await knex('events').del();
-  await knex('venues').del();
-  await knex('organizations').del();
+  const keyHash = hashKey(API_KEY_RAW);
 
-  // Insert sample API key for dev/test
-  await knex('api_keys').insert({
-    id: uuidv4(),
-    key_hash: hashKey(API_KEY_RAW),
-    partner_name: 'Test Partner',
-    created_at: new Date().toISOString(),
-    revoked_at: null,
-    rate_limit: 100,
-  });
+  // Only insert the API key if it doesn't already exist
+  const existing = await knex('api_keys').where('key_hash', keyHash).first();
+  if (!existing) {
+    await knex('api_keys').insert({
+      id: uuidv4(),
+      key_hash: keyHash,
+      partner_name: 'Test Partner',
+      created_at: new Date().toISOString(),
+      revoked_at: null,
+      rate_limit: 100,
+    });
+    console.log('Seeded test API key');
+  }
 }
