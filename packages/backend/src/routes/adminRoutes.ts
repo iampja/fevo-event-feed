@@ -33,6 +33,7 @@ import {
 
 import { listOffers, getOfferById, getOfferStats } from '../services/offerService';
 import { triggerFeedRefresh } from '../jobs/feedRefresh';
+import { buildFeedIndex } from '../services/feedService';
 import db from '../db/connection';
 
 const router = Router();
@@ -126,6 +127,9 @@ router.put('/offers/:offerId/distribution', async (req: Request, res: Response) 
     const status = enabled
       ? await enableDistribution(offerId)
       : await disableDistribution(offerId);
+
+    // Rebuild feed immediately so widget reflects the change
+    buildFeedIndex().catch((err) => console.error('Feed rebuild after distribution toggle:', err));
 
     res.json({ data: mapDistributionStatus(status) });
   } catch (err: any) {
@@ -572,6 +576,9 @@ router.put('/organizations/:orgId/distribution', async (req: Request, res: Respo
     const status = enabled
       ? await enableOrgDistribution(orgId)
       : await disableOrgDistribution(orgId);
+
+    // Rebuild feed immediately so widget reflects the change
+    buildFeedIndex().catch((err) => console.error('Feed rebuild after org distribution toggle:', err));
 
     res.json({
       data: {
