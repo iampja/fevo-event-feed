@@ -9,6 +9,7 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Select } from '@/components/ui/Select';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
+import { Switch } from '@/components/ui/Switch';
 import { showError, showSuccess } from '@/components/ui/Toast';
 import {
   getOffers,
@@ -16,6 +17,7 @@ import {
   getSegments,
   addOfferToSegment,
   removeOfferFromSegment,
+  updateDistribution,
   Offer,
   OffersMeta,
   OfferStats,
@@ -118,6 +120,7 @@ export const AllOffersPage: React.FC = () => {
   const [collections, setCollections] = useState<Segment[]>([]);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState>({ column: 'created_at', direction: 'desc' });
+  const [togglingDistribution, setTogglingDistribution] = useState<Set<string>>(new Set());
 
   const fetchOffers = useCallback(async () => {
     try {
@@ -215,6 +218,29 @@ export const AllOffersPage: React.FC = () => {
     }
   };
 
+  const handleDistributionToggle = async (offerId: string, enabled: boolean) => {
+    setTogglingDistribution((prev) => new Set(prev).add(offerId));
+    try {
+      await updateDistribution(offerId, enabled);
+      setOffers((prev) =>
+        prev.map((o) =>
+          o.id === offerId ? { ...o, distribution_enabled: enabled } : o,
+        ),
+      );
+      showSuccess(`Distribution ${enabled ? 'enabled' : 'disabled'}`);
+      // Refresh stats
+      getOfferStats().then(setStats).catch(() => {});
+    } catch {
+      showError('Failed to update distribution');
+    } finally {
+      setTogglingDistribution((prev) => {
+        const next = new Set(prev);
+        next.delete(offerId);
+        return next;
+      });
+    }
+  };
+
   const handleSort = useCallback((newSort: SortState) => {
     setSort(newSort);
     setPage(1);
@@ -288,9 +314,13 @@ export const AllOffersPage: React.FC = () => {
       width: '120px',
       sortable: true,
       render: (row) => (
-        <Badge variant={row.distribution_enabled ? 'success' : 'neutral'}>
-          {row.distribution_enabled ? 'Enabled' : 'Disabled'}
-        </Badge>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Switch
+            checked={!!row.distribution_enabled}
+            onChange={(checked) => handleDistributionToggle(row.id, checked)}
+            disabled={row.status !== 'active' || togglingDistribution.has(row.id)}
+          />
+        </div>
       ),
     },
     {
