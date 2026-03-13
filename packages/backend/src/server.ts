@@ -110,6 +110,13 @@ async function bootstrap(): Promise<void> {
       console.log(forceReseed ? 'Database reseeded (RESEED=true)' : 'Database seeded with sample data');
     }
 
+    // Mark any stuck "running" syncs as failed (from prior crash/restart)
+    await db('sync_log').where('status', 'running').update({
+      status: 'failed',
+      completed_at: new Date().toISOString(),
+      errors: JSON.stringify(['Interrupted by server restart']),
+    });
+
     // Build initial feed index
     const feedCount = await buildFeedIndex();
     console.log(`Initial feed index built with ${feedCount} offers`);
