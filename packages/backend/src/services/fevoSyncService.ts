@@ -44,20 +44,30 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       orgGroups.get(orgId)!.push(outing);
     }
 
+    // Fetch all outing details concurrently (batches of 10)
+    const allOutings = Array.from(orgGroups.values()).flat();
+    console.log(`[FevoSync] Fetching detail for ${allOutings.length} outings...`);
+    const detailMap = new Map<string, FevoOutingDetail | null>();
+    for (let i = 0; i < allOutings.length; i += 10) {
+      const batch = allOutings.slice(i, i + 10);
+      const results = await Promise.allSettled(
+        batch.map((o) => client.fetchOutingDetail(o.outing_id)),
+      );
+      for (let j = 0; j < batch.length; j++) {
+        const r = results[j];
+        detailMap.set(batch[j].outing_id, r.status === 'fulfilled' ? r.value : null);
+      }
+    }
+    console.log(`[FevoSync] Fetched ${detailMap.size} details`);
+
     // Process each organization group
     for (const [fevoOrgId, orgOutings] of orgGroups) {
       try {
         const localOrgId = await findOrCreateOrganization(orgOutings[0].org);
 
-        // Upsert each outing, fetching detail for rich data (description, media)
         for (const outing of orgOutings) {
           try {
-            let detail = null;
-            try {
-              detail = await client.fetchOutingDetail(outing.outing_id);
-            } catch (err: any) {
-              console.warn(`[FevoSync] Failed to fetch detail for ${outing.outing_id}: ${err.message}`);
-            }
+            const detail = detailMap.get(outing.outing_id) || null;
             const result = await upsertFevoOuting(outing, detail, localOrgId);
             if (result === 'created') offersCreated++;
             else if (result === 'updated') offersUpdated++;
