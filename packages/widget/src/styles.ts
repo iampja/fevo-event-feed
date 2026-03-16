@@ -614,7 +614,12 @@ export const WIDGET_STYLES = `
   color: var(--fevo-ef-text-secondary);
   line-height: 1.6;
   margin: 16px 0;
-  white-space: pre-line;
+}
+.fevo-ef-modal-description p {
+  margin: 0 0 8px 0;
+}
+.fevo-ef-modal-description p:last-child {
+  margin-bottom: 0;
 }
 
 .fevo-ef-modal-tags {

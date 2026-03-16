@@ -137,7 +137,10 @@ export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalPro
           </span>
 
           {offer.description && (
-            <div class="fevo-ef-modal-description">{offer.description}</div>
+            <div
+              class="fevo-ef-modal-description"
+              dangerouslySetInnerHTML={{ __html: offer.description }}
+            />
           )}
 
           {offer.tags && offer.tags.length > 0 && (

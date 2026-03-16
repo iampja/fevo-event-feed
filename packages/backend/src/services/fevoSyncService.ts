@@ -49,10 +49,16 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       try {
         const localOrgId = await findOrCreateOrganization(orgOutings[0].org);
 
-        // Upsert each outing (manage API provides inline org/venue/media data)
+        // Upsert each outing, fetching detail for rich data (description, media)
         for (const outing of orgOutings) {
           try {
-            const result = await upsertFevoOuting(outing, null, localOrgId);
+            let detail = null;
+            try {
+              detail = await client.fetchOutingDetail(outing.outing_id);
+            } catch (err: any) {
+              console.warn(`[FevoSync] Failed to fetch detail for ${outing.outing_id}: ${err.message}`);
+            }
+            const result = await upsertFevoOuting(outing, detail, localOrgId);
             if (result === 'created') offersCreated++;
             else if (result === 'updated') offersUpdated++;
           } catch (err: any) {
