@@ -86,6 +86,8 @@ export function fevoDateTimeToISO(dt: FevoDateTime | null | undefined): string |
 
 // ── Real Client ──────────────────────────────────────────────────────────────
 
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
 export class FevoApiClient implements IFevoApiClient {
   private baseUrl: string;
   private tokenManager: IFevoTokenManager;
@@ -318,6 +320,7 @@ export class FevoApiClient implements IFevoApiClient {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'User-Agent': BROWSER_UA,
       },
       body: JSON.stringify(body),
     });
@@ -345,6 +348,7 @@ export class FevoApiClient implements IFevoApiClient {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
+        'User-Agent': BROWSER_UA,
       },
     });
 

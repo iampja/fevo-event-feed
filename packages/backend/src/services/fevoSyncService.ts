@@ -52,12 +52,13 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
 
     // Fetch all outing details concurrently (batches of 10)
     const allOutings = Array.from(orgGroups.values()).flat();
-    logProgress(syncId, `Fetching detail for ${allOutings.length} outings (batches of 10)...`);
+    logProgress(syncId, `Fetching detail for ${allOutings.length} outings (batches of 5)...`);
     const detailMap = new Map<string, FevoOutingDetail | null>();
     let detailsFetched = 0;
     let detailsFailed = 0;
-    for (let i = 0; i < allOutings.length; i += 10) {
-      const batch = allOutings.slice(i, i + 10);
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < allOutings.length; i += BATCH_SIZE) {
+      const batch = allOutings.slice(i, i + BATCH_SIZE);
       const results = await Promise.allSettled(
         batch.map((o) => client.fetchOutingDetail(o.outing_id)),
       );
@@ -71,8 +72,12 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
           detailsFailed++;
         }
       }
-      if ((i + 10) % 50 === 0 || i + 10 >= allOutings.length) {
-        logProgress(syncId, `Detail progress: ${Math.min(i + 10, allOutings.length)}/${allOutings.length} fetched`);
+      if ((i + BATCH_SIZE) % 50 === 0 || i + BATCH_SIZE >= allOutings.length) {
+        logProgress(syncId, `Detail progress: ${Math.min(i + BATCH_SIZE, allOutings.length)}/${allOutings.length} fetched`);
+      }
+      // Small delay between batches to avoid Cloudflare rate limiting
+      if (i + BATCH_SIZE < allOutings.length) {
+        await new Promise((r) => setTimeout(r, 200));
       }
     }
     logProgress(syncId, `Details complete: ${detailsFetched} fetched, ${detailsFailed} failed`);
