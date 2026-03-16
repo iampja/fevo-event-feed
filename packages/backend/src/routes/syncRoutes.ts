@@ -28,20 +28,11 @@ router.post('/sync/organization/:orgId', async (req: Request, res: Response) => 
 // ── POST /sync/all — sync all configured organizations ──────────────────────
 
 router.post('/sync/all', async (_req: Request, res: Response) => {
-  try {
-    const results = await syncAllOrganizations();
-    res.json({
-      data: results,
-      meta: {
-        organizations_synced: results.length,
-        total_created: results.reduce((sum, r) => sum + r.offers_created, 0),
-        total_updated: results.reduce((sum, r) => sum + r.offers_updated, 0),
-      },
-    });
-  } catch (err: any) {
-    console.error('POST /sync/all error:', err);
-    res.status(500).json({ error: 'Sync failed', message: err.message });
-  }
+  // Fire-and-forget: respond immediately, sync runs in background
+  res.json({ data: { message: 'Sync started', status: 'running' } });
+  syncAllOrganizations().catch((err) => {
+    console.error('Background sync/all error:', err);
+  });
 });
 
 // ── GET /sync/status — auto-sync status ─────────────────────────────────────

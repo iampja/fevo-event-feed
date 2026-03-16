@@ -265,17 +265,40 @@ export const SyncDashboardPage: React.FC = () => {
     setSyncing(true);
     setMessage(null);
     try {
-      const res = await apiClient.post('/admin/sync/all');
-      const meta = res.data.meta;
-      setMessage({
-        type: 'success',
-        text: `Synced ${meta.organizations_synced} organizations: ${meta.total_created} created, ${meta.total_updated} updated`,
-      });
-      fetchLogs();
-      fetchSyncStatus();
+      await apiClient.post('/admin/sync/all');
+      setMessage({ type: 'success', text: 'Sync started — refreshing status...' });
+
+      // Poll for completion
+      const poll = setInterval(async () => {
+        try {
+          const logRes = await apiClient.get<{ data: SyncLogEntry[] }>('/admin/sync/log', { params: { limit: 1 } });
+          const latest = logRes.data.data[0];
+          if (latest && latest.status !== 'running') {
+            clearInterval(poll);
+            setSyncing(false);
+            fetchLogs();
+            fetchSyncStatus();
+            if (latest.status === 'completed') {
+              setMessage({
+                type: 'success',
+                text: `Sync completed: ${latest.offers_created} created, ${latest.offers_updated} updated`,
+              });
+            } else {
+              setMessage({ type: 'error', text: `Sync ${latest.status}` });
+            }
+          }
+        } catch {
+          // keep polling
+        }
+      }, 3000);
+
+      // Stop polling after 5 minutes
+      setTimeout(() => {
+        clearInterval(poll);
+        setSyncing(false);
+      }, 300000);
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Sync all failed' });
-    } finally {
       setSyncing(false);
     }
   };
