@@ -287,6 +287,7 @@ export const WIDGET_STYLES = `
   text-decoration: none;
   transition: background-color 0.15s ease;
   white-space: nowrap;
+  font-family: var(--fevo-ef-font);
 }
 
 .fevo-ef-cta:hover {
@@ -722,6 +723,88 @@ export const WIDGET_STYLES = `
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ===== Checkout Drawer ===== */
+.fevo-ef-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.5);
+  animation: fevo-ef-backdrop-in 0.2s ease-out;
+}
+
+.fevo-ef-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 480px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--fevo-ef-card-bg);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: fevo-ef-drawer-in 0.3s ease-out;
+}
+
+@keyframes fevo-ef-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.fevo-ef-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--fevo-ef-border);
+  flex-shrink: 0;
+}
+
+.fevo-ef-drawer-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--fevo-ef-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-drawer-close:hover {
+  background: var(--fevo-ef-border);
+  color: var(--fevo-ef-text);
+}
+
+.fevo-ef-drawer-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .fevo-ef-drawer {
+    width: 100%;
   }
 }
 
