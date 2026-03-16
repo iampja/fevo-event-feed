@@ -13,7 +13,8 @@ import { ErrorState } from './ErrorState';
 import { EmptyState } from './EmptyState';
 import { PoweredByFevo } from './PoweredByFevo';
 import { OfferDetailModal } from './OfferDetailModal';
-import { CheckoutDrawer } from './CheckoutDrawer';
+import { openCheckoutPopup } from './CheckoutDrawer';
+
 type WidgetContainerProps = {
   config: WidgetConfig;
 };
@@ -47,7 +48,6 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
     useAutoRefresh(effectiveConfig, geoReady);
 
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const handleCardClick = useCallback((offer: Offer) => {
     setSelectedOffer(offer);
@@ -59,11 +59,7 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
   }, []);
 
   const handleGetTickets = useCallback((url: string) => {
-    setCheckoutUrl(url);
-  }, []);
-
-  const handleDrawerClose = useCallback(() => {
-    setCheckoutUrl(null);
+    openCheckoutPopup(url);
   }, []);
 
   // Determine widget state
@@ -135,14 +131,6 @@ export function WidgetContainer({ config }: WidgetContainerProps) {
           config={config}
           onClose={handleModalClose}
           onGetTickets={handleGetTickets}
-        />
-      )}
-
-      {checkoutUrl && (
-        <CheckoutDrawer
-          checkoutUrl={checkoutUrl}
-          config={config}
-          onClose={handleDrawerClose}
         />
       )}
 
