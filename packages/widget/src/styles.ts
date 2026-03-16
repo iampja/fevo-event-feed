@@ -287,7 +287,6 @@ export const WIDGET_STYLES = `
   text-decoration: none;
   transition: background-color 0.15s ease;
   white-space: nowrap;
-  font-family: var(--fevo-ef-font);
 }
 
 .fevo-ef-cta:hover {

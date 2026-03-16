@@ -12,7 +12,6 @@ type OfferCardProps = {
   offer: Offer;
   config: WidgetConfig;
   onCardClick: (offer: Offer) => void;
-  onGetTickets: (url: string) => void;
 };
 
 const AVAILABILITY_LABELS: Record<string, string> = {
@@ -21,7 +20,7 @@ const AVAILABILITY_LABELS: Record<string, string> = {
   sold_out: 'Sold Out',
 };
 
-export function OfferCard({ offer, config, onCardClick, onGetTickets }: OfferCardProps) {
+export function OfferCard({ offer, config, onCardClick }: OfferCardProps) {
   const viewedRef = useRef(false);
 
   const cardRef = useIntersectionObserver<HTMLDivElement>((isVisible) => {
@@ -55,12 +54,10 @@ export function OfferCard({ offer, config, onCardClick, onGetTickets }: OfferCar
 
   const handleCtaClick = useCallback(
     (e: Event) => {
-      e.preventDefault();
       e.stopPropagation();
       trackOfferClicked(offer.offer_id, config.segment, config.partnerId);
-      onGetTickets(buildCheckoutUrl(offer, config));
     },
-    [offer.offer_id, config.segment, config.partnerId, onGetTickets, offer, config],
+    [offer.offer_id, config.segment, config.partnerId],
   );
 
   const isSoldOut = offer.availability === 'sold_out';
@@ -139,14 +136,16 @@ export function OfferCard({ offer, config, onCardClick, onGetTickets }: OfferCar
             {AVAILABILITY_LABELS[offer.availability] || offer.availability}
           </span>
 
-          <button
+          <a
             class="fevo-ef-cta"
+            href={isSoldOut ? undefined : buildCheckoutUrl(offer, config)}
+            target="_blank"
+            rel="noopener noreferrer"
             data-status={offer.availability}
             onClick={isSoldOut ? undefined : handleCtaClick}
-            disabled={isSoldOut}
           >
             {isSoldOut ? 'Sold Out' : 'Get Tickets'}
-          </button>
+          </a>
         </div>
       </div>
     </div>

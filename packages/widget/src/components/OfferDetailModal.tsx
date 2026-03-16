@@ -18,10 +18,9 @@ type OfferDetailModalProps = {
   offer: Offer;
   config: WidgetConfig;
   onClose: () => void;
-  onGetTickets: (url: string) => void;
 };
 
-export function OfferDetailModal({ offer, config, onClose, onGetTickets }: OfferDetailModalProps) {
+export function OfferDetailModal({ offer, config, onClose }: OfferDetailModalProps) {
   // Create a portal container on document.body so the modal escapes any
   // parent overflow/transform that would break position:fixed.
   const portalRef = useRef<HTMLDivElement | null>(null);
@@ -66,11 +65,9 @@ export function OfferDetailModal({ offer, config, onClose, onGetTickets }: Offer
   }, []);
 
   const handleCtaClick = useCallback((e: Event) => {
-    e.preventDefault();
     e.stopPropagation();
     trackOfferClicked(offer.offer_id, config.segment, config.partnerId);
-    onGetTickets(buildCheckoutUrl(offer, config));
-  }, [offer.offer_id, config.segment, config.partnerId, onGetTickets, offer, config]);
+  }, [offer.offer_id, config.segment, config.partnerId]);
 
   const isSoldOut = offer.availability === 'sold_out';
   const videoUrl = offer.media?.video_url;
@@ -160,14 +157,16 @@ export function OfferDetailModal({ offer, config, onClose, onGetTickets }: Offer
         </div>
 
         <div class="fevo-ef-modal-footer">
-          <button
+          <a
             class="fevo-ef-cta"
+            href={isSoldOut ? undefined : buildCheckoutUrl(offer, config)}
+            target="_blank"
+            rel="noopener noreferrer"
             data-status={offer.availability}
             onClick={isSoldOut ? undefined : handleCtaClick}
-            disabled={isSoldOut}
           >
             {isSoldOut ? 'Sold Out' : 'Get Tickets'}
-          </button>
+          </a>
         </div>
       </div>
     </div>,
