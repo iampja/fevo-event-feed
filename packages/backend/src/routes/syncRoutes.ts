@@ -5,6 +5,7 @@ import {
   syncAllOrganizations,
   getSyncLogs,
 } from '../services/fevoSyncService';
+import { getLatestProgress } from '../services/syncProgress';
 
 const router = Router();
 
@@ -57,6 +58,17 @@ router.get('/sync/status', async (_req: Request, res: Response) => {
   } catch {
     res.json({ autoSync: true, intervalSeconds: 900, lastSync: null });
   }
+});
+
+// ── GET /sync/progress — live sync progress log ─────────────────────────────
+
+router.get('/sync/progress', async (_req: Request, res: Response) => {
+  const progress = getLatestProgress();
+  if (!progress) {
+    res.json({ data: null });
+    return;
+  }
+  res.json({ data: progress });
 });
 
 // ── GET /sync/log — list recent sync operations ─────────────────────────────

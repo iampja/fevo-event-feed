@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../db/connection';
 import { getFevoApiClient, FevoOuting, FevoOutingDetail } from './fevoApiClient';
 import { SyncLog } from '../models/types';
+import { startProgress, logProgress, completeProgress } from './syncProgress';
 
 function buildCheckoutUrl(accessCode: string): string {
   const base = (process.env.FEVO_API_BASE_URL || 'https://www.gofevo.com').replace(/\/$/, '');
@@ -26,13 +27,17 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     status: 'running',
   });
 
+  startProgress(syncId);
+
   let offersCreated = 0;
   let offersUpdated = 0;
   const errors: string[] = [];
 
   try {
+    logProgress(syncId, 'Fetching outings from FEVO API...');
     const outings = await client.fetchOutings();
     console.log(`[FevoSync] Fetched ${outings.length} outings`);
+    logProgress(syncId, `Found ${outings.length} outings from FEVO`);
 
     // Group outings by organization
     const orgGroups = new Map<string, FevoOuting[]>();
@@ -43,11 +48,14 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       }
       orgGroups.get(orgId)!.push(outing);
     }
+    logProgress(syncId, `Grouped into ${orgGroups.size} organizations`);
 
     // Fetch all outing details concurrently (batches of 10)
     const allOutings = Array.from(orgGroups.values()).flat();
-    console.log(`[FevoSync] Fetching detail for ${allOutings.length} outings...`);
+    logProgress(syncId, `Fetching detail for ${allOutings.length} outings (batches of 10)...`);
     const detailMap = new Map<string, FevoOutingDetail | null>();
+    let detailsFetched = 0;
+    let detailsFailed = 0;
     for (let i = 0; i < allOutings.length; i += 10) {
       const batch = allOutings.slice(i, i + 10);
       const results = await Promise.allSettled(
@@ -55,15 +63,28 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       );
       for (let j = 0; j < batch.length; j++) {
         const r = results[j];
-        detailMap.set(batch[j].outing_id, r.status === 'fulfilled' ? r.value : null);
+        if (r.status === 'fulfilled') {
+          detailMap.set(batch[j].outing_id, r.value);
+          detailsFetched++;
+        } else {
+          detailMap.set(batch[j].outing_id, null);
+          detailsFailed++;
+        }
+      }
+      if ((i + 10) % 50 === 0 || i + 10 >= allOutings.length) {
+        logProgress(syncId, `Detail progress: ${Math.min(i + 10, allOutings.length)}/${allOutings.length} fetched`);
       }
     }
-    console.log(`[FevoSync] Fetched ${detailMap.size} details`);
+    logProgress(syncId, `Details complete: ${detailsFetched} fetched, ${detailsFailed} failed`);
 
     // Process each organization group
+    let orgIndex = 0;
     for (const [fevoOrgId, orgOutings] of orgGroups) {
+      orgIndex++;
       try {
         const localOrgId = await findOrCreateOrganization(orgOutings[0].org);
+        const orgName = orgOutings[0].org.name || fevoOrgId;
+        logProgress(syncId, `[${orgIndex}/${orgGroups.size}] Processing ${orgName} (${orgOutings.length} outings)`);
 
         for (const outing of orgOutings) {
           try {
@@ -73,28 +94,51 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
             else if (result === 'updated') offersUpdated++;
           } catch (err: any) {
             errors.push(`Outing ${outing.outing_id}: ${err.message}`);
+            logProgress(syncId, `  Error: ${outing.title} — ${err.message}`);
           }
         }
       } catch (err: any) {
         errors.push(`Org ${fevoOrgId}: ${err.message}`);
+        logProgress(syncId, `  Org error: ${err.message}`);
       }
     }
 
+    const completedAt = new Date().toISOString();
+    const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+    const duration = `${(durationMs / 1000).toFixed(1)}s`;
+    const finalStatus = errors.length > 0 && offersCreated === 0 && offersUpdated === 0 ? 'failed' : 'completed';
+
     await db('sync_log').where('id', syncId).update({
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       offers_created: offersCreated,
       offers_updated: offersUpdated,
       errors: errors.length > 0 ? JSON.stringify(errors) : null,
-      status: errors.length > 0 && offersCreated === 0 && offersUpdated === 0 ? 'failed' : 'completed',
+      status: finalStatus,
+    });
+
+    completeProgress(syncId, finalStatus as 'completed' | 'failed', {
+      created: offersCreated,
+      updated: offersUpdated,
+      errors: errors.length,
+      duration,
     });
   } catch (err: any) {
     errors.push(err.message);
+    const completedAt = new Date().toISOString();
+    const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
     await db('sync_log').where('id', syncId).update({
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       offers_created: offersCreated,
       offers_updated: offersUpdated,
       errors: JSON.stringify(errors),
       status: 'failed',
+    });
+    logProgress(syncId, `Fatal error: ${err.message}`);
+    completeProgress(syncId, 'failed', {
+      created: offersCreated,
+      updated: offersUpdated,
+      errors: errors.length,
+      duration: `${((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 1000).toFixed(1)}s`,
     });
   }
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import styled, { keyframes } from 'styled-components';
 import { apiClient } from '@/api/client';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -35,6 +35,19 @@ interface SyncStatus {
     offers_updated: number;
     errors: string | null;
   } | null;
+}
+
+interface ProgressLine {
+  time: string;
+  message: string;
+}
+
+interface SyncProgress {
+  syncId: string;
+  lines: ProgressLine[];
+  status: 'running' | 'completed' | 'failed';
+  startedAt: string;
+  summary?: { created: number; updated: number; errors: number; duration: string };
 }
 
 const Card = styled.div`
@@ -200,6 +213,143 @@ const SyncButton = styled.button<{ $syncing?: boolean }>`
   }
 `;
 
+// ── Progress Dialog styles ──────────────────────────────────────────────────
+
+const DialogBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const DialogPanel = styled.div`
+  background: #1a1a2e;
+  border-radius: ${radius.cornerRadiusLg};
+  width: 640px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+`;
+
+const DialogHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a4a;
+`;
+
+const DialogTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+`;
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const Spinner = styled.span`
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #4a4a6a;
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+const DialogClose = styled.button`
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  &:hover { background: #2a2a4a; color: #e2e8f0; }
+`;
+
+const LogContainer = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  min-height: 300px;
+  max-height: 50vh;
+`;
+
+const LogLine = styled.div`
+  color: #94a3b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+`;
+
+const LogTime = styled.span`
+  color: #4a5568;
+  margin-right: 8px;
+  user-select: none;
+`;
+
+const LogStatus = styled.span<{ $type: 'info' | 'success' | 'error' | 'progress' }>`
+  color: ${(p) => {
+    switch (p.$type) {
+      case 'success': return '#22c55e';
+      case 'error': return '#ef4444';
+      case 'progress': return '#eab308';
+      default: return '#60a5fa';
+    }
+  }};
+`;
+
+const DialogFooter = styled.div`
+  padding: 12px 20px;
+  border-top: 1px solid #2a2a4a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const FooterStatus = styled.div<{ $status: string }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${(p) => {
+    switch (p.$status) {
+      case 'completed': return '#22c55e';
+      case 'failed': return '#ef4444';
+      default: return '#eab308';
+    }
+  }};
+`;
+
+function classifyLine(msg: string): 'info' | 'success' | 'error' | 'progress' {
+  if (msg.startsWith('Sync completed') || msg.startsWith('Details complete')) return 'success';
+  if (msg.includes('Error') || msg.includes('error') || msg.includes('Fatal') || msg.startsWith('Sync failed')) return 'error';
+  if (msg.includes('progress:') || msg.startsWith('[')) return 'progress';
+  return 'info';
+}
+
+function formatLogTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 export const SyncDashboardPage: React.FC = () => {
   const [logs, setLogs] = useState<SyncLogEntry[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -207,6 +357,10 @@ export const SyncDashboardPage: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [showProgressDialog, setShowProgressDialog] = useState(false);
+  const [progress, setProgress] = useState<SyncProgress | null>(null);
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -241,6 +395,20 @@ export const SyncDashboardPage: React.FC = () => {
     fetchSyncStatus();
   }, [fetchLogs, fetchOrgs, fetchSyncStatus]);
 
+  // Auto-scroll log to bottom
+  useEffect(() => {
+    if (logEndRef.current) {
+      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [progress?.lines.length]);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
   const handleSyncOrg = async () => {
     if (!selectedOrgId) return;
     setSyncing(true);
@@ -261,45 +429,52 @@ export const SyncDashboardPage: React.FC = () => {
     }
   };
 
-  const handleSyncAll = async () => {
-    setSyncing(true);
-    setMessage(null);
-    try {
-      await apiClient.post('/admin/sync/all');
-      setMessage({ type: 'success', text: 'Sync started — refreshing status...' });
+  const startPollingProgress = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
 
-      // Poll for completion
-      const poll = setInterval(async () => {
-        try {
-          const logRes = await apiClient.get<{ data: SyncLogEntry[] }>('/admin/sync/log', { params: { limit: 1 } });
-          const latest = logRes.data.data[0];
-          if (latest && latest.status !== 'running') {
-            clearInterval(poll);
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await apiClient.get<{ data: SyncProgress | null }>('/admin/sync/progress');
+        const p = res.data.data;
+        if (p) {
+          setProgress(p);
+          if (p.status !== 'running') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            pollRef.current = null;
             setSyncing(false);
             fetchLogs();
             fetchSyncStatus();
-            if (latest.status === 'completed') {
-              setMessage({
-                type: 'success',
-                text: `Sync completed: ${latest.offers_created} created, ${latest.offers_updated} updated`,
-              });
-            } else {
-              setMessage({ type: 'error', text: `Sync ${latest.status}` });
-            }
           }
-        } catch {
-          // keep polling
         }
-      }, 3000);
+      } catch {
+        // keep polling
+      }
+    }, 1000);
+  };
 
-      // Stop polling after 5 minutes
-      setTimeout(() => {
-        clearInterval(poll);
-        setSyncing(false);
-      }, 300000);
+  const handleSyncAll = async () => {
+    setSyncing(true);
+    setMessage(null);
+    setProgress(null);
+    setShowProgressDialog(true);
+
+    try {
+      await apiClient.post('/admin/sync/all');
+      startPollingProgress();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Sync all failed' });
       setSyncing(false);
+      setShowProgressDialog(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setShowProgressDialog(false);
+    if (progress?.status !== 'running') {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     }
   };
 
@@ -447,6 +622,55 @@ export const SyncDashboardPage: React.FC = () => {
           </Table>
         )}
       </Card>
+
+      {/* ── Progress Dialog ── */}
+      {showProgressDialog && (
+        <DialogBackdrop onClick={progress?.status !== 'running' ? handleCloseDialog : undefined}>
+          <DialogPanel onClick={(e) => e.stopPropagation()}>
+            <DialogHeader>
+              <DialogTitle>
+                {progress?.status === 'running' && <Spinner />}
+                {progress?.status === 'completed' && <span style={{ color: '#22c55e' }}>&#10003;</span>}
+                {progress?.status === 'failed' && <span style={{ color: '#ef4444' }}>&#10007;</span>}
+                FEVO Sync
+              </DialogTitle>
+              <DialogClose onClick={handleCloseDialog}>&#x2715;</DialogClose>
+            </DialogHeader>
+
+            <LogContainer>
+              {progress?.lines.map((line, i) => (
+                <LogLine key={i}>
+                  <LogTime>{formatLogTime(line.time)}</LogTime>
+                  <LogStatus $type={classifyLine(line.message)}>{line.message}</LogStatus>
+                </LogLine>
+              ))}
+              {!progress && (
+                <LogLine>
+                  <LogStatus $type="info">Connecting...</LogStatus>
+                </LogLine>
+              )}
+              <div ref={logEndRef} />
+            </LogContainer>
+
+            <DialogFooter>
+              <FooterStatus $status={progress?.status || 'running'}>
+                <Dot $color={
+                  progress?.status === 'completed' ? '#22c55e'
+                    : progress?.status === 'failed' ? '#ef4444'
+                    : '#eab308'
+                } />
+                {progress?.status === 'running' ? 'Running...' : progress?.status === 'completed' ? 'Completed' : progress?.status === 'failed' ? 'Failed' : 'Starting...'}
+                {progress?.summary && ` \u2014 ${progress.summary.duration}`}
+              </FooterStatus>
+              {progress?.status !== 'running' && (
+                <DialogClose onClick={handleCloseDialog} style={{ fontSize: 13, padding: '6px 16px', background: '#2a2a4a', borderRadius: 6, color: '#e2e8f0' }}>
+                  Close
+                </DialogClose>
+              )}
+            </DialogFooter>
+          </DialogPanel>
+        </DialogBackdrop>
+      )}
     </div>
   );
 };

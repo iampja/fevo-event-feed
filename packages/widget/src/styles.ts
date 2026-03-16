@@ -621,6 +621,46 @@ export const WIDGET_STYLES = `
 .fevo-ef-modal-description p:last-child {
   margin-bottom: 0;
 }
+.fevo-ef-modal-description h1,
+.fevo-ef-modal-description h2,
+.fevo-ef-modal-description h3,
+.fevo-ef-modal-description h4 {
+  color: var(--fevo-ef-text-primary);
+  font-weight: 700;
+  margin: 16px 0 8px 0;
+  line-height: 1.3;
+}
+.fevo-ef-modal-description h1 { font-size: 20px; }
+.fevo-ef-modal-description h2 { font-size: 18px; }
+.fevo-ef-modal-description h3 { font-size: 16px; }
+.fevo-ef-modal-description h4 { font-size: 15px; }
+.fevo-ef-modal-description h1:first-child,
+.fevo-ef-modal-description h2:first-child,
+.fevo-ef-modal-description h3:first-child,
+.fevo-ef-modal-description h4:first-child {
+  margin-top: 0;
+}
+.fevo-ef-modal-description strong,
+.fevo-ef-modal-description b {
+  font-weight: 700;
+  color: var(--fevo-ef-text-primary);
+}
+.fevo-ef-modal-description em,
+.fevo-ef-modal-description i {
+  font-style: italic;
+}
+.fevo-ef-modal-description ul,
+.fevo-ef-modal-description ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.fevo-ef-modal-description li {
+  margin-bottom: 4px;
+}
+.fevo-ef-modal-description a {
+  color: var(--fevo-ef-accent);
+  text-decoration: underline;
+}
 
 .fevo-ef-modal-tags {
   display: flex;
