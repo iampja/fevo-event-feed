@@ -1,8 +1,16 @@
 /** @jsxImportSource preact */
 
-import { useEffect, useCallback, useRef } from 'preact/hooks';
+import { useEffect, useCallback, useRef, useState } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import type { WidgetConfig } from '../types';
+
+/**
+ * Convert /event/ checkout URLs to /embed/ path which FEVO
+ * explicitly exposes for iframe embedding.
+ */
+function toEmbedUrl(url: string): string {
+  return url.replace(/\/event\//, '/embed/');
+}
 
 type CheckoutDrawerProps = {
   checkoutUrl: string;
@@ -12,6 +20,9 @@ type CheckoutDrawerProps = {
 
 export function CheckoutDrawer({ checkoutUrl, config, onClose }: CheckoutDrawerProps) {
   const portalRef = useRef<HTMLDivElement | null>(null);
+  const [iframeFailed, setIframeFailed] = useState(false);
+  const embedUrl = toEmbedUrl(checkoutUrl);
+
   if (!portalRef.current) {
     portalRef.current = document.createElement('div');
     portalRef.current.className = 'fevo-ef-root';
@@ -44,6 +55,26 @@ export function CheckoutDrawer({ checkoutUrl, config, onClose }: CheckoutDrawerP
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  // Detect iframe load failure via a timeout — if the iframe
+  // hasn't signalled load after 5s, the embed was likely blocked.
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const loadedRef = useRef(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!loadedRef.current) setIframeFailed(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleIframeLoad = useCallback(() => {
+    loadedRef.current = true;
+  }, []);
+
+  const handleOpenExternal = useCallback((e: Event) => {
+    e.preventDefault();
+    window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+  }, [checkoutUrl]);
+
   const handleBackdropClick = useCallback(() => {
     onClose();
   }, [onClose]);
@@ -67,12 +98,23 @@ export function CheckoutDrawer({ checkoutUrl, config, onClose }: CheckoutDrawerP
             &#x2715;
           </button>
         </div>
-        <iframe
-          class="fevo-ef-drawer-iframe"
-          src={checkoutUrl}
-          title="FEVO Checkout"
-          allow="payment"
-        />
+        {iframeFailed ? (
+          <div class="fevo-ef-drawer-fallback">
+            <p>Checkout couldn't be loaded inline.</p>
+            <button class="fevo-ef-cta" onClick={handleOpenExternal}>
+              Open Checkout
+            </button>
+          </div>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            class="fevo-ef-drawer-iframe"
+            src={embedUrl}
+            title="FEVO Checkout"
+            allow="payment"
+            onLoad={handleIframeLoad}
+          />
+        )}
       </div>
     </div>,
     portalRef.current!,

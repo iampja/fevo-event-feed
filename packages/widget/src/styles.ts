@@ -802,6 +802,28 @@ export const WIDGET_STYLES = `
   background: #ffffff;
 }
 
+.fevo-ef-drawer-fallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+  color: var(--fevo-ef-text-secondary);
+  font-size: 14px;
+}
+
+.fevo-ef-drawer-fallback p {
+  margin: 0;
+}
+
+.fevo-ef-drawer-fallback .fevo-ef-cta {
+  padding: 12px 32px;
+  font-size: 16px;
+}
+
 @media (max-width: 640px) {
   .fevo-ef-drawer {
     width: 100%;
