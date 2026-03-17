@@ -53,38 +53,217 @@ export const WIDGET_STYLES = `
 
 /* ===== Marketplace Theme ===== */
 .fevo-ef-root[data-theme="marketplace"] {
-  --fevo-ef-bg: #000000;
-  --fevo-ef-card-bg: #141414;
-  --fevo-ef-text: #ffffff;
-  --fevo-ef-text-secondary: #a0a0a0;
-  --fevo-ef-border: #2a2a2a;
-  --fevo-ef-accent: #FFCC00;
-  --fevo-ef-accent-hover: #e6b800;
-  --fevo-ef-skeleton-base: #2a2a2a;
-  --fevo-ef-skeleton-shine: #3a3a3a;
-  --fevo-ef-error-bg: #2a0a0a;
-  --fevo-ef-error-text: #fca5a5;
-  --fevo-ef-empty-text: #6b6b6b;
-  --fevo-ef-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --fevo-ef-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.3);
+  --fevo-ef-bg: #f8f8f8;
+  --fevo-ef-card-bg: #ffffff;
+  --fevo-ef-text: #1a1a1a;
+  --fevo-ef-text-secondary: #6b7280;
+  --fevo-ef-border: #e0e0e0;
+  --fevo-ef-accent: #1a1a1a;
+  --fevo-ef-accent-hover: #333333;
+  --fevo-ef-skeleton-base: #e5e7eb;
+  --fevo-ef-skeleton-shine: #f3f4f6;
+  --fevo-ef-error-bg: #fef2f2;
+  --fevo-ef-error-text: #991b1b;
+  --fevo-ef-empty-text: #9ca3af;
+  --fevo-ef-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --fevo-ef-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --fevo-ef-radius: 16px;
 }
 
-.fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta {
-  background: linear-gradient(135deg, #FFCC00, #FF9500);
-  color: #000000;
+/* Marketplace hero banner */
+.fevo-ef-marketplace-hero {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 40px;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fevo-ef-marketplace-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.fevo-ef-marketplace-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.fevo-ef-marketplace-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.fevo-ef-marketplace-hero-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.fevo-ef-marketplace-hero-subtitle {
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+/* Section heading */
+.fevo-ef-marketplace-section-title {
+  font-size: 24px;
   font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0 0 24px 0;
+}
+
+/* Marketplace card overrides */
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-card {
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-card:hover {
+  box-shadow: var(--fevo-ef-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-card-image-wrap {
+  border-radius: 0;
+}
+
+/* Category tag on marketplace cards */
+.fevo-ef-card-category-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.fevo-ef-card-category-tag[data-category="sports"] {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.fevo-ef-card-category-tag[data-category="music"] {
+  background: #fce7f3;
+  color: #9d174d;
+}
+.fevo-ef-card-category-tag[data-category="entertainment"] {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.fevo-ef-card-category-tag[data-category="community"] {
+  background: #d1fae5;
+  color: #065f46;
+}
+.fevo-ef-card-category-tag[data-category="corporate"] {
+  background: #fef3c7;
+  color: #92400e;
+}
+.fevo-ef-card-category-tag[data-category] {
+  background: #f3f4f6;
+  color: #374151;
+}
+/* Specific categories override the generic */
+.fevo-ef-card-category-tag[data-category="sports"] { background: #dbeafe; color: #1e40af; }
+.fevo-ef-card-category-tag[data-category="music"] { background: #fce7f3; color: #9d174d; }
+.fevo-ef-card-category-tag[data-category="entertainment"] { background: #ede9fe; color: #6d28d9; }
+.fevo-ef-card-category-tag[data-category="community"] { background: #d1fae5; color: #065f46; }
+.fevo-ef-card-category-tag[data-category="corporate"] { background: #fef3c7; color: #92400e; }
+
+/* Read more link */
+.fevo-ef-card-readmore {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e85d04;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--fevo-ef-font);
+}
+.fevo-ef-card-readmore:hover { color: #c44d03; }
+.fevo-ef-card-readmore svg { width: 16px; height: 16px; }
+
+/* Marketplace filter pill overrides — outlined style */
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-filter-pill {
+  background: transparent;
+  border: 1.5px solid #d1d5db;
+  color: #6b7280;
+  font-weight: 500;
+}
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-filter-pill:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-filter-pill--active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #ffffff;
+}
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-filter-pill--active:hover {
+  background: #333333;
+  border-color: #333333;
+  color: #ffffff;
+}
+
+/* Marketplace CTA overrides */
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta {
+  background: #1a1a1a;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
 }
 
 .fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta:hover {
-  background: linear-gradient(135deg, #e6b800, #e68600);
+  background: #333333;
 }
 
-/* ===== Marketplace Toolbar ===== */
-.fevo-ef-marketplace-toolbar {
+/* Marketplace footer hides availability + CTA, shows readmore instead */
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-card-footer {
+  display: none;
+}
+
+/* ===== Marketplace Search Row ===== */
+.fevo-ef-marketplace-search-row {
+  margin-bottom: 32px;
+}
+
+/* ===== Collections Header (title + filters) ===== */
+.fevo-ef-marketplace-collections-header {
+  margin-bottom: 24px;
+}
+
+.fevo-ef-marketplace-collections-header .fevo-ef-marketplace-section-title {
+  margin-bottom: 16px;
+}
+
+.fevo-ef-marketplace-collections-header .fevo-ef-filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 24px;
   align-items: center;
 }
 
@@ -308,28 +487,17 @@ export const WIDGET_STYLES = `
   font-size: 15px;
 }
 
-/* ===== Marketplace Toolbar Mobile ===== */
+/* ===== Marketplace Mobile ===== */
 @media (max-width: 640px) {
-  .fevo-ef-marketplace-toolbar {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .fevo-ef-search-bar {
+  .fevo-ef-marketplace-search-row .fevo-ef-search-bar {
     min-width: 100%;
   }
 
-  .fevo-ef-filter-pills {
+  .fevo-ef-marketplace-collections-header .fevo-ef-filter-pills {
     width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .fevo-ef-create-cta {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
   }
 
   .fevo-ef-offer-page-hero {

@@ -61,12 +61,21 @@ export async function getFeed(
 
   let allOffers: Offer[] = [];
   let builtAt: string | null = null;
+  const isMarketplace = filters.mode === 'marketplace';
 
-  if (cached) {
+  if (!isMarketplace && cached) {
+    // Use cached feed (distribution-filtered) for normal widget mode
     allOffers = JSON.parse(cached.data) as Offer[];
     builtAt = cached.built_at;
+  } else if (isMarketplace) {
+    // Marketplace mode: all active offers, no distribution filter
+    allOffers = await db('offers')
+      .where('offers.status', 'active')
+      .select('offers.*')
+      .orderBy('offers.date', 'asc');
+    builtAt = new Date().toISOString();
   } else {
-    // Fallback: query directly
+    // Fallback: query directly with distribution filter
     allOffers = await db('offers')
       .leftJoin('organizations', 'offers.organization_id', 'organizations.id')
       .where('offers.status', 'active')

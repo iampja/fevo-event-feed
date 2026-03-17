@@ -78,6 +78,8 @@ export interface Offer {
   is_sold_out: boolean;
   source: OfferSource;
   fevo_synced_at: string | null;
+  category: string | null;
+  subcategory: string | null;
 }
 
 // ── Sync Log ─────────────────────────────────────────────────────────────────
@@ -152,7 +154,7 @@ export interface FeedOffer {
   price: { min: number | null; max: number | null; currency: string };
   date: { utc: string | null; timezone: string | null; display: string | null };
   venue: { name: string | null; city: string | null; state: string | null };
-  organization: { id: string | null; name: string | null; logo_url: string | null };
+  organization: { id: string | null; name: string | null; logo_url: string | null; category: string | null; subcategory: string | null };
   availability: OfferAvailability;
   checkout_url: string | null;
   tags: string[];
@@ -246,4 +248,5 @@ export interface FilterParams {
   event_type?: string;
   creator?: string;
   search?: string;
+  mode?: string;
 }

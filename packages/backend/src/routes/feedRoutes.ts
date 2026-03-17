@@ -21,6 +21,7 @@ const feedQuerySchema = z.object({
   event_type: z.string().optional(),
   creator: z.string().optional(),
   search: z.string().optional(),
+  mode: z.string().optional(),
 });
 
 // ── GET / ────────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ router.get(
         return;
       }
 
-      const { page, per_page, segment, theme, geography, organization, event_type, creator, search } =
+      const { page, per_page, segment, theme, geography, organization, event_type, creator, search, mode } =
         parsed.data;
 
       const filters: FilterParams = {
@@ -52,6 +53,7 @@ router.get(
         event_type,
         creator,
         search,
+        mode,
       };
 
       const pagination: PaginationParams = { page, per_page };

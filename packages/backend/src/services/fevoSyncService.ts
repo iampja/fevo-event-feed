@@ -245,10 +245,12 @@ async function findOrCreateOrganization(
   // Try to find by fevo_org_id
   let org = await db('organizations').where('fevo_org_id', orgData.id).first();
   if (org) {
-    // Update name and logo if changed
+    // Update name, logo, and category if changed
     await db('organizations').where('id', org.id).update({
       name: orgData.name || org.name,
       logo_url: orgData.logo_url || org.logo_url,
+      category: orgData.category || org.category,
+      subcategory: orgData.subcategory || org.subcategory,
       updated_at: now,
     });
     return org.id;
@@ -257,10 +259,12 @@ async function findOrCreateOrganization(
   // Try to find by name
   org = await db('organizations').where('name', orgData.name).first();
   if (org) {
-    // Link fevo_org_id and update logo
+    // Link fevo_org_id and update logo/category
     await db('organizations').where('id', org.id).update({
       fevo_org_id: orgData.id,
       logo_url: orgData.logo_url || org.logo_url,
+      category: orgData.category || org.category,
+      subcategory: orgData.subcategory || org.subcategory,
       updated_at: now,
     });
     return org.id;
@@ -273,6 +277,8 @@ async function findOrCreateOrganization(
     name: orgData.name,
     logo_url: orgData.logo_url,
     fevo_org_id: orgData.id,
+    category: orgData.category,
+    subcategory: orgData.subcategory,
     distribution_enabled: false,
     created_at: now,
     updated_at: now,
@@ -397,6 +403,11 @@ async function upsertFevoOuting(
     .where('fevo_offer_id', outing.outing_id)
     .first();
 
+  // Fetch org category from the organizations table (authoritative source)
+  const orgRow = await db('organizations').where('id', orgId).select('category', 'subcategory').first();
+  const category = orgRow?.category || outing.org.category || null;
+  const subcategory = orgRow?.subcategory || outing.org.subcategory || null;
+
   if (existing) {
     await db('offers')
       .where('id', existing.id)
@@ -412,6 +423,8 @@ async function upsertFevoOuting(
         venue_id: venueId,
         organization_id: orgId,
         organization_name: orgName,
+        category,
+        subcategory,
         event_id: eventId,
         checkout_url: checkoutUrl,
         fevo_url_code: outing.access_code,
@@ -438,6 +451,8 @@ async function upsertFevoOuting(
     availability: 'available',
     organization_id: orgId,
     organization_name: outing.org.name,
+    category,
+    subcategory,
     checkout_url: checkoutUrl,
     tags: null,
     status: 'active',

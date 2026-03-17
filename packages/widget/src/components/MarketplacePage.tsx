@@ -5,14 +5,13 @@ import type { Offer, WidgetConfig } from '../types';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { trackWidgetLoaded, trackOfferDetailOpened } from '../analytics';
 import { injectStyles } from '../styles';
-import { OfferCard } from './OfferCard';
+import { MarketplaceCard } from './MarketplaceCard';
 import { SkeletonCard } from './SkeletonCard';
 import { ErrorState } from './ErrorState';
 import { EmptyState } from './EmptyState';
 import { OfferDetailModal } from './OfferDetailModal';
 import { SearchBar } from './SearchBar';
 import { FilterBar } from './FilterBar';
-import { CreateOfferCTA } from './CreateOfferCTA';
 
 type MarketplacePageProps = {
   config: WidgetConfig;
@@ -74,8 +73,29 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
     <div class="fevo-ef-root" data-theme={theme}>
       {isRefreshing && hasOffers && <div class="fevo-ef-refreshing-bar" />}
 
-      <div class="fevo-ef-marketplace-toolbar">
+      {/* Hero banner */}
+      <div class="fevo-ef-marketplace-hero">
+        <img
+          class="fevo-ef-marketplace-hero-bg"
+          src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80"
+          alt=""
+          loading="eager"
+        />
+        <div class="fevo-ef-marketplace-hero-overlay" />
+        <div class="fevo-ef-marketplace-hero-content">
+          <h1 class="fevo-ef-marketplace-hero-title">Discover Live Events</h1>
+          <p class="fevo-ef-marketplace-hero-subtitle">
+            Browse group experiences, find the best deals, and get tickets with friends.
+          </p>
+        </div>
+      </div>
+
+      <div class="fevo-ef-marketplace-search-row">
         <SearchBar onSearch={handleSearch} />
+      </div>
+
+      <div class="fevo-ef-marketplace-collections-header">
+        <h2 class="fevo-ef-marketplace-section-title">Collections</h2>
         <FilterBar
           config={config}
           activeSegment={activeSegment}
@@ -86,8 +106,8 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
       </div>
 
       {isInitialLoad && (
-        <div class="fevo-ef-grid" data-columns={config.columns || 4}>
-          {Array.from({ length: 8 }).map((_, i) => (
+        <div class="fevo-ef-grid" data-columns={config.columns || 3}>
+          {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={`skel-${i}`} />
           ))}
         </div>
@@ -100,9 +120,9 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
       {!isInitialLoad && !error && !hasOffers && <EmptyState />}
 
       {hasOffers && (
-        <div class="fevo-ef-grid" data-columns={config.columns || 4}>
+        <div class="fevo-ef-grid" data-columns={config.columns || 3}>
           {offers.map((offer) => (
-            <OfferCard
+            <MarketplaceCard
               key={offer.offer_id}
               offer={offer}
               config={effectiveConfig}
@@ -111,8 +131,6 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
           ))}
         </div>
       )}
-
-      <CreateOfferCTA signupUrl={config.signupUrl} />
 
       {selectedOffer && (
         <OfferDetailModal

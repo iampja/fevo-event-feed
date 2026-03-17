@@ -29,6 +29,9 @@ export async function fetchFeed(config: WidgetConfig): Promise<FeedResponse> {
   if (config.search) {
     url.searchParams.set('search', config.search);
   }
+  if (config.mode === 'marketplace') {
+    url.searchParams.set('mode', 'marketplace');
+  }
 
   const headers: Record<string, string> = {
     Accept: 'application/json',

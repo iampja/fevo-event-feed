@@ -60,6 +60,8 @@ export function transformOffer(offer: Offer, orgLogoUrl?: string | null, reward?
       id: offer.organization_id,
       name: offer.organization_name,
       logo_url: orgLogoUrl ?? null,
+      category: offer.category ?? null,
+      subcategory: offer.subcategory ?? null,
     },
     availability: offer.availability,
     checkout_url: offer.checkout_url,

@@ -31,7 +31,7 @@ export type Offer = {
   date: DateValue;
   venue: { name: string; city: string; state: string };
   availability: 'available' | 'limited' | 'sold_out';
-  organization: { id: string; name: string; logo_url?: string | null };
+  organization: { id: string; name: string; logo_url?: string | null; category?: string | null; subcategory?: string | null };
   checkout_url: string;
   tags: string[];
   media?: { image_url: string | null; video_url: string | null };

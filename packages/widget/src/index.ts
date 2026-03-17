@@ -15,8 +15,8 @@ function parseConfigFromElement(el: Element): WidgetConfig {
   const segment = el.getAttribute('data-segment');
   if (segment) config.segment = segment;
 
-  const theme = el.getAttribute('data-theme') as 'light' | 'dark' | null;
-  if (theme === 'light' || theme === 'dark') config.theme = theme;
+  const theme = el.getAttribute('data-theme') as 'light' | 'dark' | 'marketplace' | null;
+  if (theme === 'light' || theme === 'dark' || theme === 'marketplace') config.theme = theme;
 
   const columns = el.getAttribute('data-columns');
   if (columns) {

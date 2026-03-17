@@ -44,6 +44,8 @@ export interface FevoOuting {
     id: string;
     name: string;
     logo_url: string | null;
+    category: string | null;
+    subcategory: string | null;
   };
 }
 
@@ -272,6 +274,8 @@ export class FevoApiClient implements IFevoApiClient {
         id: String(org.id || ''),
         name: org.name || '',
         logo_url: org.logo_image || org.logo_image_url || org.logo_url || null,
+        category: org.category || org.category_name || null,
+        subcategory: org.subcategory || org.subcategory_name || null,
       },
     };
   }
@@ -306,6 +310,8 @@ export class FevoApiClient implements IFevoApiClient {
         id: String(org.organization_id || org.id || ''),
         name: org.organization_name || org.name || '',
         logo_url: org.logo_url || org.logo_image || org.logo_image_url || org.organization_logo || null,
+        category: org.category || org.category_name || null,
+        subcategory: org.subcategory || org.subcategory_name || null,
       },
     };
   }
@@ -389,7 +395,7 @@ export class MockFevoApiClient implements IFevoApiClient {
         event_date_utc: '2026-04-15T19:00:00Z',
         event_timezone: 'America/New_York',
         venue: { id: 'mock-venue-001', name: 'Madison Square Garden', city: 'New York', state: 'NY', timezone: 'America/New_York' },
-        org: { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: 'https://logo.clearbit.com/msg.com' },
+        org: { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: 'https://logo.clearbit.com/msg.com', category: 'Sports', subcategory: 'Basketball' },
       },
       {
         outing_id: 'mock-outing-002',
@@ -403,7 +409,7 @@ export class MockFevoApiClient implements IFevoApiClient {
         event_date_utc: '2026-05-10T18:30:00Z',
         event_timezone: 'America/New_York',
         venue: { id: 'mock-venue-002', name: 'Barclays Center', city: 'Brooklyn', state: 'NY', timezone: 'America/New_York' },
-        org: { id: 'mock-org-002', name: 'BSE Global', logo_url: 'https://logo.clearbit.com/bfriesents.com' },
+        org: { id: 'mock-org-002', name: 'BSE Global', logo_url: 'https://logo.clearbit.com/bfriesents.com', category: 'Sports', subcategory: 'Basketball' },
       },
       {
         outing_id: 'mock-outing-003',
@@ -417,7 +423,7 @@ export class MockFevoApiClient implements IFevoApiClient {
         event_date_utc: '2026-06-01T20:00:00Z',
         event_timezone: 'America/Chicago',
         venue: { id: 'mock-venue-003', name: 'United Center', city: 'Chicago', state: 'IL', timezone: 'America/Chicago' },
-        org: { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: 'https://logo.clearbit.com/msg.com' },
+        org: { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: 'https://logo.clearbit.com/msg.com', category: 'Sports', subcategory: 'Basketball' },
       },
     ];
   }
