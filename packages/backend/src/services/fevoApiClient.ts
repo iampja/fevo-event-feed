@@ -172,62 +172,71 @@ export class FevoApiClient implements IFevoApiClient {
   }
 
   async fetchOutings(): Promise<FevoOuting[]> {
-    // Strategy: iterate ALL orgs via overviews, then for each org fetch
-    // events via /api/manage/event/overviews, then outings per event.
-    // Filter out test/QA/automation/sandbox orgs by name.
-    const orgOverviews = await this.fetchOrgOverviews();
-    const activeOrgs = orgOverviews.filter((o) => {
-      if (o.league === undefined) return false;
-      // The overview doesn't carry active_outings, so we rely on the
-      // full overview fetch below. Keep all non-test orgs.
-      return true;
-    });
-
-    console.log(`[FevoApiClient] Found ${activeOrgs.length} orgs from overviews`);
-
+    // Strategy: paginate through ALL events via /api/manage/event/overviews
+    // (global endpoint, returns 100 per page). For events with outings
+    // from non-test orgs, fetch outings per event.
     const allOutings: FevoOuting[] = [];
     const seenOutingIds = new Set<string>();
+    const seenOrgNames = new Set<string>();
+    const MAX_PAGES = 500; // safety limit
+    const PAGE_SIZE = 100;
 
-    for (const org of activeOrgs) {
-      try {
-        // Fetch up to 1000 events for this org
-        const eventsData = await this.authenticatedGet(
-          `/api/manage/event/overviews?organizationId=${encodeURIComponent(org.id)}&skip=0&take=1000`,
-        );
-        const events: any[] = Array.isArray(eventsData) ? eventsData : (eventsData?.items || []);
-        if (events.length === 0) continue;
+    let eventsWithOutings = 0;
+    let eventsSkipped = 0;
 
-        // Only process non-disabled events that have outings
-        const activeEvents = events.filter((e: any) => !e.disabled && (e.outing_count || 0) > 0);
-        if (activeEvents.length === 0) continue;
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const eventsData = await this.authenticatedGet(
+        `/api/manage/event/overviews?page=${page}&pageSize=${PAGE_SIZE}`,
+      );
+      const events: any[] = eventsData?.overviews || [];
+      if (events.length === 0) break;
 
-        console.log(`[FevoApiClient] Org ${org.id}: ${activeEvents.length} events with outings`);
-
-        for (const event of activeEvents) {
-          const eventId = String(event.id || event.event_id);
-          try {
-            const outings = await this.authenticatedGet(
-              `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
-            );
-            if (!Array.isArray(outings)) continue;
-
-            for (const raw of outings) {
-              if (raw.disabled) continue;
-              const outingId = String(raw.id || raw.outing_id);
-              if (seenOutingIds.has(outingId)) continue;
-              seenOutingIds.add(outingId);
-              allOutings.push(this.normalizeManageOuting(raw));
-            }
-          } catch (err: any) {
-            console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
-          }
-        }
-      } catch (err: any) {
-        console.warn(`[FevoApiClient] Failed events for org ${org.id}: ${err.message}`);
+      if (page === 1) {
+        console.log(`[FevoApiClient] Event overviews total: ${eventsData.total || 'unknown'}`);
       }
+
+      for (const event of events) {
+        if (event.disabled) continue;
+        if ((event.outing_count || 0) === 0) continue;
+
+        // Filter out test orgs
+        const orgName = event.organization?.name || '';
+        if (isTestOrg(orgName)) {
+          eventsSkipped++;
+          continue;
+        }
+
+        const eventId = String(event.id || event.event_id);
+        eventsWithOutings++;
+
+        try {
+          const outings = await this.authenticatedGet(
+            `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
+          );
+          if (!Array.isArray(outings)) continue;
+
+          for (const raw of outings) {
+            if (raw.disabled) continue;
+            const outingId = String(raw.id || raw.outing_id);
+            if (seenOutingIds.has(outingId)) continue;
+            seenOutingIds.add(outingId);
+            allOutings.push(this.normalizeManageOuting(raw));
+          }
+
+          seenOrgNames.add(orgName);
+        } catch (err: any) {
+          console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
+        }
+      }
+
+      if (page % 10 === 0) {
+        console.log(`[FevoApiClient] Page ${page}: ${allOutings.length} outings from ${seenOrgNames.size} orgs so far`);
+      }
+
+      if (events.length < PAGE_SIZE) break;
     }
 
-    console.log(`[FevoApiClient] Total: ${allOutings.length} unique enabled outings from ${activeOrgs.length} orgs`);
+    console.log(`[FevoApiClient] Done: ${allOutings.length} outings from ${seenOrgNames.size} orgs (${eventsWithOutings} events fetched, ${eventsSkipped} test-org events skipped)`);
     return allOutings;
   }
 
