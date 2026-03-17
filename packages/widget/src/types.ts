@@ -43,8 +43,8 @@ export type Offer = {
 
 export type FeedResponse = {
   data: Offer[];
-  meta: { page: number; per_page: number; total: number; total_pages: number };
-  feed_updated_at: string;
+  meta: { page: number; per_page: number; total: number; total_pages: number; built_at?: string | null };
+  feed_updated_at?: string;
 };
 
 export type WidgetConfig = {

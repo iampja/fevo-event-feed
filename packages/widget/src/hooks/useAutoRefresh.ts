@@ -56,7 +56,7 @@ export function useAutoRefresh(config: WidgetConfig, enabled: boolean = true): U
 
         offersRef.current = newOffers;
         setOffers(newOffers);
-        setLastUpdated(response.feed_updated_at);
+        setLastUpdated(response.feed_updated_at || response.meta?.built_at || new Date().toISOString());
         setError(null);
       } catch (err) {
         if (!isMountedRef.current) return;
