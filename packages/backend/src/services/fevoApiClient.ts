@@ -80,9 +80,34 @@ export interface IFevoApiClient {
   fetchOutings(): Promise<FevoOuting[]>;
   fetchOutingDetail(outingId: string): Promise<FevoOutingDetail | null>;
   fetchVenueAddress(venueId: string): Promise<VenueAddress | null>;
-  fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>>;
+  fetchOrgOverviews(): Promise<Array<{ id: string; name: string; league: number; active_outings: number; venues: Array<{ id: string; name: string }> }>>;
   searchOrganizations(query: string): Promise<FevoOrganizationResult[]>;
   isConfigured(): boolean;
+}
+
+// ── Test org filter ──────────────────────────────────────────────────────────
+
+const TEST_ORG_PATTERNS = [
+  /\btest\b/i,
+  /\bqa\b/i,
+  /\bautomation\b/i,
+  /\bautomated\b/i,
+  /\bsandbox\b/i,
+  /\bdemo\b/i,
+  /\bdon'?t\s*touch\b/i,
+  /\bdo\s*not\s*touch\b/i,
+  /\bbraintree\b/i,
+  /\bload\s*test\b/i,
+  /\bregression\b/i,
+  /\bpixel\s*test\b/i,
+  /^\W/,               // Starts with special char like #, *, ^, /
+  /^\(/,               // Starts with (
+  /^\[/,               // Starts with [
+  /testorg/i,          // ducanh_testorg etc.
+];
+
+function isTestOrg(name: string): boolean {
+  return TEST_ORG_PATTERNS.some((p) => p.test(name.trim()));
 }
 
 // ── League enum mapping ──────────────────────────────────────────────────────
@@ -147,68 +172,62 @@ export class FevoApiClient implements IFevoApiClient {
   }
 
   async fetchOutings(): Promise<FevoOuting[]> {
-    // Strategy: get events via /api/account/events, then for each event
-    // fetch ALL outings via /api/manage/event/{id}/outings (which returns
-    // hundreds of outings with full event/org/venue data inline).
-    const eventsData = await this.authenticatedGet('/api/account/events');
-    const events = eventsData?.value || eventsData;
-    if (!Array.isArray(events)) {
-      console.warn('[FevoApiClient] Unexpected events response shape:', typeof eventsData);
-      // Fallback to old endpoint
-      const data = await this.authenticatedGet('/api/account/outings');
-      if (!Array.isArray(data)) return [];
-      return data.map((raw: any) => this.normalizeOuting(raw));
-    }
+    // Strategy: iterate ALL orgs via overviews, then for each org fetch
+    // events via /api/manage/event/overviews, then outings per event.
+    // Filter out test/QA/automation/sandbox orgs by name.
+    const orgOverviews = await this.fetchOrgOverviews();
+    const activeOrgs = orgOverviews.filter((o) => {
+      if (o.league === undefined) return false;
+      // The overview doesn't carry active_outings, so we rely on the
+      // full overview fetch below. Keep all non-test orgs.
+      return true;
+    });
 
-    // Extract unique event IDs from the account events
-    const eventIds = new Set<string>();
-    for (const item of events) {
-      const eventId = item.event?.event_id || item.event?.id;
-      if (eventId) eventIds.add(String(eventId));
-    }
+    console.log(`[FevoApiClient] Found ${activeOrgs.length} orgs from overviews`);
 
-    console.log(`[FevoApiClient] Found ${eventIds.size} events, fetching outings for each...`);
-
-    // Fetch all outings for each event via the manage API
     const allOutings: FevoOuting[] = [];
     const seenOutingIds = new Set<string>();
 
-    for (const eventId of eventIds) {
+    for (const org of activeOrgs) {
       try {
-        const outings = await this.authenticatedGet(`/api/manage/event/${encodeURIComponent(eventId)}/outings`);
-        if (!Array.isArray(outings)) continue;
+        // Fetch up to 1000 events for this org
+        const eventsData = await this.authenticatedGet(
+          `/api/manage/event/overviews?organizationId=${encodeURIComponent(org.id)}&skip=0&take=1000`,
+        );
+        const events: any[] = Array.isArray(eventsData) ? eventsData : (eventsData?.items || []);
+        if (events.length === 0) continue;
 
-        // Log first raw outing's org + venue structure for debugging field names
-        if (allOutings.length === 0 && outings.length > 0) {
-          const sample = outings[0];
-          const ev = sample.event || {};
-          const v = ev.venue || sample.venue || {};
-          const o = ev.organization || sample.organization || {};
-          console.log('[FevoApiClient] Sample raw org keys:', Object.keys(o).join(', '));
-          console.log('[FevoApiClient] Sample raw org data:', JSON.stringify({ category: o.category, category_name: o.category_name, league_name: o.league_name, league: o.league, subcategory: o.subcategory }));
-          console.log('[FevoApiClient] Sample raw venue keys:', Object.keys(v).join(', '));
-          const va = v.address || v.venue_address || {};
-          console.log('[FevoApiClient] Sample raw venue address keys:', Object.keys(va).join(', '));
-          console.log('[FevoApiClient] Sample venue data:', JSON.stringify({ city: v.city, venue_city: v.venue_city, state: v.state, venue_state: v.venue_state, addr_city: va.city, addr_state: va.state, addr_state_province: va.state_province }));
+        // Only process non-disabled events that have outings
+        const activeEvents = events.filter((e: any) => !e.disabled && (e.outing_count || 0) > 0);
+        if (activeEvents.length === 0) continue;
+
+        console.log(`[FevoApiClient] Org ${org.id}: ${activeEvents.length} events with outings`);
+
+        for (const event of activeEvents) {
+          const eventId = String(event.id || event.event_id);
+          try {
+            const outings = await this.authenticatedGet(
+              `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
+            );
+            if (!Array.isArray(outings)) continue;
+
+            for (const raw of outings) {
+              if (raw.disabled) continue;
+              const outingId = String(raw.id || raw.outing_id);
+              if (seenOutingIds.has(outingId)) continue;
+              seenOutingIds.add(outingId);
+              allOutings.push(this.normalizeManageOuting(raw));
+            }
+          } catch (err: any) {
+            console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
+          }
         }
-
-        for (const raw of outings) {
-          // Skip disabled outings
-          if (raw.disabled) continue;
-
-          const outingId = String(raw.id || raw.outing_id);
-          if (seenOutingIds.has(outingId)) continue;
-          seenOutingIds.add(outingId);
-
-          allOutings.push(this.normalizeManageOuting(raw));
-        }
-        console.log(`[FevoApiClient] Event ${eventId}: ${outings.length} outings`);
       } catch (err: any) {
-        console.warn(`[FevoApiClient] Failed to fetch outings for event ${eventId}: ${err.message}`);
+        console.warn(`[FevoApiClient] Failed events for org ${org.id}: ${err.message}`);
       }
     }
 
-    console.log(`[FevoApiClient] Total: ${allOutings.length} unique enabled outings`);
+    console.log(`[FevoApiClient] Total: ${allOutings.length} unique enabled outings from ${activeOrgs.length} orgs`);
     return allOutings;
   }
 
@@ -298,16 +317,21 @@ export class FevoApiClient implements IFevoApiClient {
     }
   }
 
-  async fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>> {
+  async fetchOrgOverviews(): Promise<Array<{ id: string; name: string; league: number; active_outings: number; venues: Array<{ id: string; name: string }> }>> {
     try {
       const data = await this.authenticatedPost('/api/manage/organization/overviews?skip=0&take=500', {});
       const orgs = data?.overviews || data;
       if (!Array.isArray(orgs)) return [];
-      return orgs.map((o: any) => ({
-        id: String(o.id),
-        league: typeof o.league === 'number' ? o.league : 0,
-        venues: Array.isArray(o.venues) ? o.venues.map((v: any) => ({ id: String(v.id), name: v.name || '' })) : [],
-      }));
+      return orgs
+        .filter((o: any) => (o.active_outings || 0) > 0)
+        .filter((o: any) => !isTestOrg(o.name || ''))
+        .map((o: any) => ({
+          id: String(o.id),
+          name: o.name || '',
+          league: typeof o.league === 'number' ? o.league : 0,
+          active_outings: o.active_outings || 0,
+          venues: Array.isArray(o.venues) ? o.venues.map((v: any) => ({ id: String(v.id), name: v.name || '' })) : [],
+        }));
     } catch (err: any) {
       console.warn(`[FevoApiClient] Failed to fetch org overviews: ${err.message}`);
       return [];
@@ -527,10 +551,10 @@ export class MockFevoApiClient implements IFevoApiClient {
     return { city: 'New York', state: 'NY' };
   }
 
-  async fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>> {
+  async fetchOrgOverviews(): Promise<Array<{ id: string; name: string; league: number; active_outings: number; venues: Array<{ id: string; name: string }> }>> {
     return [
-      { id: 'mock-org-001', league: 2, venues: [{ id: 'mock-venue-001', name: 'Madison Square Garden' }] },
-      { id: 'mock-org-002', league: 2, venues: [{ id: 'mock-venue-002', name: 'Barclays Center' }] },
+      { id: 'mock-org-001', name: 'MSG Entertainment', league: 2, active_outings: 5, venues: [{ id: 'mock-venue-001', name: 'Madison Square Garden' }] },
+      { id: 'mock-org-002', name: 'BSE Global', league: 2, active_outings: 3, venues: [{ id: 'mock-venue-002', name: 'Barclays Center' }] },
     ];
   }
 
