@@ -135,6 +135,20 @@ export class FevoApiClient implements IFevoApiClient {
         const outings = await this.authenticatedGet(`/api/manage/event/${encodeURIComponent(eventId)}/outings`);
         if (!Array.isArray(outings)) continue;
 
+        // Log first raw outing's org + venue structure for debugging field names
+        if (allOutings.length === 0 && outings.length > 0) {
+          const sample = outings[0];
+          const ev = sample.event || {};
+          const v = ev.venue || sample.venue || {};
+          const o = ev.organization || sample.organization || {};
+          console.log('[FevoApiClient] Sample raw org keys:', Object.keys(o).join(', '));
+          console.log('[FevoApiClient] Sample raw org data:', JSON.stringify({ category: o.category, category_name: o.category_name, league_name: o.league_name, league: o.league, subcategory: o.subcategory }));
+          console.log('[FevoApiClient] Sample raw venue keys:', Object.keys(v).join(', '));
+          const va = v.address || v.venue_address || {};
+          console.log('[FevoApiClient] Sample raw venue address keys:', Object.keys(va).join(', '));
+          console.log('[FevoApiClient] Sample venue data:', JSON.stringify({ city: v.city, venue_city: v.venue_city, state: v.state, venue_state: v.venue_state, addr_city: va.city, addr_state: va.state, addr_state_province: va.state_province }));
+        }
+
         for (const raw of outings) {
           // Skip disabled outings
           if (raw.disabled) continue;
@@ -274,7 +288,7 @@ export class FevoApiClient implements IFevoApiClient {
         id: String(org.id || org.organization_id || ''),
         name: org.name || org.organization_name || '',
         logo_url: org.logo_image || org.logo_image_url || org.logo_url || null,
-        category: org.category || org.category_name || org.league_name || null,
+        category: org.category || org.category_name || org.league_name || org.league || null,
         subcategory: org.subcategory || org.subcategory_name || null,
       },
     };
@@ -310,7 +324,7 @@ export class FevoApiClient implements IFevoApiClient {
         id: String(org.organization_id || org.id || ''),
         name: org.organization_name || org.name || '',
         logo_url: org.logo_url || org.logo_image || org.logo_image_url || org.organization_logo || null,
-        category: org.category || org.category_name || org.league_name || null,
+        category: org.category || org.category_name || org.league_name || org.league || null,
         subcategory: org.subcategory || org.subcategory_name || null,
       },
     };
