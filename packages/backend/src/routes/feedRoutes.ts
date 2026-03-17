@@ -13,7 +13,7 @@ const router = Router();
 
 const feedQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  per_page: z.coerce.number().int().min(1).max(100).default(20),
+  per_page: z.coerce.number().int().min(1).max(1000).default(20),
   segment: z.string().optional(),
   theme: z.string().optional(),
   geography: z.string().optional(),

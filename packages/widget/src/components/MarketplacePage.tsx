@@ -32,7 +32,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
     search: searchQuery || undefined,
     geo: activeGeo || undefined,
     theme: config.theme || 'marketplace',
-    maxCards: config.maxCards || 100,
+    maxCards: config.maxCards || 500,
   }), [config, searchQuery, activeSegment, activeGeo]);
 
   const { offers, isRefreshing, error, lastUpdated, retry } = useAutoRefresh(effectiveConfig);
