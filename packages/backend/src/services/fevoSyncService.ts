@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import db from '../db/connection';
-import { getFevoApiClient, FevoOuting, FevoOutingDetail } from './fevoApiClient';
+import { getFevoApiClient, FevoOuting, FevoOutingDetail, leagueToCategory } from './fevoApiClient';
 import { SyncLog } from '../models/types';
 import { startProgress, logProgress, completeProgress } from './syncProgress';
 
@@ -61,6 +61,56 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     logProgress(syncId, 'Fetching outings from FEVO API...');
     const outings = await client.fetchOutings();
     logProgress(syncId, `Found ${outings.length} outings from FEVO`);
+
+    // ── Enrich outings with org category and venue address ─────────────
+    logProgress(syncId, 'Fetching org overviews for category data...');
+    const orgOverviews = await client.fetchOrgOverviews();
+    const orgCategoryMap = new Map<string, string | null>();
+    for (const ov of orgOverviews) {
+      orgCategoryMap.set(ov.id, leagueToCategory(ov.league));
+    }
+
+    // Collect unique venue IDs that have no city/state
+    const venueIdsToFetch = new Set<string>();
+    for (const o of outings) {
+      if (o.venue.id && !o.venue.city) venueIdsToFetch.add(o.venue.id);
+    }
+
+    const venueAddressMap = new Map<string, { city: string | null; state: string | null }>();
+    if (venueIdsToFetch.size > 0) {
+      logProgress(syncId, `Fetching address for ${venueIdsToFetch.size} venues...`);
+      const venueIds = Array.from(venueIdsToFetch);
+      const VENUE_BATCH = 10;
+      for (let i = 0; i < venueIds.length; i += VENUE_BATCH) {
+        const batch = venueIds.slice(i, i + VENUE_BATCH);
+        const results = await Promise.allSettled(
+          batch.map((vid) => client.fetchVenueAddress(vid)),
+        );
+        for (let j = 0; j < batch.length; j++) {
+          const r = results[j];
+          if (r.status === 'fulfilled' && r.value) {
+            venueAddressMap.set(batch[j], r.value);
+          }
+        }
+      }
+      logProgress(syncId, `Fetched ${venueAddressMap.size}/${venueIdsToFetch.size} venue addresses`);
+    }
+
+    // Patch outings with enriched data
+    for (const o of outings) {
+      // Enrich category from org overviews
+      if (!o.org.category) {
+        o.org.category = orgCategoryMap.get(o.org.id) || null;
+      }
+      // Enrich venue address
+      if (o.venue.id && !o.venue.city) {
+        const addr = venueAddressMap.get(o.venue.id);
+        if (addr) {
+          o.venue.city = addr.city;
+          o.venue.state = addr.state;
+        }
+      }
+    }
 
     // Load existing content hashes in bulk for fast comparison
     const existingOffers = await db('offers')
@@ -231,6 +281,28 @@ export async function syncOrganizationOffers(orgId: string): Promise<SyncLog> {
     const fevoOrgId = org.fevo_org_id;
 
     const outings = await client.fetchOutings();
+
+    // Enrich with org category and venue address
+    const orgOverviews = await client.fetchOrgOverviews();
+    const orgCatMap = new Map<string, string | null>();
+    for (const ov of orgOverviews) orgCatMap.set(ov.id, leagueToCategory(ov.league));
+
+    const venueIdsToFetch = new Set<string>();
+    for (const o of outings) {
+      if (o.venue.id && !o.venue.city) venueIdsToFetch.add(o.venue.id);
+    }
+    const venueAddrMap = new Map<string, { city: string | null; state: string | null }>();
+    for (const vid of venueIdsToFetch) {
+      const addr = await client.fetchVenueAddress(vid);
+      if (addr) venueAddrMap.set(vid, addr);
+    }
+    for (const o of outings) {
+      if (!o.org.category) o.org.category = orgCatMap.get(o.org.id) || null;
+      if (o.venue.id && !o.venue.city) {
+        const addr = venueAddrMap.get(o.venue.id);
+        if (addr) { o.venue.city = addr.city; o.venue.state = addr.state; }
+      }
+    }
 
     const orgOutings = fevoOrgId
       ? outings.filter(o => o.org.id === fevoOrgId)

@@ -71,11 +71,54 @@ export interface FevoOrganizationResult {
   active_outings: number;
 }
 
+export interface VenueAddress {
+  city: string | null;
+  state: string | null;
+}
+
 export interface IFevoApiClient {
   fetchOutings(): Promise<FevoOuting[]>;
   fetchOutingDetail(outingId: string): Promise<FevoOutingDetail | null>;
+  fetchVenueAddress(venueId: string): Promise<VenueAddress | null>;
+  fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>>;
   searchOrganizations(query: string): Promise<FevoOrganizationResult[]>;
   isConfigured(): boolean;
+}
+
+// ── League enum mapping ──────────────────────────────────────────────────────
+
+const LEAGUE_MAP: Record<number, string> = {
+  0: 'Other',
+  1: 'MLB',
+  2: 'NBA',
+  3: 'NHL',
+  4: 'MLS',
+  5: 'G League',
+  6: 'MiLB',
+  7: 'College',
+  8: 'WNBA',
+  9: 'AHL',
+  10: 'ECHL',
+  13: 'MLS NEXT Pro',
+  15: 'USL',
+  17: 'PLL',
+  18: 'AFL',
+  19: 'AFL',
+  20: 'CFL',
+  22: 'Other',
+  23: 'Entertainment',
+  24: 'Live Entertainment',
+  25: 'NFL',
+  30: 'Indie Baseball',
+  31: 'NASCAR',
+  39: 'Music & Entertainment',
+  43: 'Other',
+  46: 'International',
+};
+
+export function leagueToCategory(league: number | null | undefined): string | null {
+  if (league == null) return null;
+  return LEAGUE_MAP[league] || 'Other';
 }
 
 // ── Date helper ──────────────────────────────────────────────────────────────
@@ -237,6 +280,37 @@ export class FevoApiClient implements IFevoApiClient {
     } catch (err: any) {
       console.warn(`[FevoApiClient] Failed to fetch outing detail ${outingId}: ${err.message}`);
       return null;
+    }
+  }
+
+  async fetchVenueAddress(venueId: string): Promise<VenueAddress | null> {
+    try {
+      const data = await this.authenticatedGet(`/api/manage/venue/${encodeURIComponent(venueId)}`);
+      if (!data) return null;
+      const addr = data.address || {};
+      return {
+        city: addr.city || null,
+        state: addr.state || addr.state_province || null,
+      };
+    } catch (err: any) {
+      console.warn(`[FevoApiClient] Failed to fetch venue ${venueId}: ${err.message}`);
+      return null;
+    }
+  }
+
+  async fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>> {
+    try {
+      const data = await this.authenticatedPost('/api/manage/organization/overviews?skip=0&take=500', {});
+      const orgs = data?.overviews || data;
+      if (!Array.isArray(orgs)) return [];
+      return orgs.map((o: any) => ({
+        id: String(o.id),
+        league: typeof o.league === 'number' ? o.league : 0,
+        venues: Array.isArray(o.venues) ? o.venues.map((v: any) => ({ id: String(v.id), name: v.name || '' })) : [],
+      }));
+    } catch (err: any) {
+      console.warn(`[FevoApiClient] Failed to fetch org overviews: ${err.message}`);
+      return [];
     }
   }
 
@@ -444,8 +518,19 @@ export class MockFevoApiClient implements IFevoApiClient {
 
   async searchOrganizations(_query: string): Promise<FevoOrganizationResult[]> {
     return [
-      { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: null, league: 0, active_events: 5, active_outings: 12 },
-      { id: 'mock-org-002', name: 'BSE Global', logo_url: null, league: 0, active_events: 3, active_outings: 8 },
+      { id: 'mock-org-001', name: 'MSG Entertainment', logo_url: null, league: 2, active_events: 5, active_outings: 12 },
+      { id: 'mock-org-002', name: 'BSE Global', logo_url: null, league: 2, active_events: 3, active_outings: 8 },
+    ];
+  }
+
+  async fetchVenueAddress(_venueId: string): Promise<VenueAddress | null> {
+    return { city: 'New York', state: 'NY' };
+  }
+
+  async fetchOrgOverviews(): Promise<Array<{ id: string; league: number; venues: Array<{ id: string; name: string }> }>> {
+    return [
+      { id: 'mock-org-001', league: 2, venues: [{ id: 'mock-venue-001', name: 'Madison Square Garden' }] },
+      { id: 'mock-org-002', league: 2, venues: [{ id: 'mock-venue-002', name: 'Barclays Center' }] },
     ];
   }
 
