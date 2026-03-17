@@ -175,19 +175,24 @@ export class FevoApiClient implements IFevoApiClient {
     // Strategy: paginate through ALL events via /api/manage/event/overviews
     // (global endpoint, returns 100 per page). For events with outings
     // from non-test orgs, fetch outings per event.
+    // Rate-limited to avoid Cloudflare 503s.
     const allOutings: FevoOuting[] = [];
     const seenOutingIds = new Set<string>();
     const seenOrgNames = new Set<string>();
     const MAX_PAGES = 500; // safety limit
     const PAGE_SIZE = 100;
+    const PAGE_DELAY_MS = 500;           // delay between overview pages
+    const OUTING_FETCH_DELAY_MS = 200;   // delay between outing fetches
 
     let eventsWithOutings = 0;
     let eventsSkipped = 0;
+    let requestCount = 0;
 
     for (let page = 1; page <= MAX_PAGES; page++) {
       const eventsData = await this.authenticatedGet(
         `/api/manage/event/overviews?page=${page}&pageSize=${PAGE_SIZE}`,
       );
+      requestCount++;
       const events: any[] = eventsData?.overviews || [];
       if (events.length === 0) break;
 
@@ -195,45 +200,66 @@ export class FevoApiClient implements IFevoApiClient {
         console.log(`[FevoApiClient] Event overviews total: ${eventsData.total || 'unknown'}`);
       }
 
+      // Collect events needing outing fetch from this page
+      const eventsToFetch: Array<{ id: string; orgName: string }> = [];
+
       for (const event of events) {
         if (event.disabled) continue;
         if ((event.outing_count || 0) === 0) continue;
 
-        // Filter out test orgs
         const orgName = event.organization?.name || '';
         if (isTestOrg(orgName)) {
           eventsSkipped++;
           continue;
         }
 
-        const eventId = String(event.id || event.event_id);
-        eventsWithOutings++;
+        eventsToFetch.push({
+          id: String(event.id || event.event_id),
+          orgName,
+        });
+      }
 
-        try {
-          const outings = await this.authenticatedGet(
-            `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
-          );
-          if (!Array.isArray(outings)) continue;
+      // Fetch outings in batches of 5 with delays
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < eventsToFetch.length; i += BATCH_SIZE) {
+        const batch = eventsToFetch.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map((ev) =>
+            this.authenticatedGet(`/api/manage/event/${encodeURIComponent(ev.id)}/outings`),
+          ),
+        );
+        requestCount += batch.length;
 
-          for (const raw of outings) {
+        for (let j = 0; j < batch.length; j++) {
+          const r = results[j];
+          if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
+
+          eventsWithOutings++;
+          seenOrgNames.add(batch[j].orgName);
+
+          for (const raw of r.value) {
             if (raw.disabled) continue;
             const outingId = String(raw.id || raw.outing_id);
             if (seenOutingIds.has(outingId)) continue;
             seenOutingIds.add(outingId);
             allOutings.push(this.normalizeManageOuting(raw));
           }
+        }
 
-          seenOrgNames.add(orgName);
-        } catch (err: any) {
-          console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
+        // Rate limit between batches
+        if (i + BATCH_SIZE < eventsToFetch.length) {
+          await new Promise((r) => setTimeout(r, OUTING_FETCH_DELAY_MS));
         }
       }
 
       if (page % 10 === 0) {
-        console.log(`[FevoApiClient] Page ${page}: ${allOutings.length} outings from ${seenOrgNames.size} orgs so far`);
+        console.log(`[FevoApiClient] Page ${page}: ${allOutings.length} outings from ${seenOrgNames.size} orgs (${requestCount} API calls)`);
       }
 
       if (events.length < PAGE_SIZE) break;
+
+      // Rate limit between pages
+      await new Promise((r) => setTimeout(r, PAGE_DELAY_MS));
     }
 
     console.log(`[FevoApiClient] Done: ${allOutings.length} outings from ${seenOrgNames.size} orgs (${eventsWithOutings} events fetched, ${eventsSkipped} test-org events skipped)`);
@@ -437,7 +463,7 @@ export class FevoApiClient implements IFevoApiClient {
     };
   }
 
-  private async authenticatedPost(path: string, body: any, retried = false): Promise<any> {
+  private async authenticatedPost(path: string, body: any, retried = false, retryCount = 0): Promise<any> {
     const token = await this.tokenManager.getAccessToken();
     const url = `${this.baseUrl}${path}`;
 
@@ -455,18 +481,25 @@ export class FevoApiClient implements IFevoApiClient {
     if (response.status === 401 && !retried) {
       console.log('[FevoApiClient] Got 401 on POST, re-authenticating...');
       this.tokenManager.invalidate();
-      return this.authenticatedPost(path, body, true);
+      return this.authenticatedPost(path, body, true, retryCount);
+    }
+
+    if ((response.status === 429 || response.status === 503) && retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 2000;
+      console.warn(`[FevoApiClient] Got ${response.status} on POST, retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+      return this.authenticatedPost(path, body, retried, retryCount + 1);
     }
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`FEVO API error: ${response.status} ${response.statusText} — ${text}`);
+      throw new Error(`FEVO API error: ${response.status} ${response.statusText} — ${text.slice(0, 200)}`);
     }
 
     return response.json();
   }
 
-  private async authenticatedGet(path: string, retried = false): Promise<any> {
+  private async authenticatedGet(path: string, retried = false, retryCount = 0): Promise<any> {
     const token = await this.tokenManager.getAccessToken();
     const url = `${this.baseUrl}${path}`;
 
@@ -483,12 +516,20 @@ export class FevoApiClient implements IFevoApiClient {
     if (response.status === 401 && !retried) {
       console.log('[FevoApiClient] Got 401, re-authenticating...');
       this.tokenManager.invalidate();
-      return this.authenticatedGet(path, true);
+      return this.authenticatedGet(path, true, retryCount);
+    }
+
+    // Retry on 429/503 with exponential backoff (up to 3 times)
+    if ((response.status === 429 || response.status === 503) && retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 2000; // 2s, 4s, 8s
+      console.warn(`[FevoApiClient] Got ${response.status}, retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+      return this.authenticatedGet(path, retried, retryCount + 1);
     }
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`FEVO API error: ${response.status} ${response.statusText} — ${text}`);
+      throw new Error(`FEVO API error: ${response.status} ${response.statusText} — ${text.slice(0, 200)}`);
     }
 
     return response.json();
