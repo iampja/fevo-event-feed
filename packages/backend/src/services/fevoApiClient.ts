@@ -172,97 +172,49 @@ export class FevoApiClient implements IFevoApiClient {
   }
 
   async fetchOutings(): Promise<FevoOuting[]> {
-    // Strategy: paginate through ALL events via /api/manage/event/overviews
-    // (global endpoint, returns 100 per page). For events with outings
-    // from non-test orgs, fetch outings per event.
-    // Rate-limited to avoid Cloudflare 503s.
-    const allOutings: FevoOuting[] = [];
-    const seenOutingIds = new Set<string>();
-    const seenOrgNames = new Set<string>();
-    const MAX_PAGES = 500; // safety limit
-    const PAGE_SIZE = 100;
-    const PAGE_DELAY_MS = 500;           // delay between overview pages
-    const OUTING_FETCH_DELAY_MS = 200;   // delay between outing fetches
-
-    let eventsWithOutings = 0;
-    let eventsSkipped = 0;
-    let requestCount = 0;
-
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const eventsData = await this.authenticatedGet(
-        `/api/manage/event/overviews?page=${page}&pageSize=${PAGE_SIZE}`,
-      );
-      requestCount++;
-      const events: any[] = eventsData?.overviews || [];
-      if (events.length === 0) break;
-
-      if (page === 1) {
-        console.log(`[FevoApiClient] Event overviews total: ${eventsData.total || 'unknown'}`);
-      }
-
-      // Collect events needing outing fetch from this page
-      const eventsToFetch: Array<{ id: string; orgName: string }> = [];
-
-      for (const event of events) {
-        if (event.disabled) continue;
-        if ((event.outing_count || 0) === 0) continue;
-
-        const orgName = event.organization?.name || '';
-        if (isTestOrg(orgName)) {
-          eventsSkipped++;
-          continue;
-        }
-
-        eventsToFetch.push({
-          id: String(event.id || event.event_id),
-          orgName,
-        });
-      }
-
-      // Fetch outings in batches of 5 with delays
-      const BATCH_SIZE = 5;
-      for (let i = 0; i < eventsToFetch.length; i += BATCH_SIZE) {
-        const batch = eventsToFetch.slice(i, i + BATCH_SIZE);
-        const results = await Promise.allSettled(
-          batch.map((ev) =>
-            this.authenticatedGet(`/api/manage/event/${encodeURIComponent(ev.id)}/outings`),
-          ),
-        );
-        requestCount += batch.length;
-
-        for (let j = 0; j < batch.length; j++) {
-          const r = results[j];
-          if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
-
-          eventsWithOutings++;
-          seenOrgNames.add(batch[j].orgName);
-
-          for (const raw of r.value) {
-            if (raw.disabled) continue;
-            const outingId = String(raw.id || raw.outing_id);
-            if (seenOutingIds.has(outingId)) continue;
-            seenOutingIds.add(outingId);
-            allOutings.push(this.normalizeManageOuting(raw));
-          }
-        }
-
-        // Rate limit between batches
-        if (i + BATCH_SIZE < eventsToFetch.length) {
-          await new Promise((r) => setTimeout(r, OUTING_FETCH_DELAY_MS));
-        }
-      }
-
-      if (page % 10 === 0) {
-        console.log(`[FevoApiClient] Page ${page}: ${allOutings.length} outings from ${seenOrgNames.size} orgs (${requestCount} API calls)`);
-      }
-
-      if (events.length < PAGE_SIZE) break;
-
-      // Rate limit between pages
-      await new Promise((r) => setTimeout(r, PAGE_DELAY_MS));
+    // Strategy: use /api/account/events (returns events for this account),
+    // then fetch outings per event. This is the low-volume approach that
+    // avoids Cloudflare rate limits from crawling the global event list.
+    const eventsData = await this.authenticatedGet('/api/account/events');
+    const events = eventsData?.value || eventsData;
+    if (!Array.isArray(events)) {
+      console.warn('[FevoApiClient] Unexpected events response shape:', typeof eventsData);
+      return [];
     }
 
-    console.log(`[FevoApiClient] Done: ${allOutings.length} outings from ${seenOrgNames.size} orgs (${eventsWithOutings} events fetched, ${eventsSkipped} test-org events skipped)`);
+    // Extract unique event IDs
+    const eventIds = new Set<string>();
+    for (const item of events) {
+      const eventId = item.event?.event_id || item.event?.id;
+      if (eventId) eventIds.add(String(eventId));
+    }
+
+    console.log(`[FevoApiClient] Found ${eventIds.size} events from account`);
+
+    const allOutings: FevoOuting[] = [];
+    const seenOutingIds = new Set<string>();
+
+    for (const eventId of eventIds) {
+      try {
+        const outings = await this.authenticatedGet(
+          `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
+        );
+        if (!Array.isArray(outings)) continue;
+
+        for (const raw of outings) {
+          if (raw.disabled) continue;
+          const outingId = String(raw.id || raw.outing_id);
+          if (seenOutingIds.has(outingId)) continue;
+          seenOutingIds.add(outingId);
+          allOutings.push(this.normalizeManageOuting(raw));
+        }
+        console.log(`[FevoApiClient] Event ${eventId}: ${outings.length} outings`);
+      } catch (err: any) {
+        console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
+      }
+    }
+
+    console.log(`[FevoApiClient] Total: ${allOutings.length} unique enabled outings`);
     return allOutings;
   }
 
