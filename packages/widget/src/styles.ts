@@ -231,14 +231,14 @@ export const WIDGET_STYLES = `
 
 /* Marketplace CTA overrides */
 .fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: #FFCC00;
+  color: #000000;
   font-weight: 600;
   border-radius: 8px;
 }
 
 .fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta:hover {
-  background: #333333;
+  background: #e6b800;
 }
 
 /* Marketplace footer hides availability + CTA, shows readmore instead */
