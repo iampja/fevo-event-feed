@@ -1,5 +1,7 @@
 import { render, h } from 'preact';
 import { WidgetContainer } from './components/WidgetContainer';
+import { MarketplacePage } from './components/MarketplacePage';
+import { OfferPage } from './components/OfferPage';
 import { RewardsDashboard } from './components/rewards/RewardsDashboard';
 import { injectStyles } from './styles';
 import type { WidgetConfig } from './types';
@@ -40,6 +42,15 @@ function parseConfigFromElement(el: Element): WidgetConfig {
   const geo = el.getAttribute('data-geo');
   if (geo) config.geo = geo;
 
+  const mode = el.getAttribute('data-mode') as 'feed' | 'marketplace' | 'offer' | null;
+  if (mode) config.mode = mode;
+
+  const offerId = el.getAttribute('data-offer-id');
+  if (offerId) config.offerId = offerId;
+
+  const signupUrl = el.getAttribute('data-signup-url');
+  if (signupUrl) config.signupUrl = signupUrl;
+
   return config;
 }
 
@@ -47,7 +58,13 @@ function parseConfigFromElement(el: Element): WidgetConfig {
  * Render a widget instance into a target element.
  */
 function renderWidget(el: Element, config: WidgetConfig): void {
-  render(h(WidgetContainer, { config }), el);
+  if (config.mode === 'marketplace') {
+    render(h(MarketplacePage, { config }), el);
+  } else if (config.mode === 'offer' && config.offerId) {
+    render(h(OfferPage, { offerId: config.offerId, config }), el);
+  } else {
+    render(h(WidgetContainer, { config }), el);
+  }
 }
 
 /**

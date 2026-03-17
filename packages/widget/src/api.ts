@@ -1,4 +1,4 @@
-import type { FeedResponse, WidgetConfig } from './types';
+import type { FeedResponse, Offer, WidgetConfig } from './types';
 
 const DEFAULT_API_URL = '/api/v1/event-feed';
 
@@ -24,7 +24,10 @@ export async function fetchFeed(config: WidgetConfig): Promise<FeedResponse> {
     url.searchParams.set('per_page', String(config.maxCards));
   }
   if (config.geo) {
-    url.searchParams.set('geo', config.geo);
+    url.searchParams.set('geography', config.geo);
+  }
+  if (config.search) {
+    url.searchParams.set('search', config.search);
   }
 
   const headers: Record<string, string> = {
@@ -76,4 +79,34 @@ export async function fetchFeed(config: WidgetConfig): Promise<FeedResponse> {
   }
 
   return data;
+}
+
+export async function fetchSegments(config: WidgetConfig): Promise<{ data: { id: string; name: string; slug: string; type: string }[] }> {
+  const baseUrl = config.apiUrl || DEFAULT_API_URL;
+  const url = new URL(`${baseUrl}/segments`, window.location.origin);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (config.apiKey) headers['X-API-Key'] = config.apiKey;
+  const response = await fetch(url.toString(), { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new ApiError(`API responded with status ${response.status}`, response.status);
+  return response.json();
+}
+
+export async function fetchGeographies(config: WidgetConfig): Promise<{ data: { venue_city: string; venue_state: string }[] }> {
+  const baseUrl = config.apiUrl || DEFAULT_API_URL;
+  const url = new URL(`${baseUrl}/geographies`, window.location.origin);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (config.apiKey) headers['X-API-Key'] = config.apiKey;
+  const response = await fetch(url.toString(), { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new ApiError(`API responded with status ${response.status}`, response.status);
+  return response.json();
+}
+
+export async function fetchOffer(config: WidgetConfig, offerId: string): Promise<{ data: Offer }> {
+  const baseUrl = config.apiUrl || DEFAULT_API_URL;
+  const url = new URL(`${baseUrl}/${offerId}`, window.location.origin);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (config.apiKey) headers['X-API-Key'] = config.apiKey;
+  const response = await fetch(url.toString(), { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new ApiError(`API responded with status ${response.status}`, response.status);
+  return response.json();
 }

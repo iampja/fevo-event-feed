@@ -51,6 +51,300 @@ export const WIDGET_STYLES = `
   --fevo-ef-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* ===== Marketplace Theme ===== */
+.fevo-ef-root[data-theme="marketplace"] {
+  --fevo-ef-bg: #000000;
+  --fevo-ef-card-bg: #141414;
+  --fevo-ef-text: #ffffff;
+  --fevo-ef-text-secondary: #a0a0a0;
+  --fevo-ef-border: #2a2a2a;
+  --fevo-ef-accent: #FFCC00;
+  --fevo-ef-accent-hover: #e6b800;
+  --fevo-ef-skeleton-base: #2a2a2a;
+  --fevo-ef-skeleton-shine: #3a3a3a;
+  --fevo-ef-error-bg: #2a0a0a;
+  --fevo-ef-error-text: #fca5a5;
+  --fevo-ef-empty-text: #6b6b6b;
+  --fevo-ef-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --fevo-ef-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta {
+  background: linear-gradient(135deg, #FFCC00, #FF9500);
+  color: #000000;
+  font-weight: 700;
+}
+
+.fevo-ef-root[data-theme="marketplace"] .fevo-ef-cta:hover {
+  background: linear-gradient(135deg, #e6b800, #e68600);
+}
+
+/* ===== Marketplace Toolbar ===== */
+.fevo-ef-marketplace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.fevo-ef-search-bar {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fevo-ef-search-icon {
+  position: absolute;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: var(--fevo-ef-text-secondary);
+  pointer-events: none;
+}
+
+.fevo-ef-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 40px;
+  font-size: 14px;
+  font-family: var(--fevo-ef-font);
+  color: var(--fevo-ef-text);
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.fevo-ef-search-input::placeholder {
+  color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-search-input:focus {
+  border-color: var(--fevo-ef-accent);
+}
+
+.fevo-ef-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--fevo-ef-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--fevo-ef-font);
+}
+
+.fevo-ef-search-clear:hover {
+  background: var(--fevo-ef-border);
+  color: var(--fevo-ef-text);
+}
+
+/* ===== Filter Pills ===== */
+.fevo-ef-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.fevo-ef-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fevo-ef-filter-pill {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--fevo-ef-font);
+  color: var(--fevo-ef-text-secondary);
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fevo-ef-filter-pill:hover {
+  color: var(--fevo-ef-text);
+  border-color: var(--fevo-ef-text-secondary);
+}
+
+.fevo-ef-filter-pill--active {
+  color: #000000;
+  background: var(--fevo-ef-accent);
+  border-color: var(--fevo-ef-accent);
+}
+
+.fevo-ef-filter-pill--active:hover {
+  color: #000000;
+  background: var(--fevo-ef-accent-hover);
+  border-color: var(--fevo-ef-accent-hover);
+}
+
+/* ===== Geo Select ===== */
+.fevo-ef-geo-select {
+  padding: 8px 32px 8px 12px;
+  font-size: 13px;
+  font-family: var(--fevo-ef-font);
+  color: var(--fevo-ef-text);
+  background: var(--fevo-ef-card-bg);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.fevo-ef-geo-select:focus {
+  border-color: var(--fevo-ef-accent);
+}
+
+/* ===== Create Offer CTA Banner ===== */
+.fevo-ef-create-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 32px;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 1px solid var(--fevo-ef-border);
+  border-radius: var(--fevo-ef-radius);
+}
+
+.fevo-ef-create-cta-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0 0 4px 0;
+}
+
+.fevo-ef-create-cta-text {
+  font-size: 14px;
+  color: var(--fevo-ef-text-secondary);
+  margin: 0;
+}
+
+.fevo-ef-create-cta-btn {
+  flex-shrink: 0;
+  padding: 12px 28px;
+  font-size: 15px;
+}
+
+/* ===== Offer Page (standalone) ===== */
+.fevo-ef-offer-page {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--fevo-ef-card-bg);
+  border-radius: var(--fevo-ef-radius);
+  overflow: hidden;
+  box-shadow: var(--fevo-ef-shadow);
+}
+
+.fevo-ef-offer-page-hero {
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.fevo-ef-offer-page-hero img,
+.fevo-ef-offer-page-hero video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fevo-ef-offer-page-content {
+  padding: 32px;
+}
+
+.fevo-ef-offer-page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0 0 16px 0;
+  line-height: 1.3;
+}
+
+.fevo-ef-offer-page-meta {
+  margin-bottom: 24px;
+}
+
+.fevo-ef-offer-page-cta {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--fevo-ef-border);
+}
+
+.fevo-ef-offer-page-cta .fevo-ef-cta {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.fevo-ef-offer-page-loading,
+.fevo-ef-offer-page-error {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--fevo-ef-text-secondary);
+  font-size: 15px;
+}
+
+/* ===== Marketplace Toolbar Mobile ===== */
+@media (max-width: 640px) {
+  .fevo-ef-marketplace-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fevo-ef-search-bar {
+    min-width: 100%;
+  }
+
+  .fevo-ef-filter-pills {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fevo-ef-create-cta {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .fevo-ef-offer-page-hero {
+    height: 240px;
+  }
+
+  .fevo-ef-offer-page-content {
+    padding: 20px;
+  }
+
+  .fevo-ef-offer-page-title {
+    font-size: 22px;
+  }
+}
+
 /* ===== Grid Layout ===== */
 .fevo-ef-grid {
   display: grid;

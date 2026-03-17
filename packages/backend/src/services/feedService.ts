@@ -121,6 +121,17 @@ export async function getFeed(
     );
   }
 
+  // Apply text search
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    filtered = filtered.filter(
+      (o) =>
+        o.title?.toLowerCase().includes(q) ||
+        o.organization_name?.toLowerCase().includes(q) ||
+        o.venue_name?.toLowerCase().includes(q)
+    );
+  }
+
   // Apply organization filter
   if (filters.organization) {
     filtered = filtered.filter(

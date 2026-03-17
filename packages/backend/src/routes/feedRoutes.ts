@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { getFeed } from '../services/feedService';
+import { transformOffers } from '../services/feedTransformer';
 import { apiKeyAuth } from '../middleware/auth';
 import { defaultRateLimiter } from '../middleware/rateLimit';
 import db from '../db/connection';
@@ -19,6 +20,7 @@ const feedQuerySchema = z.object({
   organization: z.string().optional(),
   event_type: z.string().optional(),
   creator: z.string().optional(),
+  search: z.string().optional(),
 });
 
 // ── GET / ────────────────────────────────────────────────────────────────────
@@ -39,7 +41,7 @@ router.get(
         return;
       }
 
-      const { page, per_page, segment, theme, geography, organization, event_type, creator } =
+      const { page, per_page, segment, theme, geography, organization, event_type, creator, search } =
         parsed.data;
 
       const filters: FilterParams = {
@@ -49,6 +51,7 @@ router.get(
         organization,
         event_type,
         creator,
+        search,
       };
 
       const pagination: PaginationParams = { page, per_page };
@@ -96,6 +99,41 @@ router.get('/segments/:slug', apiKeyAuth, async (req: Request, res: Response) =>
     res.json({ data: { ...segment, offers: offerLinks } });
   } catch (err) {
     console.error('Segment detail error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /geographies ────────────────────────────────────────────────────────
+
+router.get('/geographies', apiKeyAuth, defaultRateLimiter, async (_req: Request, res: Response) => {
+  try {
+    const geos = await db('offers')
+      .where('status', 'active')
+      .whereNotNull('venue_city')
+      .whereNotNull('venue_state')
+      .distinct('venue_city', 'venue_state')
+      .orderBy('venue_state')
+      .orderBy('venue_city');
+    res.json({ data: geos });
+  } catch (err) {
+    console.error('Geographies list error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── GET /:offerId ───────────────────────────────────────────────────────────
+
+router.get('/:offerId', apiKeyAuth, defaultRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const offer = await db('offers').where('id', req.params.offerId).first();
+    if (!offer) {
+      res.status(404).json({ error: 'Offer not found' });
+      return;
+    }
+    const [transformed] = await transformOffers([offer]);
+    res.json({ data: transformed });
+  } catch (err) {
+    console.error('Offer detail error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

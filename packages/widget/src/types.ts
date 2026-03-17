@@ -49,13 +49,20 @@ export type FeedResponse = {
 
 export type WidgetConfig = {
   segment?: string;
-  theme?: 'light' | 'dark';
+  theme?: 'light' | 'dark' | 'marketplace';
   columns?: 1 | 2 | 3 | 4;
   maxCards?: number;
   apiUrl?: string;
   apiKey?: string;
   partnerId?: string;
   geo?: string;
+  search?: string;
+  showSearch?: boolean;
+  showFilters?: boolean;
+  showCreateCta?: boolean;
+  signupUrl?: string;
+  mode?: 'feed' | 'offer' | 'marketplace';
+  offerId?: string;
 };
 
 export type WidgetState = 'loading' | 'ready' | 'empty' | 'error';

@@ -245,4 +245,5 @@ export interface FilterParams {
   organization?: string;
   event_type?: string;
   creator?: string;
+  search?: string;
 }

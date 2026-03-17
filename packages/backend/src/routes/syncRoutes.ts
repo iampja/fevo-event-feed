@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   syncOrganizationOffers,
   syncAllOrganizations,
+  syncDelta,
   getSyncLogs,
 } from '../services/fevoSyncService';
 import { getLatestProgress } from '../services/syncProgress';
@@ -33,6 +34,15 @@ router.post('/sync/all', async (_req: Request, res: Response) => {
   res.json({ data: { message: 'Sync started', status: 'running' } });
   syncAllOrganizations().catch((err) => {
     console.error('Background sync/all error:', err);
+  });
+});
+
+// ── POST /sync/delta — sync only new/changed records ────────────────────────
+
+router.post('/sync/delta', async (_req: Request, res: Response) => {
+  res.json({ data: { message: 'Delta sync started', status: 'running' } });
+  syncDelta().catch((err) => {
+    console.error('Background sync/delta error:', err);
   });
 });
 

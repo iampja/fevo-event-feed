@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'crypto';
 import db from '../db/connection';
 import { getFevoApiClient, FevoOuting, FevoOutingDetail } from './fevoApiClient';
 import { SyncLog } from '../models/types';
@@ -454,4 +455,159 @@ async function upsertFevoOuting(
     updated_at: now,
   });
   return 'created';
+}
+
+// ── Content hashing for delta sync ──────────────────────────────────────────
+
+function computeContentHash(outing: FevoOuting, detail: FevoOutingDetail | null): string {
+  const parts = [
+    outing.title,
+    detail?.description || outing.description || '',
+    detail?.image_url || outing.image_url || '',
+    detail?.video_url || outing.video_url || '',
+    outing.event_date_utc || '',
+    outing.venue.name || '',
+    outing.venue.city || '',
+    outing.access_code || '',
+  ];
+  return createHash('md5').update(parts.join('|')).digest('hex');
+}
+
+/**
+ * Delta sync — only process new or changed outings.
+ * Fetches the full outing list but skips upserting records whose content hash hasn't changed.
+ */
+export async function syncDelta(): Promise<SyncLog[]> {
+  const client = getFevoApiClient();
+  const syncId = uuidv4();
+  const startedAt = new Date().toISOString();
+
+  await db('sync_log').insert({
+    id: syncId,
+    sync_type: 'delta',
+    organization_id: null,
+    started_at: startedAt,
+    status: 'running',
+  });
+
+  startProgress(syncId);
+
+  let offersCreated = 0;
+  let offersUpdated = 0;
+  let offersSkipped = 0;
+  const errors: string[] = [];
+
+  try {
+    logProgress(syncId, 'Delta sync: fetching outings from FEVO API...');
+    const outings = await client.fetchOutings();
+    logProgress(syncId, `Found ${outings.length} outings, checking for changes...`);
+
+    // Group outings by organization
+    const orgGroups = new Map<string, FevoOuting[]>();
+    for (const outing of outings) {
+      const orgId = outing.org.id;
+      if (!orgGroups.has(orgId)) orgGroups.set(orgId, []);
+      orgGroups.get(orgId)!.push(outing);
+    }
+
+    // Fetch details only for outings that are new or changed
+    let orgIndex = 0;
+    for (const [fevoOrgId, orgOutings] of orgGroups) {
+      orgIndex++;
+      try {
+        const localOrgId = await findOrCreateOrganization(orgOutings[0].org);
+        const orgName = orgOutings[0].org.name || fevoOrgId;
+        logProgress(syncId, `[${orgIndex}/${orgGroups.size}] Processing ${orgName}`);
+
+        for (const outing of orgOutings) {
+          try {
+            // Check if this outing exists and has a content hash
+            const existing = await db('offers')
+              .where('fevo_offer_id', outing.outing_id)
+              .first();
+
+            // Quick check: compute hash from list data only first
+            const quickHash = computeContentHash(outing, null);
+
+            if (existing && existing.content_hash === quickHash) {
+              offersSkipped++;
+              continue;
+            }
+
+            // Fetch detail for new or changed outings
+            let detail: FevoOutingDetail | null = null;
+            try {
+              detail = await client.fetchOutingDetail(outing.outing_id);
+            } catch {
+              // Continue without detail
+            }
+
+            const fullHash = computeContentHash(outing, detail);
+
+            // If the full hash matches, skip
+            if (existing && existing.content_hash === fullHash) {
+              offersSkipped++;
+              continue;
+            }
+
+            const result = await upsertFevoOuting(outing, detail, localOrgId);
+            if (result === 'created') offersCreated++;
+            else if (result === 'updated') offersUpdated++;
+
+            // Update content hash
+            const offer = await db('offers').where('fevo_offer_id', outing.outing_id).first();
+            if (offer) {
+              await db('offers').where('id', offer.id).update({ content_hash: fullHash });
+            }
+
+            // Small delay to avoid rate limiting
+            await new Promise((r) => setTimeout(r, 200));
+          } catch (err: any) {
+            errors.push(`Outing ${outing.outing_id}: ${err.message}`);
+          }
+        }
+      } catch (err: any) {
+        errors.push(`Org ${fevoOrgId}: ${err.message}`);
+      }
+    }
+
+    const completedAt = new Date().toISOString();
+    const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+    const duration = `${(durationMs / 1000).toFixed(1)}s`;
+    const finalStatus = errors.length > 0 && offersCreated === 0 && offersUpdated === 0 ? 'failed' : 'completed';
+
+    await db('sync_log').where('id', syncId).update({
+      completed_at: completedAt,
+      offers_created: offersCreated,
+      offers_updated: offersUpdated,
+      errors: errors.length > 0 ? JSON.stringify(errors) : null,
+      status: finalStatus,
+    });
+
+    completeProgress(syncId, finalStatus as 'completed' | 'failed', {
+      created: offersCreated,
+      updated: offersUpdated,
+      errors: errors.length,
+      duration,
+    });
+  } catch (err: any) {
+    errors.push(err.message);
+    await db('sync_log').where('id', syncId).update({
+      completed_at: new Date().toISOString(),
+      offers_created: offersCreated,
+      offers_updated: offersUpdated,
+      errors: JSON.stringify(errors),
+      status: 'failed',
+    });
+    logProgress(syncId, `Fatal error: ${err.message}`);
+    completeProgress(syncId, 'failed', {
+      created: offersCreated,
+      updated: offersUpdated,
+      errors: errors.length,
+      duration: '0s',
+    });
+  }
+
+  const logEntry = await db('sync_log').where('id', syncId).first() as SyncLog;
+  return [logEntry];
 }
