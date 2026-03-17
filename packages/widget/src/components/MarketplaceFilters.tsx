@@ -6,9 +6,11 @@ import type { Offer } from '../types';
 type MarketplaceFiltersProps = {
   offers: Offer[];
   activeOrg: string | null;
+  activeCategory: string | null;
   activeState: string | null;
   activeCity: string | null;
   onOrgChange: (org: string | null) => void;
+  onCategoryChange: (cat: string | null) => void;
   onStateChange: (state: string | null) => void;
   onCityChange: (city: string | null) => void;
 };
@@ -16,13 +18,15 @@ type MarketplaceFiltersProps = {
 export function MarketplaceFilters({
   offers,
   activeOrg,
+  activeCategory,
   activeState,
   activeCity,
   onOrgChange,
+  onCategoryChange,
   onStateChange,
   onCityChange,
 }: MarketplaceFiltersProps) {
-  // Derive unique orgs from loaded offers
+  // Derive unique orgs
   const orgs = useMemo(() => {
     const map = new Map<string, string>();
     for (const o of offers) {
@@ -33,6 +37,16 @@ export function MarketplaceFilters({
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  }, [offers]);
+
+  // Derive unique categories from org category
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const o of offers) {
+      const cat = o.organization?.category;
+      if (cat) set.add(cat);
+    }
+    return Array.from(set).sort();
   }, [offers]);
 
   // Derive unique states
@@ -57,68 +71,77 @@ export function MarketplaceFilters({
     return Array.from(set).sort();
   }, [offers, activeState]);
 
-  const hasFilters = orgs.length > 1 || states.length > 0;
-  if (!hasFilters) return null;
+  const anyActive = !!(activeOrg || activeCategory || activeState || activeCity);
 
   return (
     <div class="fevo-ef-marketplace-filters">
-      {orgs.length > 1 && (
-        <div class="fevo-ef-marketplace-filter-group">
-          <label class="fevo-ef-marketplace-filter-label">Organization</label>
-          <select
-            class="fevo-ef-geo-select"
-            value={activeOrg || ''}
-            onChange={(e: Event) => onOrgChange((e.target as HTMLSelectElement).value || null)}
-          >
-            <option value="">All Organizations</option>
-            {orgs.map((org) => (
-              <option key={org.id} value={org.id}>{org.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div class="fevo-ef-marketplace-filter-group">
+        <label class="fevo-ef-marketplace-filter-label">Organization</label>
+        <select
+          class="fevo-ef-geo-select"
+          value={activeOrg || ''}
+          onChange={(e: Event) => onOrgChange((e.target as HTMLSelectElement).value || null)}
+        >
+          <option value="">All Organizations</option>
+          {orgs.map((org) => (
+            <option key={org.id} value={org.id}>{org.name}</option>
+          ))}
+        </select>
+      </div>
 
-      {states.length > 0 && (
-        <div class="fevo-ef-marketplace-filter-group">
-          <label class="fevo-ef-marketplace-filter-label">State</label>
-          <select
-            class="fevo-ef-geo-select"
-            value={activeState || ''}
-            onChange={(e: Event) => {
-              const val = (e.target as HTMLSelectElement).value || null;
-              onStateChange(val);
-              // Clear city when state changes
-              if (val !== activeState) onCityChange(null);
-            }}
-          >
-            <option value="">All States</option>
-            {states.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div class="fevo-ef-marketplace-filter-group">
+        <label class="fevo-ef-marketplace-filter-label">Category</label>
+        <select
+          class="fevo-ef-geo-select"
+          value={activeCategory || ''}
+          disabled={categories.length === 0}
+          onChange={(e: Event) => onCategoryChange((e.target as HTMLSelectElement).value || null)}
+        >
+          <option value="">{categories.length === 0 ? 'No categories yet' : 'All Categories'}</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
 
-      {cities.length > 0 && (
-        <div class="fevo-ef-marketplace-filter-group">
-          <label class="fevo-ef-marketplace-filter-label">City</label>
-          <select
-            class="fevo-ef-geo-select"
-            value={activeCity || ''}
-            onChange={(e: Event) => onCityChange((e.target as HTMLSelectElement).value || null)}
-          >
-            <option value="">All Cities</option>
-            {cities.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div class="fevo-ef-marketplace-filter-group">
+        <label class="fevo-ef-marketplace-filter-label">State</label>
+        <select
+          class="fevo-ef-geo-select"
+          value={activeState || ''}
+          disabled={states.length === 0}
+          onChange={(e: Event) => {
+            const val = (e.target as HTMLSelectElement).value || null;
+            onStateChange(val);
+            if (val !== activeState) onCityChange(null);
+          }}
+        >
+          <option value="">{states.length === 0 ? 'No locations yet' : 'All States'}</option>
+          {states.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
 
-      {(activeOrg || activeState || activeCity) && (
+      <div class="fevo-ef-marketplace-filter-group">
+        <label class="fevo-ef-marketplace-filter-label">City</label>
+        <select
+          class="fevo-ef-geo-select"
+          value={activeCity || ''}
+          disabled={cities.length === 0}
+          onChange={(e: Event) => onCityChange((e.target as HTMLSelectElement).value || null)}
+        >
+          <option value="">{cities.length === 0 ? (activeState ? 'No cities' : 'Select a state') : 'All Cities'}</option>
+          {cities.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      {anyActive && (
         <button
           class="fevo-ef-marketplace-filter-clear"
-          onClick={() => { onOrgChange(null); onStateChange(null); onCityChange(null); }}
+          onClick={() => { onOrgChange(null); onCategoryChange(null); onStateChange(null); onCityChange(null); }}
         >
           Clear filters
         </button>

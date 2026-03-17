@@ -28,6 +28,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
 
   // Client-side filters
   const [activeOrg, setActiveOrg] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeState, setActiveState] = useState<string | null>(null);
   const [activeCity, setActiveCity] = useState<string | null>(null);
 
@@ -50,6 +51,9 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
     if (activeOrg) {
       result = result.filter((o) => o.organization?.id === activeOrg);
     }
+    if (activeCategory) {
+      result = result.filter((o) => o.organization?.category === activeCategory);
+    }
     if (activeState) {
       result = result.filter((o) => o.venue?.state === activeState);
     }
@@ -58,7 +62,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
     }
 
     return result;
-  }, [offers, activeOrg, activeState, activeCity]);
+  }, [offers, activeOrg, activeCategory, activeState, activeCity]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -92,7 +96,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
   }, [hasAnyOffers && !!lastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const theme = effectiveConfig.theme || 'marketplace';
-  const filterActive = !!(activeOrg || activeState || activeCity);
+  const filterActive = !!(activeOrg || activeCategory || activeState || activeCity);
 
   return (
     <div class="fevo-ef-root" data-theme={theme}>
@@ -135,9 +139,11 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
         <MarketplaceFilters
           offers={offers}
           activeOrg={activeOrg}
+          activeCategory={activeCategory}
           activeState={activeState}
           activeCity={activeCity}
           onOrgChange={setActiveOrg}
+          onCategoryChange={setActiveCategory}
           onStateChange={setActiveState}
           onCityChange={setActiveCity}
         />
