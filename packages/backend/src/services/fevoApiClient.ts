@@ -234,9 +234,9 @@ export class FevoApiClient implements IFevoApiClient {
    */
   private normalizeManageOuting(raw: any): FevoOuting {
     const event = raw.event || {};
-    const venue = event.venue || {};
-    const venueAddr = venue.address || {};
-    const org = event.organization || {};
+    const venue = event.venue || raw.venue || {};
+    const venueAddr = venue.address || venue.venue_address || {};
+    const org = event.organization || raw.organization || {};
 
     // Parse outing_media (JSON string or array)
     let imageUrl: string | null = null;
@@ -264,17 +264,17 @@ export class FevoApiClient implements IFevoApiClient {
       event_date_utc: fevoDateTimeToISO(event.date_time || event.event_date_time_utc),
       event_timezone: event.timezone || venue.timezone || null,
       venue: {
-        id: venue.id ? String(venue.id) : null,
-        name: venue.name || null,
-        city: venueAddr.city || venue.city || null,
-        state: venueAddr.state || venue.state || null,
-        timezone: venue.timezone || event.timezone || null,
+        id: venue.id ? String(venue.id) : (venue.venue_id ? String(venue.venue_id) : null),
+        name: venue.name || venue.venue_name || null,
+        city: venueAddr.city || venue.city || venue.venue_city || null,
+        state: venueAddr.state || venueAddr.state_province || venue.state || venue.venue_state || null,
+        timezone: venue.timezone || venue.time_zone || event.timezone || null,
       },
       org: {
-        id: String(org.id || ''),
-        name: org.name || '',
+        id: String(org.id || org.organization_id || ''),
+        name: org.name || org.organization_name || '',
         logo_url: org.logo_image || org.logo_image_url || org.logo_url || null,
-        category: org.category || org.category_name || null,
+        category: org.category || org.category_name || org.league_name || null,
         subcategory: org.subcategory || org.subcategory_name || null,
       },
     };
@@ -283,8 +283,8 @@ export class FevoApiClient implements IFevoApiClient {
   /** Normalize an outing from /api/account/outings (fallback format) */
   private normalizeOuting(raw: any): FevoOuting {
     const event = raw.event || {};
-    const venue = event.venue || {};
-    const venueAddr = venue.address || {};
+    const venue = event.venue || raw.venue || {};
+    const venueAddr = venue.address || venue.venue_address || {};
     // Outings list has event.org (no name), detail has event.organization (with name)
     const org = event.organization || raw.organization || event.org || {};
 
@@ -302,15 +302,15 @@ export class FevoApiClient implements IFevoApiClient {
       venue: {
         id: venue.venue_id ? String(venue.venue_id) : (venue.id ? String(venue.id) : null),
         name: venue.venue_name || venue.name || null,
-        city: venueAddr.city || venue.city || null,
-        state: venueAddr.state || venue.state || null,
+        city: venueAddr.city || venue.city || venue.venue_city || null,
+        state: venueAddr.state || venueAddr.state_province || venue.state || venue.venue_state || null,
         timezone: venue.time_zone || venue.timezone || null,
       },
       org: {
         id: String(org.organization_id || org.id || ''),
         name: org.organization_name || org.name || '',
         logo_url: org.logo_url || org.logo_image || org.logo_image_url || org.organization_logo || null,
-        category: org.category || org.category_name || null,
+        category: org.category || org.category_name || org.league_name || null,
         subcategory: org.subcategory || org.subcategory_name || null,
       },
     };

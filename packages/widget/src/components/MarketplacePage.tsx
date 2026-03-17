@@ -12,6 +12,7 @@ import { EmptyState } from './EmptyState';
 import { OfferDetailModal } from './OfferDetailModal';
 import { SearchBar } from './SearchBar';
 import { FilterBar } from './FilterBar';
+import { MarketplaceFilters } from './MarketplaceFilters';
 
 type MarketplacePageProps = {
   config: WidgetConfig;
@@ -25,7 +26,12 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
   const [activeGeo, setActiveGeo] = useState<string | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
-  // Build effective config with search/filter state
+  // Client-side filters
+  const [activeOrg, setActiveOrg] = useState<string | null>(null);
+  const [activeState, setActiveState] = useState<string | null>(null);
+  const [activeCity, setActiveCity] = useState<string | null>(null);
+
+  // Build effective config — segment and search go to the API
   const effectiveConfig = useMemo<WidgetConfig>(() => ({
     ...config,
     segment: activeSegment || undefined,
@@ -36,6 +42,23 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
   }), [config, searchQuery, activeSegment, activeGeo]);
 
   const { offers, isRefreshing, error, lastUpdated, retry } = useAutoRefresh(effectiveConfig);
+
+  // Apply client-side filters to the loaded offers
+  const filteredOffers = useMemo(() => {
+    let result = offers;
+
+    if (activeOrg) {
+      result = result.filter((o) => o.organization?.id === activeOrg);
+    }
+    if (activeState) {
+      result = result.filter((o) => o.venue?.state === activeState);
+    }
+    if (activeCity) {
+      result = result.filter((o) => o.venue?.city === activeCity);
+    }
+
+    return result;
+  }, [offers, activeOrg, activeState, activeCity]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -58,20 +81,22 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
     setSelectedOffer(null);
   }, []);
 
-  const hasOffers = offers.length > 0;
-  const isInitialLoad = !hasOffers && !error && !lastUpdated;
+  const hasOffers = filteredOffers.length > 0;
+  const hasAnyOffers = offers.length > 0;
+  const isInitialLoad = !hasAnyOffers && !error && !lastUpdated;
 
   useEffect(() => {
-    if (hasOffers && lastUpdated) {
+    if (hasAnyOffers && lastUpdated) {
       trackWidgetLoaded(effectiveConfig.segment, offers.length);
     }
-  }, [hasOffers && !!lastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasAnyOffers && !!lastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const theme = effectiveConfig.theme || 'marketplace';
+  const filterActive = !!(activeOrg || activeState || activeCity);
 
   return (
     <div class="fevo-ef-root" data-theme={theme}>
-      {isRefreshing && hasOffers && <div class="fevo-ef-refreshing-bar" />}
+      {isRefreshing && hasAnyOffers && <div class="fevo-ef-refreshing-bar" />}
 
       {/* Hero banner */}
       <div class="fevo-ef-marketplace-hero">
@@ -105,6 +130,26 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
         />
       </div>
 
+      {/* Client-side filters for org, location */}
+      {hasAnyOffers && (
+        <MarketplaceFilters
+          offers={offers}
+          activeOrg={activeOrg}
+          activeState={activeState}
+          activeCity={activeCity}
+          onOrgChange={setActiveOrg}
+          onStateChange={setActiveState}
+          onCityChange={setActiveCity}
+        />
+      )}
+
+      {/* Results count when filtering */}
+      {hasAnyOffers && filterActive && (
+        <p class="fevo-ef-marketplace-results-count">
+          {filteredOffers.length} of {offers.length} offers
+        </p>
+      )}
+
       {isInitialLoad && (
         <div class="fevo-ef-grid" data-columns={config.columns || 3}>
           {Array.from({ length: 6 }).map((_, i) => (
@@ -113,7 +158,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
         </div>
       )}
 
-      {!isInitialLoad && error && !hasOffers && (
+      {!isInitialLoad && error && !hasAnyOffers && (
         <ErrorState message={error ?? undefined} onRetry={retry} />
       )}
 
@@ -121,7 +166,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
 
       {hasOffers && (
         <div class="fevo-ef-grid" data-columns={config.columns || 3}>
-          {offers.map((offer) => (
+          {filteredOffers.map((offer) => (
             <MarketplaceCard
               key={offer.offer_id}
               offer={offer}
