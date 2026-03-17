@@ -13,16 +13,19 @@ type FilterBarProps = {
   activeGeo: string | null;
   onSegmentChange: (slug: string | null) => void;
   onGeoChange: (geo: string | null) => void;
+  hideGeo?: boolean;
 };
 
-export function FilterBar({ config, activeSegment, activeGeo, onSegmentChange, onGeoChange }: FilterBarProps) {
+export function FilterBar({ config, activeSegment, activeGeo, onSegmentChange, onGeoChange, hideGeo }: FilterBarProps) {
   const [segments, setSegments] = useState<Segment[]>([]);
   const [geos, setGeos] = useState<Geography[]>([]);
 
   useEffect(() => {
     fetchSegments(config).then((res) => setSegments(res.data)).catch(() => {});
-    fetchGeographies(config).then((res) => setGeos(res.data)).catch(() => {});
-  }, [config.apiUrl, config.apiKey]);
+    if (!hideGeo) {
+      fetchGeographies(config).then((res) => setGeos(res.data)).catch(() => {});
+    }
+  }, [config.apiUrl, config.apiKey, hideGeo]);
 
   const handleSegmentClick = useCallback((slug: string) => {
     onSegmentChange(activeSegment === slug ? null : slug);
@@ -54,7 +57,7 @@ export function FilterBar({ config, activeSegment, activeGeo, onSegmentChange, o
           ))}
         </div>
       )}
-      {geos.length > 0 && (
+      {!hideGeo && geos.length > 0 && (
         <div class="fevo-ef-filter-geo">
           <select class="fevo-ef-geo-select" value={activeGeo || ''} onChange={handleGeoChange}>
             <option value="">All Locations</option>

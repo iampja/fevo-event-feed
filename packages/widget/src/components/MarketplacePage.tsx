@@ -131,6 +131,7 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
           activeGeo={activeGeo}
           onSegmentChange={handleSegmentChange}
           onGeoChange={handleGeoChange}
+          hideGeo
         />
       </div>
 
