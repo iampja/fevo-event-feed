@@ -70,6 +70,11 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
 
   const handleSegmentChange = useCallback((slug: string | null) => {
     setActiveSegment(slug);
+    // Clear client-side filters when a collection is selected
+    setActiveOrg(null);
+    setActiveCategory(null);
+    setActiveState(null);
+    setActiveCity(null);
   }, []);
 
   const handleGeoChange = useCallback((geo: string | null) => {
