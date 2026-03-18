@@ -59,56 +59,20 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
 
   try {
     logProgress(syncId, 'Fetching outings from FEVO API...');
+    // fetchOutings() already calls fetchOrgOverviews() internally for event discovery
     const outings = await client.fetchOutings();
     logProgress(syncId, `Found ${outings.length} outings from FEVO`);
 
-    // ── Enrich outings with org category and venue address ─────────────
-    logProgress(syncId, 'Fetching org overviews for category data...');
+    // ── Enrich org category from org overviews (reuses cached data) ──────
+    logProgress(syncId, 'Enriching org categories...');
     const orgOverviews = await client.fetchOrgOverviews();
     const orgCategoryMap = new Map<string, string | null>();
     for (const ov of orgOverviews) {
       orgCategoryMap.set(ov.id, leagueToCategory(ov.league));
     }
-
-    // Collect unique venue IDs that have no city/state
-    const venueIdsToFetch = new Set<string>();
     for (const o of outings) {
-      if (o.venue.id && !o.venue.city) venueIdsToFetch.add(o.venue.id);
-    }
-
-    const venueAddressMap = new Map<string, { city: string | null; state: string | null }>();
-    if (venueIdsToFetch.size > 0) {
-      logProgress(syncId, `Fetching address for ${venueIdsToFetch.size} venues...`);
-      const venueIds = Array.from(venueIdsToFetch);
-      const VENUE_BATCH = 10;
-      for (let i = 0; i < venueIds.length; i += VENUE_BATCH) {
-        const batch = venueIds.slice(i, i + VENUE_BATCH);
-        const results = await Promise.allSettled(
-          batch.map((vid) => client.fetchVenueAddress(vid)),
-        );
-        for (let j = 0; j < batch.length; j++) {
-          const r = results[j];
-          if (r.status === 'fulfilled' && r.value) {
-            venueAddressMap.set(batch[j], r.value);
-          }
-        }
-      }
-      logProgress(syncId, `Fetched ${venueAddressMap.size}/${venueIdsToFetch.size} venue addresses`);
-    }
-
-    // Patch outings with enriched data
-    for (const o of outings) {
-      // Enrich category from org overviews
       if (!o.org.category) {
         o.org.category = orgCategoryMap.get(o.org.id) || null;
-      }
-      // Enrich venue address
-      if (o.venue.id && !o.venue.city) {
-        const addr = venueAddressMap.get(o.venue.id);
-        if (addr) {
-          o.venue.city = addr.city;
-          o.venue.state = addr.state;
-        }
       }
     }
 

@@ -171,6 +171,7 @@ const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/
 export class FevoApiClient implements IFevoApiClient {
   private baseUrl: string;
   private tokenManager: IFevoTokenManager;
+  private orgOverviewsCache: Array<{ id: string; name: string; league: number; active_outings: number; venues: Array<{ id: string; name: string }> }> | null = null;
 
   constructor(baseUrl: string, tokenManager: IFevoTokenManager) {
     this.baseUrl = baseUrl;
@@ -218,52 +219,49 @@ export class FevoApiClient implements IFevoApiClient {
         .filter(Boolean);
       console.log(`[FevoApiClient] Searching events for ${orgNames.length} orgs from overviews`);
 
-      for (const orgName of orgNames) {
-        try {
-          // Extract a short search term from org name (first 2-3 words)
-          const searchTerm = orgName.split(/\s+/).slice(0, 3).join(' ').trim();
-          if (!searchTerm || searchTerm.length < 3) continue;
+      // Build search terms and fetch all in parallel batches of 5
+      const searchTerms = orgNames
+        .map((n) => n.split(/\s+/).slice(0, 3).join(' ').trim())
+        .filter((t) => t.length >= 3);
 
-          const data = await this.authenticatedGet(
-            `/api/manage/event/overviews?page=1&pageSize=100&filter=${encodeURIComponent(searchTerm)}`,
-          );
-          const events = data?.overviews || [];
-          let added = 0;
-          for (const ev of events) {
+      const SEARCH_BATCH = 5;
+      for (let i = 0; i < searchTerms.length; i += SEARCH_BATCH) {
+        const batch = searchTerms.slice(i, i + SEARCH_BATCH);
+        const results = await Promise.allSettled(
+          batch.map((term) =>
+            this.authenticatedGet(
+              `/api/manage/event/overviews?page=1&pageSize=100&filter=${encodeURIComponent(term)}`,
+            ),
+          ),
+        );
+        for (let j = 0; j < results.length; j++) {
+          const r = results[j];
+          if (r.status !== 'fulfilled') continue;
+          for (const ev of r.value?.overviews || []) {
             if (ev.outing_count > 0 && ev.id && !discoveredEventIds.has(ev.id)) {
               discoveredEventIds.add(ev.id);
-              added++;
             }
           }
-          if (added > 0) {
-            console.log(`[FevoApiClient] Filter "${searchTerm}": +${added} events`);
-          }
-
-          await new Promise((r) => setTimeout(r, DELAY_BETWEEN_FETCHES));
-        } catch {
-          // Skip failed searches silently
         }
       }
     } catch (err: any) {
       console.warn(`[FevoApiClient] Org-based event discovery failed: ${err.message}`);
     }
 
-    // ── Step 3: Also scan first few pages of event overviews ─────────────────
+    // ── Step 3: Scan first 3 pages of event overviews in parallel ────────────
     try {
-      for (let page = 1; page <= 3; page++) {
-        const data = await this.authenticatedGet(
-          `/api/manage/event/overviews?page=${page}&pageSize=100`,
-        );
-        const events = data?.overviews || [];
-        if (events.length === 0) break;
-
-        for (const ev of events) {
+      const pageResults = await Promise.allSettled(
+        [1, 2, 3].map((page) =>
+          this.authenticatedGet(`/api/manage/event/overviews?page=${page}&pageSize=100`),
+        ),
+      );
+      for (const r of pageResults) {
+        if (r.status !== 'fulfilled') continue;
+        for (const ev of r.value?.overviews || []) {
           if (ev.outing_count > 0 && ev.id && !discoveredEventIds.has(ev.id)) {
             discoveredEventIds.add(ev.id);
           }
         }
-
-        await new Promise((r) => setTimeout(r, DELAY_BETWEEN_FETCHES));
       }
     } catch {
       // Non-critical, continue with events we have
@@ -271,25 +269,30 @@ export class FevoApiClient implements IFevoApiClient {
 
     console.log(`[FevoApiClient] Total discovered events: ${discoveredEventIds.size}`);
 
-    // ── Step 4: Fetch outings for all discovered events ──────────────────────
-    for (const eventId of discoveredEventIds) {
-      try {
-        const outings = await this.authenticatedGet(
-          `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
-        );
-        if (!Array.isArray(outings)) continue;
+    // ── Step 4: Fetch outings for all discovered events (batches of 10) ──────
+    const eventIdArr = Array.from(discoveredEventIds);
+    const OUTING_BATCH = 10;
+    for (let i = 0; i < eventIdArr.length; i += OUTING_BATCH) {
+      const batch = eventIdArr.slice(i, i + OUTING_BATCH);
+      const results = await Promise.allSettled(
+        batch.map((eid) =>
+          this.authenticatedGet(`/api/manage/event/${encodeURIComponent(eid)}/outings`),
+        ),
+      );
 
-        for (const raw of outings) {
+      for (const r of results) {
+        if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
+        for (const raw of r.value) {
           if (raw.disabled) continue;
           const outingId = String(raw.id || raw.outing_id);
           if (seenOutingIds.has(outingId)) continue;
           seenOutingIds.add(outingId);
           allOutings.push(this.normalizeManageOuting(raw));
         }
+      }
 
+      if (i + OUTING_BATCH < eventIdArr.length) {
         await new Promise((r) => setTimeout(r, DELAY_BETWEEN_FETCHES));
-      } catch (err: any) {
-        console.warn(`[FevoApiClient] Failed outings for event ${eventId}: ${err.message}`);
       }
     }
 
@@ -384,11 +387,12 @@ export class FevoApiClient implements IFevoApiClient {
   }
 
   async fetchOrgOverviews(): Promise<Array<{ id: string; name: string; league: number; active_outings: number; venues: Array<{ id: string; name: string }> }>> {
+    if (this.orgOverviewsCache) return this.orgOverviewsCache;
     try {
       const data = await this.authenticatedPost('/api/manage/organization/overviews?skip=0&take=500', {});
       const orgs = data?.overviews || data;
       if (!Array.isArray(orgs)) return [];
-      return orgs
+      this.orgOverviewsCache = orgs
         .filter((o: any) => (o.active_outings || 0) > 0)
         .map((o: any) => ({
           id: String(o.id),
@@ -397,6 +401,7 @@ export class FevoApiClient implements IFevoApiClient {
           active_outings: o.active_outings || 0,
           venues: Array.isArray(o.venues) ? o.venues.map((v: any) => ({ id: String(v.id), name: v.name || '' })) : [],
         }));
+      return this.orgOverviewsCache;
     } catch (err: any) {
       console.warn(`[FevoApiClient] Failed to fetch org overviews: ${err.message}`);
       return [];
