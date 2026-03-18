@@ -183,18 +183,16 @@ export class FevoApiClient implements IFevoApiClient {
   }
 
   async fetchOutings(): Promise<FevoOuting[]> {
-    // Hybrid strategy:
-    // 1. Use /api/account/events (user-scoped) for the base set of events
-    // 2. Supplement with filter-search on event/overviews using org names
-    //    from org overviews to discover additional events the user can access
-    // 3. Fetch outings for all discovered events
+    const t0 = Date.now();
+    const ts = () => `${((Date.now() - t0) / 1000).toFixed(1)}s`;
 
-    const DELAY_BETWEEN_FETCHES = 100; // ms between API calls
+    const DELAY_BETWEEN_FETCHES = 100;
     const allOutings: FevoOuting[] = [];
     const seenOutingIds = new Set<string>();
     const discoveredEventIds = new Set<string>();
 
-    // ── Step 1: Account events (primary source) ──────────────────────────────
+    // ── Step 1: Account events ───────────────────────────────────────────────
+    console.log(`[FevoApiClient] [${ts()}] Step 1: Fetching account events...`);
     try {
       const eventsData = await this.authenticatedGet('/api/account/events');
       const events = eventsData?.value || eventsData;
@@ -203,23 +201,22 @@ export class FevoApiClient implements IFevoApiClient {
           const eventId = item.event?.event_id || item.event?.id;
           if (eventId) discoveredEventIds.add(String(eventId));
         }
-        console.log(`[FevoApiClient] Account events: ${discoveredEventIds.size} events`);
       }
+      console.log(`[FevoApiClient] [${ts()}] Step 1 done: ${discoveredEventIds.size} events from account`);
     } catch (err: any) {
-      console.warn(`[FevoApiClient] Account events failed: ${err.message}`);
+      console.error(`[FevoApiClient] [${ts()}] Step 1 FAILED: ${err.message}`);
     }
 
-    // ── Step 2: Search for additional events via org name filters ─────────────
+    // ── Step 2: Org name filter search ───────────────────────────────────────
+    console.log(`[FevoApiClient] [${ts()}] Step 2: Fetching org overviews...`);
     try {
       const orgOverviews = await this.fetchOrgOverviews();
-      // Only search for non-test orgs (test orgs are already covered by account events / page scan)
       const orgNames = orgOverviews
         .filter((o) => !isTestOrg(o.name))
         .map((o) => o.name)
         .filter(Boolean);
-      console.log(`[FevoApiClient] Searching events for ${orgNames.length} orgs from overviews`);
+      console.log(`[FevoApiClient] [${ts()}] Got ${orgOverviews.length} orgs, ${orgNames.length} non-test. Searching events...`);
 
-      // Build search terms and fetch all in parallel batches of 5
       const searchTerms = orgNames
         .map((n) => n.split(/\s+/).slice(0, 3).join(' ').trim())
         .filter((t) => t.length >= 3);
@@ -234,44 +231,60 @@ export class FevoApiClient implements IFevoApiClient {
             ),
           ),
         );
-        for (let j = 0; j < results.length; j++) {
-          const r = results[j];
-          if (r.status !== 'fulfilled') continue;
+        let batchAdded = 0;
+        for (const r of results) {
+          if (r.status === 'rejected') {
+            console.warn(`[FevoApiClient] [${ts()}] Filter search failed: ${r.reason?.message || r.reason}`);
+            continue;
+          }
           for (const ev of r.value?.overviews || []) {
             if (ev.outing_count > 0 && ev.id && !discoveredEventIds.has(ev.id)) {
               discoveredEventIds.add(ev.id);
+              batchAdded++;
             }
           }
         }
+        if (batchAdded > 0) {
+          console.log(`[FevoApiClient] [${ts()}] Filter batch ${Math.floor(i / SEARCH_BATCH) + 1}: +${batchAdded} events`);
+        }
       }
+      console.log(`[FevoApiClient] [${ts()}] Step 2 done: ${discoveredEventIds.size} events total`);
     } catch (err: any) {
-      console.warn(`[FevoApiClient] Org-based event discovery failed: ${err.message}`);
+      console.error(`[FevoApiClient] [${ts()}] Step 2 FAILED: ${err.message}`);
     }
 
-    // ── Step 3: Scan first 3 pages of event overviews in parallel ────────────
+    // ── Step 3: Page scan ────────────────────────────────────────────────────
+    console.log(`[FevoApiClient] [${ts()}] Step 3: Scanning event overview pages...`);
     try {
       const pageResults = await Promise.allSettled(
         [1, 2, 3].map((page) =>
           this.authenticatedGet(`/api/manage/event/overviews?page=${page}&pageSize=100`),
         ),
       );
-      for (const r of pageResults) {
-        if (r.status !== 'fulfilled') continue;
+      let pageAdded = 0;
+      for (let p = 0; p < pageResults.length; p++) {
+        const r = pageResults[p];
+        if (r.status === 'rejected') {
+          console.warn(`[FevoApiClient] [${ts()}] Page ${p + 1} failed: ${r.reason?.message || r.reason}`);
+          continue;
+        }
         for (const ev of r.value?.overviews || []) {
           if (ev.outing_count > 0 && ev.id && !discoveredEventIds.has(ev.id)) {
             discoveredEventIds.add(ev.id);
+            pageAdded++;
           }
         }
       }
-    } catch {
-      // Non-critical, continue with events we have
+      console.log(`[FevoApiClient] [${ts()}] Step 3 done: +${pageAdded} events → ${discoveredEventIds.size} total`);
+    } catch (err: any) {
+      console.error(`[FevoApiClient] [${ts()}] Step 3 FAILED: ${err.message}`);
     }
 
-    console.log(`[FevoApiClient] Total discovered events: ${discoveredEventIds.size}`);
-
-    // ── Step 4: Fetch outings for all discovered events (batches of 10) ──────
+    // ── Step 4: Fetch outings per event ──────────────────────────────────────
+    console.log(`[FevoApiClient] [${ts()}] Step 4: Fetching outings for ${discoveredEventIds.size} events...`);
     const eventIdArr = Array.from(discoveredEventIds);
     const OUTING_BATCH = 10;
+    let fetchErrors = 0;
     for (let i = 0; i < eventIdArr.length; i += OUTING_BATCH) {
       const batch = eventIdArr.slice(i, i + OUTING_BATCH);
       const results = await Promise.allSettled(
@@ -281,7 +294,11 @@ export class FevoApiClient implements IFevoApiClient {
       );
 
       for (const r of results) {
-        if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
+        if (r.status === 'rejected') {
+          fetchErrors++;
+          continue;
+        }
+        if (!Array.isArray(r.value)) continue;
         for (const raw of r.value) {
           if (raw.disabled) continue;
           const outingId = String(raw.id || raw.outing_id);
@@ -296,7 +313,7 @@ export class FevoApiClient implements IFevoApiClient {
       }
     }
 
-    console.log(`[FevoApiClient] Total: ${allOutings.length} unique enabled outings from ${discoveredEventIds.size} events`);
+    console.log(`[FevoApiClient] [${ts()}] Step 4 done: ${allOutings.length} outings from ${discoveredEventIds.size} events (${fetchErrors} fetch errors)`);
     return allOutings;
   }
 

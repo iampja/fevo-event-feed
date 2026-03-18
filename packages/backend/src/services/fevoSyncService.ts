@@ -29,18 +29,18 @@ function computeListHash(outing: FevoOuting): string {
   return createHash('md5').update(parts.join('|')).digest('hex');
 }
 
+function elapsed(start: number): string {
+  return `${((Date.now() - start) / 1000).toFixed(1)}s`;
+}
+
 /**
  * Sync all outings from the FEVO API (smart delta).
- *
- * 1. Fetches the full outing list (fast — single API call)
- * 2. Compares content hashes to detect new/changed outings
- * 3. Only fetches detail for new or changed outings (expensive)
- * 4. Skips unchanged outings entirely
  */
 export async function syncAllOrganizations(): Promise<SyncLog[]> {
   const client = getFevoApiClient();
   const syncId = uuidv4();
   const startedAt = new Date().toISOString();
+  const t0 = Date.now();
 
   await db('sync_log').insert({
     id: syncId,
@@ -58,16 +58,18 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
   const errors: string[] = [];
 
   try {
-    logProgress(syncId, 'Fetching outings from FEVO API...');
-    // fetchOutings() already calls fetchOrgOverviews() internally for event discovery
+    // ── Fetch outings ────────────────────────────────────────────────────
+    logProgress(syncId, `[${elapsed(t0)}] Fetching outings from FEVO API...`);
     const outings = await client.fetchOutings();
-    // Filter out expired outings before processing
+    logProgress(syncId, `[${elapsed(t0)}] fetchOutings returned ${outings.length} outings`);
+
+    // Filter out expired outings
     const now = new Date().toISOString();
     const activeOutings = outings.filter((o) => !o.event_date_utc || o.event_date_utc >= now);
-    logProgress(syncId, `Found ${outings.length} outings, ${activeOutings.length} active (${outings.length - activeOutings.length} expired skipped)`);
+    logProgress(syncId, `[${elapsed(t0)}] ${activeOutings.length} active, ${outings.length - activeOutings.length} expired skipped`);
 
     // ── Enrich org category from org overviews (reuses cached data) ──────
-    logProgress(syncId, 'Enriching org categories...');
+    logProgress(syncId, `[${elapsed(t0)}] Enriching org categories...`);
     const orgOverviews = await client.fetchOrgOverviews();
     const orgCategoryMap = new Map<string, string | null>();
     for (const ov of orgOverviews) {
@@ -78,8 +80,9 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
         o.org.category = orgCategoryMap.get(o.org.id) || null;
       }
     }
+    logProgress(syncId, `[${elapsed(t0)}] Enriched categories from ${orgOverviews.length} org overviews`);
 
-    // Load existing content hashes in bulk for fast comparison
+    // ── Delta check ──────────────────────────────────────────────────────
     const existingOffers = await db('offers')
       .whereNotNull('fevo_offer_id')
       .select('fevo_offer_id', 'content_hash');
@@ -88,7 +91,6 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       hashMap.set(row.fevo_offer_id, row.content_hash);
     }
 
-    // Determine which outings need processing
     const needsUpdate: FevoOuting[] = [];
     const unchanged: FevoOuting[] = [];
     for (const outing of activeOutings) {
@@ -102,16 +104,12 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     }
 
     offersSkipped = unchanged.length;
-    logProgress(syncId, `Delta check: ${needsUpdate.length} new/changed, ${offersSkipped} unchanged (skipped)`);
+    logProgress(syncId, `[${elapsed(t0)}] Delta: ${needsUpdate.length} new/changed, ${offersSkipped} unchanged`);
 
+    // ── Upsert changed outings ───────────────────────────────────────────
     if (needsUpdate.length === 0) {
-      logProgress(syncId, 'Nothing to update — all offers are current');
+      logProgress(syncId, `[${elapsed(t0)}] Nothing to update`);
     } else {
-      // Skip individual detail fetches — the outing list data from
-      // /api/manage/event/{id}/outings already includes description,
-      // media, org, and venue info. This eliminates ~875 API calls.
-
-      // Group changed outings by org and process
       const orgGroups = new Map<string, FevoOuting[]>();
       for (const outing of needsUpdate) {
         const orgId = outing.org.id;
@@ -125,7 +123,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
         try {
           const localOrgId = await findOrCreateOrganization(orgOutings[0].org);
           const orgName = orgOutings[0].org.name || fevoOrgId;
-          logProgress(syncId, `[${orgIndex}/${orgGroups.size}] Processing ${orgName} (${orgOutings.length} changed)`);
+          logProgress(syncId, `[${elapsed(t0)}] [${orgIndex}/${orgGroups.size}] ${orgName} (${orgOutings.length} offers)`);
 
           for (const outing of orgOutings) {
             try {
@@ -133,7 +131,6 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
               if (result === 'created') offersCreated++;
               else if (result === 'updated') offersUpdated++;
 
-              // Store new content hash
               const listHash = computeListHash(outing);
               await db('offers')
                 .where('fevo_offer_id', outing.outing_id)
@@ -148,6 +145,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
           logProgress(syncId, `  Org error: ${err.message}`);
         }
       }
+      logProgress(syncId, `[${elapsed(t0)}] Upsert done: ${offersCreated} created, ${offersUpdated} updated`);
     }
 
     // ── Clean up expired offers ────────────────────────────────────────────
@@ -156,7 +154,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       .where('date', '<', new Date().toISOString())
       .delete();
     if (expiredCount > 0) {
-      logProgress(syncId, `Cleaned up ${expiredCount} expired offers`);
+      logProgress(syncId, `[${elapsed(t0)}] Cleaned up ${expiredCount} expired offers`);
     }
 
     const completedAt = new Date().toISOString();
@@ -172,6 +170,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       status: finalStatus,
     });
 
+    logProgress(syncId, `[${elapsed(t0)}] Sync ${finalStatus} — ${offersCreated} created, ${offersUpdated} updated, ${offersSkipped} skipped, ${errors.length} errors`);
     completeProgress(syncId, finalStatus as 'completed' | 'failed', {
       created: offersCreated,
       updated: offersUpdated,
@@ -189,7 +188,8 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       errors: JSON.stringify(errors),
       status: 'failed',
     });
-    logProgress(syncId, `Fatal error: ${err.message}`);
+    logProgress(syncId, `[${elapsed(t0)}] FATAL: ${err.message}`);
+    console.error(`[FevoSync] Fatal error after ${elapsed(t0)}:`, err);
     completeProgress(syncId, 'failed', {
       created: offersCreated,
       updated: offersUpdated,
@@ -235,26 +235,12 @@ export async function syncOrganizationOffers(orgId: string): Promise<SyncLog> {
 
     const outings = await client.fetchOutings();
 
-    // Enrich with org category and venue address
+    // Enrich with org category
     const orgOverviews = await client.fetchOrgOverviews();
     const orgCatMap = new Map<string, string | null>();
     for (const ov of orgOverviews) orgCatMap.set(ov.id, leagueToCategory(ov.league));
-
-    const venueIdsToFetch = new Set<string>();
-    for (const o of outings) {
-      if (o.venue.id && !o.venue.city) venueIdsToFetch.add(o.venue.id);
-    }
-    const venueAddrMap = new Map<string, { city: string | null; state: string | null }>();
-    for (const vid of venueIdsToFetch) {
-      const addr = await client.fetchVenueAddress(vid);
-      if (addr) venueAddrMap.set(vid, addr);
-    }
     for (const o of outings) {
       if (!o.org.category) o.org.category = orgCatMap.get(o.org.id) || null;
-      if (o.venue.id && !o.venue.city) {
-        const addr = venueAddrMap.get(o.venue.id);
-        if (addr) { o.venue.city = addr.city; o.venue.state = addr.state; }
-      }
     }
 
     const orgOutings = fevoOrgId
@@ -269,7 +255,6 @@ export async function syncOrganizationOffers(orgId: string): Promise<SyncLog> {
         if (result === 'created') offersCreated++;
         else if (result === 'updated') offersUpdated++;
 
-        // Store content hash
         const listHash = computeListHash(outing);
         await db('offers')
           .where('fevo_offer_id', outing.outing_id)
