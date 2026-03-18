@@ -148,13 +148,16 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       logProgress(syncId, `[${elapsed(t0)}] Upsert done: ${offersCreated} created, ${offersUpdated} updated`);
     }
 
-    // ── Clean up expired offers ────────────────────────────────────────────
-    const expiredCount = await db('offers')
+    // ── Clean up expired offers (cascade to dependent tables) ──────────────
+    const expiredIds = await db('offers')
       .whereNotNull('date')
       .where('date', '<', new Date().toISOString())
-      .delete();
-    if (expiredCount > 0) {
-      logProgress(syncId, `[${elapsed(t0)}] Cleaned up ${expiredCount} expired offers`);
+      .pluck('id');
+    if (expiredIds.length > 0) {
+      await db('event_feed_segment_offers').whereIn('offer_id', expiredIds).delete();
+      await db('reward_programs').whereIn('offer_id', expiredIds).delete();
+      await db('offers').whereIn('id', expiredIds).delete();
+      logProgress(syncId, `[${elapsed(t0)}] Cleaned up ${expiredIds.length} expired offers`);
     }
 
     const completedAt = new Date().toISOString();
