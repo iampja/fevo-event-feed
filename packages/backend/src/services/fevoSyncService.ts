@@ -61,7 +61,10 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     logProgress(syncId, 'Fetching outings from FEVO API...');
     // fetchOutings() already calls fetchOrgOverviews() internally for event discovery
     const outings = await client.fetchOutings();
-    logProgress(syncId, `Found ${outings.length} outings from FEVO`);
+    // Filter out expired outings before processing
+    const now = new Date().toISOString();
+    const activeOutings = outings.filter((o) => !o.event_date_utc || o.event_date_utc >= now);
+    logProgress(syncId, `Found ${outings.length} outings, ${activeOutings.length} active (${outings.length - activeOutings.length} expired skipped)`);
 
     // ── Enrich org category from org overviews (reuses cached data) ──────
     logProgress(syncId, 'Enriching org categories...');
@@ -70,7 +73,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     for (const ov of orgOverviews) {
       orgCategoryMap.set(ov.id, leagueToCategory(ov.league));
     }
-    for (const o of outings) {
+    for (const o of activeOutings) {
       if (!o.org.category) {
         o.org.category = orgCategoryMap.get(o.org.id) || null;
       }
@@ -88,7 +91,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     // Determine which outings need processing
     const needsUpdate: FevoOuting[] = [];
     const unchanged: FevoOuting[] = [];
-    for (const outing of outings) {
+    for (const outing of activeOutings) {
       const listHash = computeListHash(outing);
       const storedHash = hashMap.get(outing.outing_id);
       if (storedHash && storedHash === listHash) {
@@ -145,6 +148,15 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
           logProgress(syncId, `  Org error: ${err.message}`);
         }
       }
+    }
+
+    // ── Clean up expired offers ────────────────────────────────────────────
+    const expiredCount = await db('offers')
+      .whereNotNull('date')
+      .where('date', '<', new Date().toISOString())
+      .delete();
+    if (expiredCount > 0) {
+      logProgress(syncId, `Cleaned up ${expiredCount} expired offers`);
     }
 
     const completedAt = new Date().toISOString();
