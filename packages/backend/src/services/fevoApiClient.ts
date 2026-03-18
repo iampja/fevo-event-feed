@@ -188,7 +188,7 @@ export class FevoApiClient implements IFevoApiClient {
     //    from org overviews to discover additional events the user can access
     // 3. Fetch outings for all discovered events
 
-    const DELAY_BETWEEN_FETCHES = 300; // ms between API calls
+    const DELAY_BETWEEN_FETCHES = 100; // ms between API calls
     const allOutings: FevoOuting[] = [];
     const seenOutingIds = new Set<string>();
     const discoveredEventIds = new Set<string>();
@@ -497,16 +497,25 @@ export class FevoApiClient implements IFevoApiClient {
     const token = await this.tokenManager.getAccessToken();
     const url = `${this.baseUrl}${path}`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'User-Agent': BROWSER_UA,
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': BROWSER_UA,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (response.status === 401 && !retried) {
       console.log('[FevoApiClient] Got 401 on POST, re-authenticating...');
@@ -514,7 +523,7 @@ export class FevoApiClient implements IFevoApiClient {
       return this.authenticatedPost(path, body, true, retryCount);
     }
 
-    if ((response.status === 429 || response.status === 503) && retryCount < 3) {
+    if ((response.status === 429 || response.status === 403 || response.status === 503) && retryCount < 3) {
       const delay = Math.pow(2, retryCount) * 2000;
       console.warn(`[FevoApiClient] Got ${response.status} on POST, retrying in ${delay}ms...`);
       await new Promise((r) => setTimeout(r, delay));
@@ -533,14 +542,23 @@ export class FevoApiClient implements IFevoApiClient {
     const token = await this.tokenManager.getAccessToken();
     const url = `${this.baseUrl}${path}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-        'User-Agent': BROWSER_UA,
-      },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+          'User-Agent': BROWSER_UA,
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     // Retry once on 401 by forcing re-login
     if (response.status === 401 && !retried) {
@@ -549,8 +567,8 @@ export class FevoApiClient implements IFevoApiClient {
       return this.authenticatedGet(path, true, retryCount);
     }
 
-    // Retry on 429/503 with exponential backoff (up to 3 times)
-    if ((response.status === 429 || response.status === 503) && retryCount < 3) {
+    // Retry on 429/403/503 with exponential backoff (up to 3 times)
+    if ((response.status === 429 || response.status === 403 || response.status === 503) && retryCount < 3) {
       const delay = Math.pow(2, retryCount) * 2000; // 2s, 4s, 8s
       console.warn(`[FevoApiClient] Got ${response.status}, retrying in ${delay}ms...`);
       await new Promise((r) => setTimeout(r, delay));
