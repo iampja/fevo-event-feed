@@ -140,31 +140,9 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
     if (needsUpdate.length === 0) {
       logProgress(syncId, 'Nothing to update — all offers are current');
     } else {
-      // Fetch detail only for changed outings (batches of 10)
-      const BATCH_SIZE = 10;
-      const detailMap = new Map<string, FevoOutingDetail | null>();
-      let detailsFetched = 0;
-
-      logProgress(syncId, `Fetching detail for ${needsUpdate.length} changed outings...`);
-      for (let i = 0; i < needsUpdate.length; i += BATCH_SIZE) {
-        const batch = needsUpdate.slice(i, i + BATCH_SIZE);
-        const results = await Promise.allSettled(
-          batch.map((o) => client.fetchOutingDetail(o.outing_id)),
-        );
-        for (let j = 0; j < batch.length; j++) {
-          const r = results[j];
-          detailMap.set(batch[j].outing_id, r.status === 'fulfilled' ? r.value : null);
-          if (r.status === 'fulfilled') detailsFetched++;
-        }
-        if ((i + BATCH_SIZE) % 50 === 0 || i + BATCH_SIZE >= needsUpdate.length) {
-          logProgress(syncId, `Detail progress: ${Math.min(i + BATCH_SIZE, needsUpdate.length)}/${needsUpdate.length} fetched`);
-        }
-        // Brief delay between batches
-        if (i + BATCH_SIZE < needsUpdate.length) {
-          await new Promise((r) => setTimeout(r, 100));
-        }
-      }
-      logProgress(syncId, `Details fetched: ${detailsFetched}/${needsUpdate.length}`);
+      // Skip individual detail fetches — the outing list data from
+      // /api/manage/event/{id}/outings already includes description,
+      // media, org, and venue info. This eliminates ~875 API calls.
 
       // Group changed outings by org and process
       const orgGroups = new Map<string, FevoOuting[]>();
@@ -184,8 +162,7 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
 
           for (const outing of orgOutings) {
             try {
-              const detail = detailMap.get(outing.outing_id) || null;
-              const result = await upsertFevoOuting(outing, detail, localOrgId);
+              const result = await upsertFevoOuting(outing, null, localOrgId);
               if (result === 'created') offersCreated++;
               else if (result === 'updated') offersUpdated++;
 
@@ -310,27 +287,9 @@ export async function syncOrganizationOffers(orgId: string): Promise<SyncLog> {
 
     console.log(`[FevoSync] Filtered ${orgOutings.length} outings for org ${effectiveOrgId}`);
 
-    // Batch fetch details (batches of 10)
-    const BATCH_SIZE = 10;
-    const detailMap = new Map<string, FevoOutingDetail | null>();
-    for (let i = 0; i < orgOutings.length; i += BATCH_SIZE) {
-      const batch = orgOutings.slice(i, i + BATCH_SIZE);
-      const results = await Promise.allSettled(
-        batch.map((o) => client.fetchOutingDetail(o.outing_id)),
-      );
-      for (let j = 0; j < batch.length; j++) {
-        const r = results[j];
-        detailMap.set(batch[j].outing_id, r.status === 'fulfilled' ? r.value : null);
-      }
-      if (i + BATCH_SIZE < orgOutings.length) {
-        await new Promise((r) => setTimeout(r, 100));
-      }
-    }
-
     for (const outing of orgOutings) {
       try {
-        const detail = detailMap.get(outing.outing_id) || null;
-        const result = await upsertFevoOuting(outing, detail, effectiveOrgId);
+        const result = await upsertFevoOuting(outing, null, effectiveOrgId);
         if (result === 'created') offersCreated++;
         else if (result === 'updated') offersUpdated++;
 
