@@ -74,12 +74,6 @@ export function MarketplaceCard({ offer, config, onCardClick }: MarketplaceCardP
         </span>
         <h3 class="fevo-ef-card-title">{offer.title}</h3>
 
-        {offer.organization?.name && (
-          <p class="fevo-ef-card-meta" style={{ marginBottom: '12px' }}>
-            {offer.organization.name}
-          </p>
-        )}
-
         <button
           class="fevo-ef-card-readmore"
           onClick={(e: Event) => {

@@ -76,8 +76,8 @@ export const WIDGET_STYLES = `
   background: #1a1a1a;
   border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 40px;
-  min-height: 280px;
+  margin-bottom: 32px;
+  min-height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,42 +89,200 @@ export const WIDGET_STYLES = `
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .fevo-ef-marketplace-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%);
 }
 
 .fevo-ef-marketplace-hero-content {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 48px 24px;
+  padding: 56px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fevo-ef-marketplace-hero-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #000000;
+  background: #FFCC00;
+  border-radius: 999px;
+  margin-bottom: 20px;
 }
 
 .fevo-ef-marketplace-hero-title {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 800;
   color: #ffffff;
-  margin: 0 0 8px 0;
-  line-height: 1.2;
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+  max-width: 600px;
 }
 
 .fevo-ef-marketplace-hero-subtitle {
   font-size: 16px;
   color: rgba(255,255,255,0.7);
-  margin: 0;
+  margin: 0 0 24px 0;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.fevo-ef-marketplace-hero-chevron {
+  width: 32px;
+  height: 32px;
+  color: rgba(255,255,255,0.6);
+  animation: fevo-ef-bounce 2s ease infinite;
+}
+.fevo-ef-marketplace-hero-chevron svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes fevo-ef-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(6px); }
+  60% { transform: translateY(3px); }
+}
+
+/* Filter section */
+.fevo-ef-marketplace-filter-section {
+  margin-bottom: 32px;
 }
 
 /* Section heading */
 .fevo-ef-marketplace-section-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--fevo-ef-text);
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
+}
+
+/* See More button */
+.fevo-ef-marketplace-see-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 48px;
+}
+
+.fevo-ef-marketplace-see-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 36px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--fevo-ef-font);
+  color: #000000;
+  background: #FFCC00;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.fevo-ef-marketplace-see-more:hover {
+  background: #e6b800;
+}
+
+/* ===== Marketplace Footer ===== */
+.fevo-ef-marketplace-footer {
+  background: #1a1a1a;
+  border-radius: 20px 20px 0 0;
+  margin-top: 48px;
+  padding: 48px 40px 0;
+  color: #ffffff;
+}
+
+.fevo-ef-marketplace-footer-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.fevo-ef-marketplace-footer-brand {
+  max-width: 320px;
+}
+
+.fevo-ef-marketplace-footer-logo {
+  display: inline-block;
+  background: #FFCC00;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 5px;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.fevo-ef-marketplace-footer-tagline {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fevo-ef-marketplace-footer-links {
+  display: flex;
+  gap: 56px;
+}
+
+.fevo-ef-marketplace-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fevo-ef-marketplace-footer-col h4 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.4);
+  margin: 0 0 4px 0;
+}
+
+.fevo-ef-marketplace-footer-col a {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.fevo-ef-marketplace-footer-col a:hover {
+  color: #ffffff;
+}
+
+.fevo-ef-marketplace-footer-bottom {
+  padding: 20px 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+}
+
+@media (max-width: 640px) {
+  .fevo-ef-marketplace-footer-inner {
+    flex-direction: column;
+    gap: 32px;
+  }
+  .fevo-ef-marketplace-footer-links {
+    gap: 32px;
+  }
+  .fevo-ef-marketplace-footer {
+    padding: 32px 20px 0;
+  }
 }
 
 /* Marketplace card overrides */
@@ -148,45 +306,44 @@ export const WIDGET_STYLES = `
 /* Category tag on marketplace cards */
 .fevo-ef-card-category-tag {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 5px 14px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-radius: 999px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  /* Default fallback */
+  background: #f3f4f6;
+  color: #374151;
 }
 
+/* Category-specific colors matching design */
+.fevo-ef-card-category-tag[data-category="marketing campaigns"],
+.fevo-ef-card-category-tag[data-category="group sales"],
+.fevo-ef-card-category-tag[data-category="corporate"] {
+  background: #FFF3CD;
+  color: #856404;
+}
+.fevo-ef-card-category-tag[data-category="premium sales and hospitality"],
+.fevo-ef-card-category-tag[data-category="entertainment"] {
+  background: #E8DEF8;
+  color: #6d28d9;
+}
+.fevo-ef-card-category-tag[data-category="memberships"],
 .fevo-ef-card-category-tag[data-category="sports"] {
-  background: #dbeafe;
+  background: #D1E7FF;
   color: #1e40af;
+}
+.fevo-ef-card-category-tag[data-category="creative offers"],
+.fevo-ef-card-category-tag[data-category="community"] {
+  background: #D4EDDA;
+  color: #155724;
 }
 .fevo-ef-card-category-tag[data-category="music"] {
   background: #fce7f3;
   color: #9d174d;
 }
-.fevo-ef-card-category-tag[data-category="entertainment"] {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-.fevo-ef-card-category-tag[data-category="community"] {
-  background: #d1fae5;
-  color: #065f46;
-}
-.fevo-ef-card-category-tag[data-category="corporate"] {
-  background: #fef3c7;
-  color: #92400e;
-}
-.fevo-ef-card-category-tag[data-category] {
-  background: #f3f4f6;
-  color: #374151;
-}
-/* Specific categories override the generic */
-.fevo-ef-card-category-tag[data-category="sports"] { background: #dbeafe; color: #1e40af; }
-.fevo-ef-card-category-tag[data-category="music"] { background: #fce7f3; color: #9d174d; }
-.fevo-ef-card-category-tag[data-category="entertainment"] { background: #ede9fe; color: #6d28d9; }
-.fevo-ef-card-category-tag[data-category="community"] { background: #d1fae5; color: #065f46; }
-.fevo-ef-card-category-tag[data-category="corporate"] { background: #fef3c7; color: #92400e; }
 
 /* Read more link */
 .fevo-ef-card-readmore {
@@ -246,79 +403,16 @@ export const WIDGET_STYLES = `
   display: none;
 }
 
-/* ===== Marketplace Search Row ===== */
-.fevo-ef-marketplace-search-row {
+/* ===== Marketplace Filter Section ===== */
+.fevo-ef-marketplace-filter-section {
   margin-bottom: 32px;
 }
 
-/* ===== Collections Header (title + filters) ===== */
-.fevo-ef-marketplace-collections-header {
-  margin-bottom: 24px;
-}
-
-.fevo-ef-marketplace-collections-header .fevo-ef-marketplace-section-title {
-  margin-bottom: 16px;
-}
-
-.fevo-ef-marketplace-collections-header .fevo-ef-filter-bar {
+.fevo-ef-marketplace-filter-section .fevo-ef-filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-}
-
-/* ===== Marketplace Filter Dropdowns ===== */
-.fevo-ef-marketplace-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  margin-bottom: 24px;
-  padding: 16px 20px;
-  background: var(--fevo-ef-card-bg);
-  border: 1px solid var(--fevo-ef-border);
-  border-radius: 12px;
-}
-
-.fevo-ef-marketplace-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 180px;
-}
-
-.fevo-ef-marketplace-filter-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--fevo-ef-text-secondary);
-}
-
-.fevo-ef-marketplace-filter-clear {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: var(--fevo-ef-font);
-  color: var(--fevo-ef-text-secondary);
-  background: transparent;
-  border: 1px solid var(--fevo-ef-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-  align-self: flex-end;
-}
-
-.fevo-ef-marketplace-filter-clear:hover {
-  color: var(--fevo-ef-text);
-  border-color: var(--fevo-ef-text-secondary);
-}
-
-.fevo-ef-marketplace-results-count {
-  font-size: 13px;
-  color: var(--fevo-ef-text-secondary);
-  margin: -12px 0 16px 0;
 }
 
 .fevo-ef-search-bar {
