@@ -1,38 +1,27 @@
 /**
  * FEVO Offer Service
  *
- * Provides read and write operations for FEVO offers, including a fully
- * orchestrated "launch offer" flow that creates an offer end-to-end with
- * SSE progress reporting.
+ * All operations go through the FEVO MCP server at /mcp, which provides
+ * reliable access to the FEVO API. Direct REST calls to /api/manage/...
+ * returned 404 for many endpoints (vendor agreements, manifest, event search
+ * with org filter). The MCP server wraps the same API but with correct
+ * internal routing.
  *
- * Uses the same token manager pattern as FevoApiClient but with its own
- * authenticated request methods so we don't need to modify the existing
- * private methods on FevoApiClient.
+ * Auth: We still use the token manager to get JWTs via the REST login
+ * endpoint (which does work). The JWT is then passed to each MCP tool call.
  */
 
 import { randomUUID } from 'crypto';
 import { getFevoTokenManager, IFevoTokenManager } from './fevoTokenManager';
+import { FevoMcpClient } from './fevoMcpClient';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const BROWSER_UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-
 const TICKETING_PROVIDER_MAP: Record<number, string> = {
-  0: 'None',
-  1: 'Provenue',
-  2: 'Archtics',
-  3: 'Ticketmaster',
-  4: 'Veritix',
-  5: 'Paciolan',
-  6: 'TicketReturn',
-  7: 'SeatGeek',
-  8: 'UrVenue',
-  9: 'TMHost',
-  10: 'FrontGate',
-  11: 'Gateway',
-  12: 'FiniDoma',
-  13: 'Ingresso',
+  0: 'None', 1: 'Provenue', 2: 'Archtics', 3: 'Ticketmaster',
+  4: 'Veritix', 5: 'Paciolan', 6: 'TicketReturn', 7: 'SeatGeek',
+  8: 'UrVenue', 9: 'TMHost', 10: 'FrontGate', 11: 'Gateway',
+  12: 'FiniDoma', 13: 'Ingresso',
 };
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -59,155 +48,139 @@ type ProgressCallback = (step: string, detail?: string) => void;
 export class FevoOfferService {
   private baseUrl: string;
   private tokenManager: IFevoTokenManager;
+  private mcp: FevoMcpClient;
 
   constructor(baseUrl: string, tokenManager: IFevoTokenManager) {
     this.baseUrl = baseUrl;
     this.tokenManager = tokenManager;
+    this.mcp = new FevoMcpClient(baseUrl);
   }
 
-  // ── Read operations ──────────────────────────────────────────────────────
+  // ── Token helper ────────────────────────────────────────────────────────
 
-  async listOrganizations(filter?: string, skip = 0, take = 500): Promise<any> {
-    const params = new URLSearchParams({
-      skip: String(skip),
-      take: String(take),
-    });
-    if (filter) params.set('filter', filter);
-    return this.authenticatedPost(`/api/manage/organization/overviews?${params}`, {});
+  private async getToken(): Promise<string> {
+    return this.tokenManager.getAccessToken();
+  }
+
+  // ── Read operations (all via MCP) ───────────────────────────────────────
+
+  async listOrganizations(filter?: string, skip?: number, take?: number): Promise<any> {
+    const token = await this.getToken();
+    const args: Record<string, any> = { token };
+    if (filter) args.filter = filter;
+    if (skip !== undefined) args.skip = skip;
+    if (take !== undefined) args.take = take;
+    return this.mcp.callTool('list_organizations', args);
   }
 
   async getOrgSettings(orgId: string): Promise<any> {
-    return this.authenticatedGet(`/api/manage/organization/${encodeURIComponent(orgId)}`);
+    const token = await this.getToken();
+    return this.mcp.callTool('get_org_settings', { token, orgId });
   }
 
   async getVendorAgreements(orgId: string): Promise<any> {
-    // The VA REST endpoint is not discoverable via standard paths.
-    // The MCP server uses an internal route. Try known paths, return [] if all fail.
-    const paths = [
-      `/api/manage/vendoragreement/${encodeURIComponent(orgId)}`,
-      `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}`,
-      `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements`,
-    ];
-
-    for (const path of paths) {
-      try {
-        const result = await this.authenticatedGet(path);
-        console.log(`[FevoOfferService] VA path worked: ${path}`);
-        return result;
-      } catch {
-        // Try next
-      }
-    }
-
-    console.warn('[FevoOfferService] All VA paths failed, returning empty (will use org defaults)');
-    return [];
-  }
-
-  /** Raw event overviews (no org filter) for debugging */
-  async getRawEventOverviews(): Promise<any> {
-    return this.authenticatedGet('/api/manage/event/overviews?page=1&pageSize=10');
+    const token = await this.getToken();
+    return this.mcp.callTool('get_vendor_agreements', { token, orgId });
   }
 
   async searchEvents(
     orgId: string,
     query?: string,
-    _fromDate?: string,
-    _toDate?: string,
-    _page = 1,
-    pageSize = 100,
+    fromDate?: string,
+    toDate?: string,
+    page?: number,
+    pageSize?: number,
   ): Promise<any> {
-    // Fetch events and filter by organization.id (REST API returns all orgs' events).
-    // Events don't have a `title` field — they have `venue.name` and `organization.name`.
-    const allOrgEvents: any[] = [];
-
-    // Scan up to 3 pages to find events for this org
-    for (let page = 1; page <= 3; page++) {
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(pageSize),
-      });
-      if (query && page === 1) params.set('filter', query);
-
-      console.log(`[FevoOfferService] searchEvents page ${page}: /api/manage/event/overviews?${params}`);
-      const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
-      const events = result?.overviews || [];
-
-      for (const e of events) {
-        if (e.organization?.id === orgId) {
-          allOrgEvents.push(e);
-        }
-      }
-
-      console.log(`[FevoOfferService] Page ${page}: ${events.length} total, ${allOrgEvents.length} matching org`);
-
-      // Stop if we found events or ran out of results
-      if (allOrgEvents.length > 0 || events.length < pageSize) break;
-    }
-
-    // If text filter found nothing for this org, retry without filter
-    if (allOrgEvents.length === 0 && query) {
-      console.log('[FevoOfferService] searchEvents: retrying without text filter...');
-      return this.searchEvents(orgId, undefined);
-    }
-
-    return { overviews: allOrgEvents, total: allOrgEvents.length };
+    const token = await this.getToken();
+    const args: Record<string, any> = { token, organizationId: orgId };
+    if (query) args.query = query;
+    if (fromDate) args.fromDate = fromDate;
+    if (toDate) args.toDate = toDate;
+    if (page) args.page = page;
+    if (pageSize) args.pageSize = pageSize;
+    return this.mcp.callTool('search_events', args);
   }
 
   async getManifest(eventId: string, saleType?: string): Promise<any> {
-    let path = `/api/manage/event/${encodeURIComponent(eventId)}/manifest`;
-    if (saleType) path += `?saleType=${encodeURIComponent(saleType)}`;
-    return this.authenticatedGet(path);
+    const token = await this.getToken();
+    const args: Record<string, any> = { token, eventId };
+    if (saleType) args.saleType = saleType;
+    return this.mcp.callTool('get_manifest', args);
   }
 
   async listEventOffers(eventId: string): Promise<any> {
-    return this.authenticatedGet(
-      `/api/manage/event/${encodeURIComponent(eventId)}/outings`,
-    );
+    const token = await this.getToken();
+    return this.mcp.callTool('list_event_offers', { token, eventId });
   }
 
   async listGroups(orgId: string, filter?: string): Promise<any> {
-    const params = new URLSearchParams({
-      organizationId: orgId,
-      skip: '0',
-      take: '50',
-    });
-    if (filter) params.set('filter', filter);
-    return this.authenticatedPost(`/api/manage/group/overviews?${params}`, {});
+    const token = await this.getToken();
+    const args: Record<string, any> = { token, orgId };
+    if (filter) args.filter = filter;
+    return this.mcp.callTool('list_groups', args);
   }
 
   async getGroupOverview(groupId: string): Promise<any> {
-    return this.authenticatedGet(`/api/manage/group/${encodeURIComponent(groupId)}`);
+    const token = await this.getToken();
+    return this.mcp.callTool('get_group_overview', { token, groupId });
   }
 
-  // ── Write operations ─────────────────────────────────────────────────────
+  async getOfferDetails(offerId: string): Promise<any> {
+    const token = await this.getToken();
+    return this.mcp.callTool('get_offer_details', { token, offerId });
+  }
+
+  /** For debug endpoint backwards compat */
+  async getRawEventOverviews(): Promise<any> {
+    const token = await this.getToken();
+    // Use list_organizations to get first org, then search its events
+    const orgs = await this.mcp.callTool('list_organizations', { token });
+    const orgList = orgs?.overviews || [];
+    if (orgList.length === 0) return { overviews: [] };
+    return this.mcp.callTool('search_events', {
+      token,
+      organizationId: orgList[0].id,
+      pageSize: 10,
+    });
+  }
+
+  // ── Write operations (via MCP) ──────────────────────────────────────────
 
   async createOffer(payload: any): Promise<any> {
-    return this.authenticatedPost('/api/manage/outing/bulk', payload);
+    const token = await this.getToken();
+    return this.mcp.callTool('create_offer', {
+      token,
+      body: JSON.stringify(payload),
+    });
   }
 
   async pollOfferComplete(): Promise<{ success: boolean; message: string | null }> {
-    const data = await this.authenticatedGet('/api/manage/outing/bulk/complete');
+    const token = await this.getToken();
+    const data = await this.mcp.callTool('poll_offer_complete', { token });
     return {
-      success: !!data?.success || data?.is_complete === true,
-      message: data?.message || data?.error || null,
+      success: !!data?.success,
+      message: data?.message || null,
     };
   }
 
   async createItemLibrary(outingId: string, payload: any): Promise<any> {
-    return this.authenticatedPost(
-      `/api/manage/outing/${encodeURIComponent(outingId)}/item-library`,
-      payload,
-    );
+    const token = await this.getToken();
+    return this.mcp.callTool('create_item_library', {
+      token,
+      body: JSON.stringify(payload),
+    });
   }
 
   async linkItemToOffer(outingId: string, itemLibraryId: string): Promise<any> {
-    return this.authenticatedPut(
-      `/api/manage/outing/${encodeURIComponent(outingId)}/item-library/${encodeURIComponent(itemLibraryId)}`,
-      {},
-    );
+    const token = await this.getToken();
+    return this.mcp.callTool('link_item_to_offer', {
+      token,
+      outingId,
+      itemLibraryId,
+    });
   }
 
-  // ── Orchestrated launch flow ─────────────────────────────────────────────
+  // ── Orchestrated launch flow ───────────────────────────────────────────
 
   async launchOffer(
     params: LaunchOfferParams,
@@ -218,51 +191,80 @@ export class FevoOfferService {
     // Step 1: Get org settings + vendor agreements (parallel)
     onProgress('loading_org', 'Loading organization settings...');
     let orgSettings: any;
-    let vendorAgreements: any;
+    let vendorAgreements: any[] = [];
     try {
       [orgSettings, vendorAgreements] = await Promise.all([
         this.getOrgSettings(orgId),
         this.getVendorAgreements(orgId),
       ]);
-      console.log('[FevoOfferService] Org settings and VAs loaded successfully');
+      console.log(`[FevoOfferService] Org settings loaded, ${vendorAgreements?.length || 0} VAs`);
     } catch (err: any) {
       console.error('[FevoOfferService] Failed to load org settings/VAs:', err.message);
       throw new Error(`Failed to load organization settings: ${err.message}`);
     }
     onProgress('org_loaded', 'Organization settings loaded');
 
-    // Step 2: Get manifest (non-fatal — many events don't have one)
+    // Step 2: Get event details + manifest
     onProgress('loading_manifest', 'Loading event manifest...');
     let manifest: any = { areas: [], holds: [] };
     try {
       manifest = await this.getManifest(eventId);
-      console.log('[FevoOfferService] Manifest loaded:', JSON.stringify(manifest).slice(0, 200));
+      console.log(`[FevoOfferService] Manifest: ${manifest?.areas?.length || 0} areas, ${manifest?.holds?.length || 0} holds`);
     } catch (err: any) {
       console.warn('[FevoOfferService] Manifest not available (non-fatal):', err.message);
     }
-    onProgress('manifest_loaded', 'Manifest loaded');
+    onProgress('manifest_loaded', `Manifest: ${manifest?.areas?.length || 0} areas`);
 
-    // Step 3: Get group (if applicable)
+    // Step 3: Get event info for the offer payload
+    onProgress('loading_event', 'Loading event details...');
+    let eventInfo: any = null;
+    try {
+      const eventsResult = await this.searchEvents(orgId);
+      const events = eventsResult?.overviews || [];
+      eventInfo = events.find((e: any) => e.id === eventId) || events[0];
+      console.log(`[FevoOfferService] Event info: ${eventInfo?.title || eventInfo?.venue?.name || eventId}`);
+    } catch (err: any) {
+      console.warn('[FevoOfferService] Event lookup failed (non-fatal):', err.message);
+    }
+    onProgress('event_loaded', eventInfo ? `Event: ${eventInfo.title || eventInfo.venue?.name || eventId}` : 'Event details loaded');
+
+    // Step 4: Get template offer (if existing offers on any event)
+    onProgress('loading_template', 'Looking for template offer...');
+    let templateOffer: any = null;
+    try {
+      // Try to find an existing offer to use as template
+      const eventOffers = await this.listEventOffers(eventId);
+      const offerList = Array.isArray(eventOffers) ? eventOffers : [];
+      if (offerList.length > 0) {
+        templateOffer = await this.getOfferDetails(offerList[0].id);
+        console.log(`[FevoOfferService] Template offer found: ${templateOffer?.title}`);
+      }
+    } catch (err: any) {
+      console.warn('[FevoOfferService] No template offer found (non-fatal):', err.message);
+    }
+    onProgress('template_loaded', templateOffer ? `Template: ${templateOffer.title}` : 'No template (creating from defaults)');
+
+    // Step 5: Get group (if applicable)
     let group: any = null;
     if (hasGroups) {
       onProgress('loading_groups', 'Loading groups...');
       try {
         const groupsData = await this.listGroups(orgId);
-        const groups = groupsData?.overviews || groupsData || [];
+        const groups = groupsData?.overviews || [];
         if (Array.isArray(groups) && groups.length > 0) {
           group = await this.getGroupOverview(String(groups[0].id));
         }
       } catch (err: any) {
         console.warn('[FevoOfferService] Groups load failed (non-fatal):', err.message);
       }
-      onProgress('groups_loaded', group ? `Group loaded: ${group.name || group.id}` : 'No groups found');
+      onProgress('groups_loaded', group ? `Group: ${group.name || group.id}` : 'No groups found');
     }
 
-    // Step 4: Pre-generate outing UUID
+    // Step 6: Pre-generate outing UUID
     const outingId = randomUUID();
     onProgress('id_generated', `Offer ID: ${outingId}`);
 
-    // Step 5: Build + create offer
+    // Step 7: Build + create offer
     onProgress('creating_offer', 'Creating offer...');
     try {
       const offerPayload = this.buildOfferPayload({
@@ -273,9 +275,11 @@ export class FevoOfferService {
         description,
         accessCode,
         orgSettings,
-        vendorAgreements,
+        vendorAgreements: vendorAgreements || [],
         manifest,
         group,
+        eventInfo,
+        templateOffer,
       });
       console.log('[FevoOfferService] Offer payload built, submitting...');
       await this.createOffer(offerPayload);
@@ -285,33 +289,47 @@ export class FevoOfferService {
     }
     onProgress('offer_created', 'Offer creation initiated');
 
-    // Step 6: Poll for completion
+    // Step 8: Poll for completion
     onProgress('polling', 'Waiting for offer creation to complete...');
     const pollResult = await this.pollUntilComplete(60, 3000, onProgress);
+    // poll_offer_complete: success:true + message:null = success, success:true + message = error
     if (!pollResult.success) {
-      throw new Error(`Offer creation failed: ${pollResult.message || 'Unknown error'}`);
+      throw new Error(`Offer creation failed: ${pollResult.message || 'Timed out'}`);
+    }
+    if (pollResult.message) {
+      throw new Error(`Offer creation error: ${pollResult.message}`);
     }
     onProgress('offer_complete', 'Offer creation complete');
 
-    // Step 7: Create item library (two-step upsert)
+    // Step 9: Create item library (two-step upsert)
     let itemLibraryId: string | null = null;
-    try {
-      onProgress('creating_item_library', 'Setting up inventory...');
-      const itemLibraryPayload = this.buildItemLibraryPayload(manifest, null);
-      const itemLibraryResult = await this.createItemLibrary(outingId, itemLibraryPayload);
-      itemLibraryId = itemLibraryResult?.id || itemLibraryResult?.item_library_id;
-      console.log('[FevoOfferService] Item library step 1 done, id:', itemLibraryId);
+    if (manifest?.areas?.length > 0) {
+      try {
+        onProgress('creating_item_library', 'Setting up inventory...');
+        const itemPayload = this.buildItemLibraryPayload(
+          manifest, orgSettings, vendorAgreements, null,
+        );
+        const step1Result = await this.createItemLibrary(outingId, itemPayload);
 
-      if (itemLibraryId) {
-        const upsertPayload = this.buildItemLibraryPayload(manifest, itemLibraryId);
-        await this.createItemLibrary(outingId, upsertPayload);
-        console.log('[FevoOfferService] Item library step 2 (upsert) done');
+        // Extract item library ID and item IDs from step 1 response
+        itemLibraryId = step1Result?.id;
+        const returnedItems = step1Result?.items || [];
+        console.log(`[FevoOfferService] Item library step 1 done, id: ${itemLibraryId}, items: ${returnedItems.length}`);
+
+        if (itemLibraryId && returnedItems.length > 0) {
+          // Step 2: Upsert with assigned IDs
+          const upsertPayload = this.buildItemLibraryUpsertPayload(
+            itemPayload, itemLibraryId, returnedItems,
+          );
+          await this.createItemLibrary(outingId, upsertPayload);
+          console.log('[FevoOfferService] Item library step 2 (upsert) done');
+        }
+      } catch (err: any) {
+        console.warn('[FevoOfferService] Item library creation failed (non-fatal):', err.message);
       }
-    } catch (err: any) {
-      console.warn('[FevoOfferService] Item library creation failed (non-fatal):', err.message);
     }
 
-    // Step 8: Link item library to offer
+    // Step 10: Link item library to offer
     if (itemLibraryId) {
       try {
         onProgress('linking', 'Linking inventory to offer...');
@@ -324,14 +342,10 @@ export class FevoOfferService {
 
     const manageUrl = `${this.baseUrl}/manage/outing/${outingId}`;
 
-    return {
-      outingId,
-      accessCode,
-      manageUrl,
-    };
+    return { outingId, accessCode, manageUrl };
   }
 
-  // ── Private helpers ──────────────────────────────────────────────────────
+  // ── Private helpers ────────────────────────────────────────────────────
 
   private async pollUntilComplete(
     maxAttempts: number,
@@ -342,13 +356,15 @@ export class FevoOfferService {
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
       try {
         const result = await this.pollOfferComplete();
+        // success:false + "Running" = still in progress
+        // success:true + null = completed successfully
+        // success:true + message = completed with error
         if (result.success) {
           return result;
         }
         onProgress('polling', `Attempt ${attempt}/${maxAttempts}...`);
       } catch (err: any) {
-        // Non-fatal poll errors: keep retrying
-        onProgress('polling', `Attempt ${attempt}/${maxAttempts} (error: ${err.message})`);
+        onProgress('polling', `Attempt ${attempt}/${maxAttempts} (retry: ${err.message})`);
       }
     }
     return { success: false, message: 'Timed out waiting for offer creation to complete' };
@@ -362,272 +378,285 @@ export class FevoOfferService {
     description: string;
     accessCode: string;
     orgSettings: any;
-    vendorAgreements: any;
+    vendorAgreements: any[];
     manifest: any;
     group: any;
+    eventInfo: any;
+    templateOffer: any;
   }): any {
     const {
-      outingId,
-      eventId,
-      orgId,
-      title,
-      description,
-      accessCode,
-      orgSettings,
-      vendorAgreements,
-      manifest,
-      group,
+      outingId, eventId, orgId, title, description, accessCode,
+      orgSettings, vendorAgreements, manifest, group, eventInfo, templateOffer,
     } = opts;
 
-    // Clone vendor agreements and strip IDs so the API creates new ones
-    const clonedVAs = this.cloneVendorAgreements(vendorAgreements);
+    const ticketingProvider = orgSettings?.ticketing_provider_config?.ticketing_provider ?? orgSettings?.ticketing_provider ?? 0;
+    const ticketingProviderName = TICKETING_PROVIDER_MAP[ticketingProvider] || 'None';
 
-    // Build ticket types from manifest
-    const ticketTypes = this.buildTicketTypes(manifest);
+    // Clone vendor agreements for the offer
+    const clonedVAs = this.cloneVendorAgreements(vendorAgreements, outingId);
 
-    // Determine ticketing provider
-    const ticketingProvider = orgSettings?.ticketing_provider ?? 0;
-    const ticketingProviderName =
-      TICKETING_PROVIDER_MAP[ticketingProvider] || 'None';
+    // Build deliveries from org defaults
+    const deliveries = (orgSettings?.deliveries_default || []).map((d: any) => {
+      const clone = { ...d };
+      delete clone.id;
+      return clone;
+    });
 
-    const offer: any = {
-      id: outingId,
-      event_id: eventId,
-      organization_id: orgId,
-      title,
-      description,
-      access_code: accessCode,
-      ticketing_provider: ticketingProvider,
-      ticketing_provider_name: ticketingProviderName,
-      vendor_agreements: clonedVAs,
-      ticket_types: ticketTypes,
-    };
+    // Build event object (stripped shape required by create_offer)
+    const eventObj = this.buildEventObject(eventId, eventInfo, orgSettings, ticketingProvider);
 
-    if (group) {
-      offer.group_id = group.id;
-      offer.group_name = group.name;
+    // Determine deadline from event date_time
+    const deadline = this.buildDeadline(eventInfo);
+
+    // Start with template if available, then override specific fields
+    let offer: any;
+    if (templateOffer) {
+      offer = { ...templateOffer };
+      // Override with our values
+      offer.id = outingId;
+      offer.is_create = true;
+      offer.title = title;
+      offer.description = description;
+      offer.access_code = accessCode;
+      offer.event = eventObj;
+      offer.deadline = deadline;
+      offer.offer_vendor_agreement = clonedVAs;
+      offer.deliveries = deliveries;
+      if (group) offer.group = group;
+    } else {
+      // Build from scratch using org defaults
+      offer = {
+        id: outingId,
+        is_create: true,
+        title,
+        description,
+        access_code: accessCode,
+        reason: 0, // Outing
+        ticket_types: 2, // OpenInventory
+        type: 1,
+        inventory_source: 1,
+        new_inventory_management_flow: true,
+        delay_delivery_fulfillment_status: 0,
+        allow_all_in_fees: false,
+        show_on_group_page: true,
+        ticket_sort: 0,
+        org_image_option: 1,
+        seat_location_display: 1,
+        restrict_offer: 1,
+        lock_email_address_editing: true,
+        is_date_time_tba: eventInfo?.is_date_time_tba ?? false,
+        is_deadline_tba: eventInfo?.is_date_time_tba ?? false,
+        questions: null,
+        allow_show_purchased_override: null,
+        social_sharing_link_enabled: false,
+        code_entry_placeholder: 'Enter Discount Code',
+        landing_quantity_filter: 2,
+        tickets: [],
+        ticketing_config: {},
+        discounts: [],
+        add_ons: [],
+        add_on_options: [],
+        promotion_codes: [],
+        discount_white_list: [],
+        promotion_white_list: [],
+
+        // Org defaults
+        action_button_color: orgSettings?.action_button_color_default,
+        action_button_text_color: orgSettings?.action_button_text_color_default,
+        display_mode: orgSettings?.display_mode_default,
+        panel_view_default: orgSettings?.panel_view_default,
+        toggle_settings: orgSettings?.toggle_settings,
+        allianz_enabled: orgSettings?.allianz_enabled,
+        shift4_payment_enabled: orgSettings?.shift4_payment_enabled,
+        travel_leisure_link_enabled: orgSettings?.travel_leisure_link_enabled,
+        zip_payment_enabled: orgSettings?.zip_payment_enabled,
+        seat_selection_type: orgSettings?.seat_selection_type,
+        page_access: orgSettings?.page_access_default,
+
+        // Required objects
+        event: eventObj,
+        deadline,
+        ticketing_provider_config: {
+          ticketing_provider: ticketingProvider,
+          add_ons: [],
+          rate_limit_setting: 0,
+        },
+        contact: {
+          name: orgSettings?.name || 'Event Contact',
+          email: '',
+          phone: '',
+        },
+        offer_vendor_agreement: clonedVAs,
+        deliveries,
+        group: group || null,
+      };
     }
 
+    return { offers: [offer], tiers: [] };
+  }
+
+  private buildEventObject(eventId: string, eventInfo: any, orgSettings: any, ticketingProvider: number): any {
+    const dt = eventInfo?.date_time || {};
     return {
-      offers: [offer],
-      tiers: [],
+      id: eventId,
+      title: eventInfo?.title || eventInfo?.venue?.name || 'Event',
+      date_time: {
+        hour: dt.hour ?? 19,
+        minute: dt.minute ?? 0,
+        second: dt.second ?? 0,
+        offset: dt.offset ?? '-05:00:00',
+        timezone: dt.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York',
+        year: dt.year ?? new Date().getFullYear(),
+        month: dt.month ?? new Date().getMonth() + 1,
+        day: dt.day ?? new Date().getDate(),
+      },
+      ticketing_provider_config: {
+        ticketing_provider: ticketingProvider,
+        has_event_id: true,
+        event_name: eventInfo?.title || eventInfo?.venue?.name || 'Event',
+        entity_type: 'Event',
+        has_complete_oi_config: true,
+      },
+      venue: {
+        id: eventInfo?.venue?.id ?? null,
+        name: eventInfo?.venue?.name ?? 'Venue',
+        timezone: eventInfo?.venue?.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York',
+      },
+      is_date_time_tba: eventInfo?.is_date_time_tba ?? false,
+      organization: { id: eventInfo?.organization?.id ?? orgSettings?.id ?? '' },
+      merchandise_media: null,
+      merchandise_image: null,
     };
   }
 
-  private cloneVendorAgreements(vendorAgreements: any): any[] {
-    if (!vendorAgreements || !Array.isArray(vendorAgreements)) return [];
+  private buildDeadline(eventInfo: any): any {
+    const dt = eventInfo?.date_time || {};
+    return {
+      year: dt.year ?? new Date().getFullYear(),
+      month: dt.month ?? new Date().getMonth() + 1,
+      day: dt.day ?? new Date().getDate(),
+      hour: dt.hour ?? 19,
+      minute: dt.minute ?? 0,
+      second: 0,
+      offset: dt.offset ?? '-05:00:00',
+      timezone: dt.timezone ?? 'America/New_York',
+    };
+  }
+
+  private cloneVendorAgreements(vendorAgreements: any[], outingId: string): any[] {
+    if (!Array.isArray(vendorAgreements)) return [];
     return vendorAgreements.map((va: any) => {
       const clone = { ...va };
-      // Strip IDs so the API creates new association records
-      delete clone.id;
-      delete clone.vendor_agreement_id;
-      // Strip delivery-related IDs
-      if (Array.isArray(clone.deliveries)) {
-        clone.deliveries = clone.deliveries.map((d: any) => {
-          const dClone = { ...d };
-          delete dClone.id;
-          delete dClone.delivery_id;
-          return dClone;
-        });
+      clone.id = randomUUID(); // New UUID for the offer VA
+      clone.owner_id = outingId;
+      // Strip IDs from fee entries
+      const fees = clone.fees || {};
+      for (const feeKey of ['at_account_receivable', 'at_checkout', 'at_payout']) {
+        if (Array.isArray(fees[feeKey])) {
+          fees[feeKey] = fees[feeKey].map((entry: any) => {
+            const e = { ...entry };
+            delete e.id;
+            return e;
+          });
+        }
       }
+      clone.fees = fees;
       return clone;
     });
   }
 
-  private buildTicketTypes(manifest: any): any[] {
-    if (!manifest) return [];
-    const sections = manifest.sections || manifest.ticket_types || [];
-    if (!Array.isArray(sections)) return [];
+  private buildItemLibraryPayload(
+    manifest: any,
+    orgSettings: any,
+    vendorAgreements: any[],
+    itemLibraryId: string | null,
+  ): any {
+    const areas = manifest?.areas || [];
+    const holds = manifest?.holds || [];
+    const ticketingProvider = orgSettings?.ticketing_provider_config?.ticketing_provider ?? orgSettings?.ticketing_provider ?? 0;
+    const ticketingProviderName = TICKETING_PROVIDER_MAP[ticketingProvider] || 'None';
 
-    return sections.map((section: any) => ({
-      name: section.name || section.section_name || 'General',
-      price: section.price || section.face_value || 0,
-      quantity: section.quantity || section.available || 0,
-      section: section.section || section.section_name || null,
-      row: section.row || null,
-    }));
-  }
+    // Find best VA for item library: prefer type=5 (Custom), fall back to type=2 (Open Inventory)
+    let bestVaId = '';
+    const customVa = vendorAgreements.find((va: any) => va.type === 5);
+    const openVa = vendorAgreements.find((va: any) => va.type === 2);
+    bestVaId = customVa?.id || openVa?.id || (vendorAgreements[0]?.id ?? '');
 
-  private buildItemLibraryPayload(manifest: any, itemLibraryId: string | null): any {
+    // Create one item per area+buyer combination
     const items: any[] = [];
-    const sections = manifest?.sections || manifest?.ticket_types || [];
+    for (const area of areas) {
+      const buyers = area.buyers || [];
+      const areaSections = area.sections || [];
+      const sectionConfigs = areaSections.map((sec: any, idx: number) => ({
+        id: sec.id,
+        condition_sort_order: idx,
+      }));
 
-    if (Array.isArray(sections)) {
-      for (const section of sections) {
+      for (const buyer of buyers) {
         items.push({
-          id: itemLibraryId ? undefined : null,
-          item_library_id: itemLibraryId || null,
-          name: section.name || section.section_name || 'General',
-          price: section.price || section.face_value || 0,
-          quantity: section.quantity || section.available || 0,
+          id: null,
+          name: `${area.name || 'Area'} - ${buyer.name || 'Buyer'}`,
+          sort_order: 0,
+          timestamp: Date.now(),
+          costco_context: { program_id: '', program_title: '' },
+          data: {
+            TicketingProvider: ticketingProviderName,
+            RateLimitSetting: 0,
+            EntityType: 'Outing',
+            AreaBuyers: [{
+              item_id: null,
+              area: area.id,
+              buyer: buyer.id,
+              name: area.name || 'Area',
+              buyer_name_origin: buyer.name || 'Buyer',
+              amount_to_group: 0.0,
+              vendor_agreement_id: bestVaId,
+              taxable: true,
+              sections: [],
+              section_configs: sectionConfigs,
+              sections_ga_displayed: [],
+              secondary_buyers: [],
+            }],
+            Holds: holds.map((h: any) => h.id),
+          },
         });
       }
     }
 
     return {
-      id: itemLibraryId || null,
+      id: itemLibraryId,
+      name: 'Inventory',
       items,
     };
   }
 
-  // ── HTTP helpers (same pattern as FevoApiClient) ─────────────────────────
+  private buildItemLibraryUpsertPayload(
+    originalPayload: any,
+    itemLibraryId: string,
+    returnedItems: any[],
+  ): any {
+    // Map original items to returned items by index, set assigned IDs
+    const upsertItems = originalPayload.items.map((item: any, idx: number) => {
+      const returned = returnedItems[idx];
+      if (!returned) return item;
 
-  private async authenticatedGet(path: string, retried = false, retryCount = 0): Promise<any> {
-    const token = await this.tokenManager.getAccessToken();
-    const url = `${this.baseUrl}${path}`;
+      const updatedItem = { ...item, id: returned.id };
+      // Set item_id on each AreaBuyer to the parent item's ID
+      if (updatedItem.data?.AreaBuyers) {
+        updatedItem.data = { ...updatedItem.data };
+        updatedItem.data.AreaBuyers = updatedItem.data.AreaBuyers.map((ab: any) => ({
+          ...ab,
+          item_id: returned.id,
+        }));
+      }
+      return updatedItem;
+    });
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60_000);
-
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-          'User-Agent': BROWSER_UA,
-        },
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (response.status === 401 && !retried) {
-      console.log('[FevoOfferService] Got 401, re-authenticating...');
-      this.tokenManager.invalidate();
-      return this.authenticatedGet(path, true, retryCount);
-    }
-
-    if (
-      (response.status === 429 || response.status === 403 || response.status === 503) &&
-      retryCount < 3
-    ) {
-      const delay = Math.pow(2, retryCount) * 2000;
-      console.warn(`[FevoOfferService] Got ${response.status}, retrying in ${delay}ms...`);
-      await new Promise((r) => setTimeout(r, delay));
-      return this.authenticatedGet(path, retried, retryCount + 1);
-    }
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(
-        `FEVO API error: ${response.status} ${response.statusText} — ${text.slice(0, 200)}`,
-      );
-    }
-
-    return response.json();
-  }
-
-  private async authenticatedPost(
-    path: string,
-    body: any,
-    retried = false,
-    retryCount = 0,
-  ): Promise<any> {
-    const token = await this.tokenManager.getAccessToken();
-    const url = `${this.baseUrl}${path}`;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60_000);
-
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'User-Agent': BROWSER_UA,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (response.status === 401 && !retried) {
-      console.log('[FevoOfferService] Got 401 on POST, re-authenticating...');
-      this.tokenManager.invalidate();
-      return this.authenticatedPost(path, body, true, retryCount);
-    }
-
-    if (
-      (response.status === 429 || response.status === 403 || response.status === 503) &&
-      retryCount < 3
-    ) {
-      const delay = Math.pow(2, retryCount) * 2000;
-      console.warn(`[FevoOfferService] Got ${response.status} on POST, retrying in ${delay}ms...`);
-      await new Promise((r) => setTimeout(r, delay));
-      return this.authenticatedPost(path, body, retried, retryCount + 1);
-    }
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(
-        `FEVO API error: ${response.status} ${response.statusText} — ${text.slice(0, 200)}`,
-      );
-    }
-
-    return response.json();
-  }
-
-  private async authenticatedPut(
-    path: string,
-    body: any,
-    retried = false,
-    retryCount = 0,
-  ): Promise<any> {
-    const token = await this.tokenManager.getAccessToken();
-    const url = `${this.baseUrl}${path}`;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60_000);
-
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'User-Agent': BROWSER_UA,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (response.status === 401 && !retried) {
-      console.log('[FevoOfferService] Got 401 on PUT, re-authenticating...');
-      this.tokenManager.invalidate();
-      return this.authenticatedPut(path, body, true, retryCount);
-    }
-
-    if (
-      (response.status === 429 || response.status === 403 || response.status === 503) &&
-      retryCount < 3
-    ) {
-      const delay = Math.pow(2, retryCount) * 2000;
-      console.warn(`[FevoOfferService] Got ${response.status} on PUT, retrying in ${delay}ms...`);
-      await new Promise((r) => setTimeout(r, delay));
-      return this.authenticatedPut(path, body, retried, retryCount + 1);
-    }
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(
-        `FEVO API error: ${response.status} ${response.statusText} — ${text.slice(0, 200)}`,
-      );
-    }
-
-    return response.json();
+    return {
+      id: itemLibraryId,
+      name: originalPayload.name,
+      items: upsertItems,
+    };
   }
 }
 
@@ -643,7 +672,7 @@ export function getFevoOfferService(): FevoOfferService | null {
 
   if (baseUrl && tokenManager) {
     serviceInstance = new FevoOfferService(baseUrl, tokenManager);
-    console.log('[FevoOfferService] Configured with JWT auth');
+    console.log('[FevoOfferService] Configured with MCP + JWT auth');
     return serviceInstance;
   }
 
