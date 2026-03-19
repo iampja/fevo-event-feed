@@ -20,11 +20,11 @@ services:
         generateValue: true
       # FEVO API integration (optional — uses mock client when not set)
       - key: FEVO_API_BASE_URL
-        value: https://stage.gofevo.com
+        value: https://dev.gofevo.com
       - key: FEVO_USERNAME
         value: pjohnson@fevo.com
       - key: FEVO_PASSWORD
-        value: TQR.dtb2tnz7khz1ukd
+        value: adj-xzg5uhv*apv3JWT
       - key: FEVO_WEBHOOK_SECRET
         sync: false
       - key: ADMIN_USERNAME
@@ -61,6 +61,9 @@ services:
     runtime: static
     buildCommand: npm install --include=dev && npm run build --workspace=packages/ai-agent
     staticPublishPath: packages/ai-agent/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://fevo-event-feed-api.onrender.com/api/v1/event-feed/fevo
     routes:
       - type: rewrite
         source: /*

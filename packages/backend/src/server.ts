@@ -48,6 +48,7 @@ app.get('/', (_req, res) => {
       health: '/health',
       event_feed: '/api/v1/event-feed',
       segments: '/api/v1/event-feed/segments',
+      fevo_proxy: '/api/v1/event-feed/fevo',
       docs: '/docs',
     },
   });

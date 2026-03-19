@@ -4,7 +4,7 @@ type CreateOfferCTAProps = {
   signupUrl?: string;
 };
 
-export function CreateOfferCTA({ signupUrl = 'https://www.gofevo.com' }: CreateOfferCTAProps) {
+export function CreateOfferCTA({ signupUrl = 'https://fevo-ai-agent.onrender.com' }: CreateOfferCTAProps) {
   return (
     <div class="fevo-ef-create-cta">
       <div class="fevo-ef-create-cta-content">

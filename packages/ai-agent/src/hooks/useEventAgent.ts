@@ -6,6 +6,7 @@ import EventDraftPreview from '@/components/EventDraftPreview';
 import QuickActionButtons, { ActionButton } from '@/components/QuickActionButtons';
 import ExampleCards from '@/components/ExampleCards';
 import TierUpgradePrompt from '@/components/TierUpgradePrompt';
+import { listOrganizations, searchEvents, launchOffer } from '@/services/fevoApi';
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -19,9 +20,15 @@ export function useEventAgent() {
   const [screen, setScreen] = useState<'agent' | 'success' | 'draft'>('agent');
   const [messageCount, setMessageCount] = useState(0);
   const [inputValue, setInputValue] = useState('');
-  const manageUrl = eventData.slug
-    ? `https://dev.gofevo.com/manage/offer/${eventData.slug}`
-    : 'https://dev.gofevo.com/manage';
+  const [fevoOutingId, setFevoOutingId] = useState<string | null>(null);
+  const [fevoOrgId, setFevoOrgId] = useState<string | null>(null);
+  const [fevoEventId, setFevoEventId] = useState<string | null>(null);
+  const launchAbortRef = useRef<(() => void) | null>(null);
+  const manageUrl = fevoOutingId
+    ? `https://dev.gofevo.com/manage/outing/${fevoOutingId}`
+    : eventData.slug
+      ? `https://dev.gofevo.com/manage/offer/${eventData.slug}`
+      : 'https://dev.gofevo.com/manage';
 
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -33,6 +40,7 @@ export function useEventAgent() {
     return () => {
       mountedRef.current = false;
       timersRef.current.forEach(clearTimeout);
+      launchAbortRef.current?.();
     };
   }, []);
 
@@ -66,18 +74,6 @@ export function useEventAgent() {
 
   // --- Conversation flow functions ---
 
-  const launchEvent = useCallback(() => {
-    addMessage({ sender: 'user', text: 'Launch event' });
-    setIsTyping(true);
-    addTimer(() => {
-      setIsTyping(false);
-      addMessage({ sender: 'agent', text: '🚀 Launching your event...' });
-      addTimer(() => {
-        setScreen('success');
-      }, 1200);
-    }, 600);
-  }, [addMessage, addTimer]);
-
   const saveAndExit = useCallback(() => {
     addMessage({ sender: 'user', text: 'Save and exit' });
     setIsTyping(true);
@@ -89,6 +85,112 @@ export function useEventAgent() {
       }, 1000);
     }, 600);
   }, [addMessage, addTimer]);
+
+  const launchEvent = useCallback(async () => {
+    addMessage({ sender: 'user', text: 'Launch event' });
+    setIsTyping(true);
+
+    try {
+      // Step 1: Get organization
+      addMessage({ sender: 'agent', text: '🔍 Searching for your organization...' });
+      let orgId = fevoOrgId;
+      if (!orgId) {
+        const orgsResponse = await listOrganizations();
+        const orgs = orgsResponse?.organizations || orgsResponse?.data || orgsResponse;
+        if (!Array.isArray(orgs) || orgs.length === 0) {
+          throw new Error('No organizations found. Please check your FEVO account setup.');
+        }
+        orgId = orgs[0].id || orgs[0].orgId;
+        setFevoOrgId(orgId);
+      }
+
+      // Step 2: Search for matching event
+      addMessage({ sender: 'agent', text: '🔍 Searching for matching event...' });
+      let eventId = fevoEventId;
+      if (!eventId) {
+        const eventsResponse = await searchEvents(orgId!, eventData.name || undefined);
+        const events = eventsResponse?.events || eventsResponse?.data || eventsResponse;
+        if (!Array.isArray(events) || events.length === 0) {
+          throw new Error('No matching events found in FEVO. Please verify the event exists.');
+        }
+        eventId = events[0].id || events[0].eventId;
+        setFevoEventId(eventId);
+      }
+
+      // Step 3: Launch offer via SSE
+      setIsTyping(false);
+      addMessage({ sender: 'agent', text: '🚀 Launching your event in FEVO...' });
+
+      const accessCode = eventData.slug || eventData.name?.toLowerCase().replace(/\s+/g, '-') || 'event';
+
+      launchAbortRef.current = launchOffer(
+        {
+          orgId: orgId!,
+          eventId: eventId!,
+          title: eventData.name || 'Untitled Event',
+          description: `${eventData.eventType} - ${eventData.mode} event`,
+          accessCode,
+          hasGroups: eventData.hasGroups,
+        },
+        // onProgress
+        (step, detail) => {
+          const stepMessages: Record<string, string> = {
+            creating: '⚙️ Creating offer in FEVO...',
+            polling: '⏳ Waiting for offer to be ready...',
+            building_inventory: '📦 Setting up inventory...',
+            linking: '🔗 Linking inventory to offer...',
+          };
+          const msg = stepMessages[step] || detail || `Processing: ${step}...`;
+          addMessage({ sender: 'agent', text: msg });
+        },
+        // onDone
+        (result) => {
+          setFevoOutingId(result.outingId);
+          addMessage({
+            sender: 'agent',
+            text: `✅ Event launched successfully! Outing ID: <strong>${result.outingId}</strong>`,
+          });
+          addTimer(() => {
+            setScreen('success');
+          }, 1200);
+        },
+        // onError
+        (errorMsg) => {
+          setIsTyping(false);
+          addMessage({
+            sender: 'agent',
+            text: `❌ Launch failed: ${errorMsg}. You can try again or save as draft.`,
+          });
+          const actions: ActionButton[] = [
+            { label: '🚀 Retry Launch', action: () => launchEvent(), variant: 'primary' },
+            { label: 'Save Draft', action: () => saveAndExit() },
+          ];
+          addMessage({
+            sender: 'agent',
+            text: 'What would you like to do?',
+            widget: React.createElement(QuickActionButtons, { actions }),
+          });
+        },
+      );
+    } catch (err: any) {
+      setIsTyping(false);
+      const errorMsg = err?.message || 'Unknown error connecting to FEVO';
+      addMessage({
+        sender: 'agent',
+        text: `❌ ${errorMsg}`,
+      });
+      const actions: ActionButton[] = [
+        { label: '🚀 Retry Launch', action: () => launchEvent(), variant: 'primary' },
+        { label: 'Save Draft', action: () => saveAndExit() },
+      ];
+      addMessage({
+        sender: 'agent',
+        text: 'What would you like to do?',
+        widget: React.createElement(QuickActionButtons, { actions }),
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addMessage, addTimer, eventData, fevoOrgId, fevoEventId, saveAndExit]);
 
   const offerEnhancements = useCallback(() => {
     const actions: ActionButton[] = [
@@ -572,8 +674,10 @@ export function useEventAgent() {
       alert(`Before launching, please set: ${missing.join(', ')}`);
       return;
     }
-    setScreen('success');
-  }, [eventData]);
+    // Switch to agent screen to show progress, then launch via real API
+    setScreen('agent');
+    launchEvent();
+  }, [eventData, launchEvent]);
 
   return {
     messages,
