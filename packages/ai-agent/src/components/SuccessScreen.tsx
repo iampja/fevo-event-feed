@@ -5,6 +5,7 @@ interface SuccessScreenProps {
   variant: 'launched' | 'draft';
   eventData: EventData;
   userTier: UserTier;
+  manageUrl?: string;
   onLaunchDraft?: () => void;
 }
 
@@ -12,6 +13,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
   variant,
   eventData,
   userTier,
+  manageUrl,
   onLaunchDraft,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -29,7 +31,8 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
   };
 
   const handleViewDashboard = () => {
-    window.open('https://dev.fevo-enterprise.com/create-event', '_blank', 'noopener,noreferrer');
+    const url = manageUrl || `https://dev.gofevo.com/manage/offer/${eventData.slug || ''}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

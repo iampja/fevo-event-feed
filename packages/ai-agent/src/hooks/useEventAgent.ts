@@ -19,6 +19,7 @@ export function useEventAgent() {
   const [screen, setScreen] = useState<'agent' | 'success' | 'draft'>('agent');
   const [messageCount, setMessageCount] = useState(0);
   const [inputValue, setInputValue] = useState('');
+  const [manageUrl, setManageUrl] = useState<string | undefined>(undefined);
 
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -578,6 +579,7 @@ export function useEventAgent() {
     userTier,
     isTyping,
     screen,
+    manageUrl,
     inputValue,
     setInputValue,
     sendMessage: () => sendMessage(),

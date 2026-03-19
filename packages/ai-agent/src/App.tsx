@@ -17,6 +17,7 @@ const App: React.FC = () => {
     setInputValue,
     sendMessage,
     launchDraft,
+    manageUrl,
   } = useEventAgent();
 
   return (
@@ -39,6 +40,7 @@ const App: React.FC = () => {
           variant={screen === 'success' ? 'launched' : 'draft'}
           eventData={eventData}
           userTier={userTier}
+          manageUrl={manageUrl}
           onLaunchDraft={launchDraft}
         />
       )}
