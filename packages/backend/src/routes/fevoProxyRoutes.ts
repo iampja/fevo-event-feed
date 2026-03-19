@@ -237,30 +237,13 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
   };
 
   try {
-    // Direct MCP calls instead of service.launchOffer() to debug hanging
-    sendEvent('debug_step', 'Step 1: Getting org settings...');
-    const orgSettings = await service.getOrgSettings(params.orgId);
-    sendEvent('debug_step', `Org settings OK: ${orgSettings?.name || 'loaded'}`);
+    // Warm up MCP session before launch flow (prevents init hanging in SSE context)
+    await service.listOrganizations(undefined, 0, 1);
 
-    sendEvent('debug_step', 'Step 2: Getting vendor agreements...');
-    const vas = await service.getVendorAgreements(params.orgId);
-    sendEvent('debug_step', `VAs OK: ${Array.isArray(vas) ? vas.length : 0}`);
-
-    sendEvent('debug_step', 'Step 3: Searching events...');
-    const events = await service.searchEvents(params.orgId);
-    sendEvent('debug_step', `Events OK: ${events?.overviews?.length || 0}`);
-
-    sendEvent('debug_step', 'Step 4: Getting manifest...');
-    let manifest: any = { areas: [], holds: [] };
-    try {
-      manifest = await service.getManifest(params.eventId);
-    } catch { /* non-fatal */ }
-    sendEvent('debug_step', `Manifest: ${manifest?.areas?.length || 0} areas`);
-
-    // Now call launchOffer with the warmed session
-    sendEvent('debug_step', 'Step 5: Launching offer...');
     const result = await service.launchOffer(params, (step, detail) => {
-      if (!aborted) sendEvent(step, detail);
+      if (!aborted) {
+        sendEvent(step, detail);
+      }
     });
 
     if (!aborted) {
@@ -371,7 +354,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v8-debug-launch', ts: Date.now() });
+  res.json({ version: '2026-03-19-v9-warmup', ts: Date.now() });
 });
 
 /**
