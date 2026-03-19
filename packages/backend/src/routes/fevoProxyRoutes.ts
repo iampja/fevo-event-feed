@@ -346,4 +346,51 @@ router.get('/debug', async (_req: Request, res: Response) => {
   res.json(results);
 });
 
+/**
+ * GET /version
+ * Returns the deployed code version for debugging deploy issues
+ */
+router.get('/version', (_req: Request, res: Response) => {
+  res.json({ version: '2026-03-19-v5-https-request', ts: Date.now() });
+});
+
+/**
+ * GET /test-sse-mcp
+ * Test MCP call from within an SSE response context (to debug launch hang)
+ */
+router.get('/test-sse-mcp', async (_req: Request, res: Response) => {
+  const service = getService(res);
+  if (!service) return;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  res.write(`data: ${JSON.stringify({ step: 'start', detail: 'Testing MCP from SSE context...' })}\n\n`);
+
+  try {
+    const orgs = await service.listOrganizations();
+    const count = orgs?.overviews?.length || 0;
+    res.write(`data: ${JSON.stringify({ step: 'orgs', detail: `Found ${count} orgs` })}\n\n`);
+
+    if (count > 0) {
+      const orgId = orgs.overviews[0].id;
+      const settings = await service.getOrgSettings(orgId);
+      res.write(`data: ${JSON.stringify({ step: 'settings', detail: `Got settings for ${settings?.name || orgId}` })}\n\n`);
+
+      const vas = await service.getVendorAgreements(orgId);
+      const vaCount = Array.isArray(vas) ? vas.length : 0;
+      res.write(`data: ${JSON.stringify({ step: 'vas', detail: `Got ${vaCount} vendor agreements` })}\n\n`);
+    }
+
+    res.write(`data: ${JSON.stringify({ step: 'done', detail: 'All MCP calls succeeded in SSE context!' })}\n\n`);
+  } catch (err: any) {
+    res.write(`data: ${JSON.stringify({ step: 'error', detail: err.message })}\n\n`);
+  }
+
+  res.end();
+});
+
 export default router;
