@@ -19,7 +19,8 @@ export function useEventAgent() {
   const [screen, setScreen] = useState<'agent' | 'success' | 'draft'>('agent');
   const [messageCount, setMessageCount] = useState(0);
   const [inputValue, setInputValue] = useState('');
-  const [manageUrl, setManageUrl] = useState<string | undefined>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [manageUrl, _setManageUrl] = useState<string | undefined>(undefined);
 
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
