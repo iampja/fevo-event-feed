@@ -5,19 +5,19 @@ export interface ExamplePrompt {
 
 export const examplePrompts: ExamplePrompt[] = [
   {
-    prompt: 'Event at Highland Heights Community Center, $10 adults, $5 kids on July 4th',
-    label: 'Ticket event with Adult/Child pricing + location',
+    prompt: 'D-backs vs. Giants group offer at Chase Field, $50 GA tickets',
+    label: 'Arizona Diamondbacks — group ticket offer',
   },
   {
-    prompt: 'Free community meetup registration at Central Park, 100 people',
-    label: 'Free registration event (no payment required)',
+    prompt: 'Arizona Cardinals game day at State Farm Stadium, $75 GA and $150 VIP',
+    label: 'Arizona Cardinals — multi-tier pricing',
   },
   {
-    prompt: 'Weekly yoga classes every Tuesday at Zen Studio, $20 per class',
-    label: 'Recurring event series (may require Pro for unlimited)',
+    prompt: 'Palisades Tahoe weekend event, $30 adults, $15 kids',
+    label: 'Heards Music & Entertainment — family pricing',
   },
   {
-    prompt: 'Concert at The Fillmore on July 15, $50 GA and $120 VIP, 500 capacity',
-    label: 'Multi-tier ticketing with venue and capacity',
+    prompt: 'Akron RubberDucks game at Canal Park, $20 GA, 500 capacity',
+    label: 'Minor League Baseball — simple group offer',
   },
 ];

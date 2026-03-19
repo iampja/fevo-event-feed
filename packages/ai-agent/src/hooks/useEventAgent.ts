@@ -96,12 +96,15 @@ export function useEventAgent() {
       let orgId = fevoOrgId;
       if (!orgId) {
         const orgsResponse = await listOrganizations();
-        const orgs = orgsResponse?.organizations || orgsResponse?.data || orgsResponse;
+        const orgs = orgsResponse?.overviews || orgsResponse?.organizations || orgsResponse?.data || orgsResponse;
         if (!Array.isArray(orgs) || orgs.length === 0) {
           throw new Error('No organizations found. Please check your FEVO account setup.');
         }
-        orgId = orgs[0].id || orgs[0].orgId;
+        // Pick first org with active events
+        const activeOrg = orgs.find((o: any) => (o.active_events || 0) > 0) || orgs[0];
+        orgId = activeOrg.id;
         setFevoOrgId(orgId);
+        addMessage({ sender: 'agent', text: `✓ Found org: <strong>${activeOrg.name}</strong>` });
       }
 
       // Step 2: Search for matching event
@@ -109,12 +112,15 @@ export function useEventAgent() {
       let eventId = fevoEventId;
       if (!eventId) {
         const eventsResponse = await searchEvents(orgId!, eventData.name || undefined);
-        const events = eventsResponse?.events || eventsResponse?.data || eventsResponse;
+        const events = eventsResponse?.overviews || eventsResponse?.events || eventsResponse?.data || eventsResponse;
         if (!Array.isArray(events) || events.length === 0) {
           throw new Error('No matching events found in FEVO. Please verify the event exists.');
         }
-        eventId = events[0].id || events[0].eventId;
+        // Pick first event with outings or first available
+        const bestEvent = events.find((e: any) => (e.outing_count || 0) > 0) || events[0];
+        eventId = bestEvent.id;
         setFevoEventId(eventId);
+        addMessage({ sender: 'agent', text: `✓ Found event: <strong>${bestEvent.title}</strong>` });
       }
 
       // Step 3: Launch offer via SSE
