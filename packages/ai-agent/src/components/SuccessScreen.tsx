@@ -29,7 +29,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
   };
 
   const handleViewDashboard = () => {
-    alert('Dashboard navigation is not yet implemented.');
+    window.open('https://dev.fevo-enterprise.com/create-event', '_blank', 'noopener,noreferrer');
   };
 
   return (
