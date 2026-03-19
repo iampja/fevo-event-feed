@@ -215,10 +215,16 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   };
 
+  // Keepalive every 10s so Render doesn't kill the connection
+  const keepalive = setInterval(() => {
+    if (!aborted) res.write(': keepalive\n\n');
+  }, 10_000);
+
   // Handle client disconnect
   let aborted = false;
   req.on('close', () => {
     aborted = true;
+    clearInterval(keepalive);
   });
 
   const params: LaunchOfferParams = {
@@ -246,10 +252,81 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
       sendEvent('error', err.message);
     }
   } finally {
+    clearInterval(keepalive);
     if (!aborted) {
       res.end();
     }
   }
+});
+
+/**
+ * GET /debug
+ * Test FEVO API connectivity — checks auth, org, events, manifest
+ */
+router.get('/debug', async (_req: Request, res: Response) => {
+  const service = getService(res);
+  if (!service) return;
+
+  const results: Record<string, any> = {};
+
+  try {
+    results.orgs = { status: 'testing...' };
+    const orgs = await service.listOrganizations();
+    const orgList = orgs?.overviews || [];
+    results.orgs = { status: 'ok', count: orgList.length, first: orgList[0]?.name };
+
+    if (orgList.length > 0) {
+      const orgId = orgList[0].id;
+      const orgName = orgList[0].name;
+
+      results.orgSettings = { status: 'testing...' };
+      try {
+        const settings = await service.getOrgSettings(orgId);
+        results.orgSettings = { status: 'ok', orgName, hasDeliveries: !!settings?.deliveries_default };
+      } catch (err: any) {
+        results.orgSettings = { status: 'error', error: err.message };
+      }
+
+      results.vendorAgreements = { status: 'testing...' };
+      try {
+        const vas = await service.getVendorAgreements(orgId);
+        results.vendorAgreements = { status: 'ok', count: Array.isArray(vas) ? vas.length : 'not-array' };
+      } catch (err: any) {
+        results.vendorAgreements = { status: 'error', error: err.message };
+      }
+
+      results.events = { status: 'testing...' };
+      try {
+        const events = await service.searchEvents(orgId);
+        const evList = events?.overviews || [];
+        results.events = {
+          status: 'ok',
+          count: evList.length,
+          first: evList[0] ? { id: evList[0].id, title: evList[0].title } : null,
+        };
+
+        if (evList.length > 0) {
+          results.manifest = { status: 'testing...' };
+          try {
+            const manifest = await service.getManifest(evList[0].id);
+            results.manifest = {
+              status: 'ok',
+              areas: manifest?.areas?.length ?? 0,
+              holds: manifest?.holds?.length ?? 0,
+            };
+          } catch (err: any) {
+            results.manifest = { status: 'error', error: err.message };
+          }
+        }
+      } catch (err: any) {
+        results.events = { status: 'error', error: err.message };
+      }
+    }
+  } catch (err: any) {
+    results.orgs = { status: 'error', error: err.message };
+  }
+
+  res.json(results);
 });
 
 export default router;

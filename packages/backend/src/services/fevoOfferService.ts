@@ -89,39 +89,58 @@ export class FevoOfferService {
   async searchEvents(
     orgId: string,
     query?: string,
-    fromDate?: string,
-    toDate?: string,
+    _fromDate?: string,
+    _toDate?: string,
     page = 1,
     pageSize = 100,
   ): Promise<any> {
-    // FEVO REST API uses snake_case params
+    // The REST API does not reliably filter by organization_id as a query param.
+    // Instead, fetch events (optionally with text filter) and filter by org client-side.
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(pageSize),
-      organization_id: orgId,
     });
     if (query) params.set('filter', query);
-    if (fromDate) params.set('fromDate', fromDate);
-    if (toDate) params.set('toDate', toDate);
 
     console.log(`[FevoOfferService] searchEvents: /api/manage/event/overviews?${params}`);
     const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
+    const allEvents = result?.overviews || [];
 
-    // If filter returned no results, retry without filter
-    const events = result?.overviews || [];
-    if (events.length === 0 && query) {
-      console.log('[FevoOfferService] searchEvents: no results with filter, retrying without...');
-      const fallbackParams = new URLSearchParams({
-        page: String(page),
-        pageSize: String(pageSize),
-        organization_id: orgId,
-      });
-      if (fromDate) fallbackParams.set('fromDate', fromDate);
-      if (toDate) fallbackParams.set('toDate', toDate);
-      return this.authenticatedGet(`/api/manage/event/overviews?${fallbackParams}`);
+    // Filter to events belonging to the requested org
+    const orgEvents = allEvents.filter(
+      (e: any) => e.organization?.id === orgId || e.organization_id === orgId,
+    );
+
+    console.log(
+      `[FevoOfferService] searchEvents: ${allEvents.length} total events, ${orgEvents.length} for org ${orgId}`,
+    );
+
+    // If filtered by text and no org events, retry without text filter
+    if (orgEvents.length === 0 && query) {
+      console.log('[FevoOfferService] searchEvents: retrying without text filter...');
+      return this.searchEvents(orgId, undefined, undefined, undefined, 1, pageSize);
     }
 
-    return result;
+    // If still no org events after scanning page 1, try pages 2-3
+    if (orgEvents.length === 0 && !query && page === 1) {
+      console.log('[FevoOfferService] searchEvents: no org events on page 1, scanning pages 2-3...');
+      const moreResults = await Promise.allSettled([
+        this.authenticatedGet(`/api/manage/event/overviews?page=2&pageSize=${pageSize}`),
+        this.authenticatedGet(`/api/manage/event/overviews?page=3&pageSize=${pageSize}`),
+      ]);
+      for (const r of moreResults) {
+        if (r.status === 'fulfilled') {
+          for (const e of r.value?.overviews || []) {
+            if (e.organization?.id === orgId || e.organization_id === orgId) {
+              orgEvents.push(e);
+            }
+          }
+        }
+      }
+      console.log(`[FevoOfferService] searchEvents: found ${orgEvents.length} org events after page scan`);
+    }
+
+    return { overviews: orgEvents, total: orgEvents.length };
   }
 
   async getManifest(eventId: string, saleType?: string): Promise<any> {
