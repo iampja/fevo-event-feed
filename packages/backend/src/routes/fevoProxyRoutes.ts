@@ -290,9 +290,26 @@ router.get('/debug', async (_req: Request, res: Response) => {
       results.vendorAgreements = { status: 'testing...' };
       try {
         const vas = await service.getVendorAgreements(orgId);
-        results.vendorAgreements = { status: 'ok', count: Array.isArray(vas) ? vas.length : 'not-array' };
+        results.vendorAgreements = { status: 'ok', count: Array.isArray(vas) ? vas.length : 'not-array', type: typeof vas };
       } catch (err: any) {
         results.vendorAgreements = { status: 'error', error: err.message };
+      }
+
+      // Raw event overview structure for debugging
+      results.rawEventSample = { status: 'testing...' };
+      try {
+        const rawResult = await service.getRawEventOverviews();
+        const rawList = rawResult?.overviews || [];
+        results.rawEventSample = {
+          status: 'ok',
+          totalFromApi: rawList.length,
+          firstKeys: rawList[0] ? Object.keys(rawList[0]) : [],
+          firstOrgField: rawList[0]?.organization || rawList[0]?.org || 'none',
+          firstOrgId: rawList[0]?.organization?.id || rawList[0]?.org?.id || rawList[0]?.organization_id || 'none',
+          firstTitle: rawList[0]?.title || rawList[0]?.name || 'none',
+        };
+      } catch (err: any) {
+        results.rawEventSample = { status: 'error', error: err.message };
       }
 
       results.events = { status: 'testing...' };

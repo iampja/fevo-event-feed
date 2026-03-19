@@ -81,9 +81,32 @@ export class FevoOfferService {
   }
 
   async getVendorAgreements(orgId: string): Promise<any> {
-    return this.authenticatedGet(
+    // Try multiple endpoint paths — the exact path varies by FEVO version
+    const paths = [
+      `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}`,
+      `/api/manage/vendor-agreement?organizationId=${encodeURIComponent(orgId)}`,
       `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements`,
-    );
+      `/api/manage/organization/${encodeURIComponent(orgId)}/vendoragreements`,
+    ];
+
+    for (const path of paths) {
+      try {
+        console.log(`[FevoOfferService] Trying VA path: ${path}`);
+        const result = await this.authenticatedGet(path);
+        console.log(`[FevoOfferService] VA path worked: ${path}`);
+        return result;
+      } catch (err: any) {
+        console.log(`[FevoOfferService] VA path failed: ${path} — ${err.message}`);
+        // Try next path
+      }
+    }
+
+    throw new Error('Could not find vendor agreements endpoint');
+  }
+
+  /** Raw event overviews (no org filter) for debugging */
+  async getRawEventOverviews(): Promise<any> {
+    return this.authenticatedGet('/api/manage/event/overviews?page=1&pageSize=10');
   }
 
   async searchEvents(
