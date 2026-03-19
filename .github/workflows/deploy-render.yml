@@ -1,0 +1,16 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy fevo-event-feed-api
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
+      - name: Deploy fevo-event-feed-widget
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_WIDGET }}"
+      - name: Deploy fevo-event-feed-admin
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_ADMIN }}"
