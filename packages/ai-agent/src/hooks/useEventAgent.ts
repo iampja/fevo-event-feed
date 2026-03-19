@@ -19,8 +19,9 @@ export function useEventAgent() {
   const [screen, setScreen] = useState<'agent' | 'success' | 'draft'>('agent');
   const [messageCount, setMessageCount] = useState(0);
   const [inputValue, setInputValue] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [manageUrl, _setManageUrl] = useState<string | undefined>(undefined);
+  const manageUrl = eventData.slug
+    ? `https://dev.gofevo.com/manage/offer/${eventData.slug}`
+    : 'https://dev.gofevo.com/manage';
 
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);

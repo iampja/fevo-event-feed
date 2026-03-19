@@ -31,8 +31,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
   };
 
   const handleViewDashboard = () => {
-    const url = manageUrl || `https://dev.gofevo.com/manage/offer/${eventData.slug || ''}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(manageUrl || 'https://dev.gofevo.com/manage', '_blank', 'noopener,noreferrer');
   };
 
   return (
