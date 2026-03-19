@@ -128,7 +128,8 @@ export function useEventAgent() {
         const bestEvent = events.find((e: any) => (e.outing_count || 0) > 0) || events[0];
         eventId = bestEvent.id;
         setFevoEventId(eventId);
-        addMessage({ sender: 'agent', text: `✓ Found event: <strong>${bestEvent.title}</strong>` });
+        const eventTitle = bestEvent.title || bestEvent.name || bestEvent.event_title || eventId;
+        addMessage({ sender: 'agent', text: `✓ Found event: <strong>${eventTitle}</strong>` });
       }
 
       // Step 3: Launch offer via SSE

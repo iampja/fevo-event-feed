@@ -185,18 +185,8 @@ export class FevoOfferService {
   ): Promise<LaunchOfferResult> {
     const { orgId, eventId, title, description, accessCode, hasGroups } = params;
 
-    // Step 1: Search for matching event
-    onProgress('searching', 'Finding event...');
-    const eventData = await this.searchEvents(orgId, undefined, undefined, undefined, 1, 100);
-    const events = eventData?.overviews || [];
-    const matchedEvent = events.find((e: any) => String(e.id) === eventId);
-    if (!matchedEvent) {
-      throw new Error(`Event ${eventId} not found in organization ${orgId}`);
-    }
-    onProgress('event_found', `Found event: ${matchedEvent.title || eventId}`);
-
-    // Step 2: Get org settings + vendor agreements (parallel)
-    onProgress('loading_org', 'Loading organization settings and vendor agreements...');
+    // Step 1: Get org settings, vendor agreements (parallel)
+    onProgress('loading_org', 'Loading organization settings...');
     const [orgSettings, vendorAgreements] = await Promise.all([
       this.getOrgSettings(orgId),
       this.getVendorAgreements(orgId),
