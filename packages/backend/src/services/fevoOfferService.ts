@@ -81,27 +81,33 @@ export class FevoOfferService {
   }
 
   async getVendorAgreements(orgId: string): Promise<any> {
-    // Try multiple endpoint paths — the exact path varies by FEVO version
-    const paths = [
-      `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}`,
-      `/api/manage/vendor-agreement?organizationId=${encodeURIComponent(orgId)}`,
-      `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements`,
-      `/api/manage/organization/${encodeURIComponent(orgId)}/vendoragreements`,
+    // Try multiple endpoint paths and methods — the exact API varies
+    const attempts: Array<{ method: 'GET' | 'POST'; path: string }> = [
+      { method: 'GET', path: `/api/manage/vendoragreement/${encodeURIComponent(orgId)}` },
+      { method: 'GET', path: `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}` },
+      { method: 'GET', path: `/api/manage/vendor-agreement/${encodeURIComponent(orgId)}` },
+      { method: 'POST', path: `/api/manage/vendoragreement/overviews?organizationId=${encodeURIComponent(orgId)}` },
+      { method: 'GET', path: `/api/manage/organization/${encodeURIComponent(orgId)}/vendoragreement` },
+      { method: 'GET', path: `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements` },
     ];
 
-    for (const path of paths) {
+    const errors: string[] = [];
+    for (const { method, path } of attempts) {
       try {
-        console.log(`[FevoOfferService] Trying VA path: ${path}`);
-        const result = await this.authenticatedGet(path);
-        console.log(`[FevoOfferService] VA path worked: ${path}`);
+        console.log(`[FevoOfferService] Trying VA: ${method} ${path}`);
+        const result = method === 'POST'
+          ? await this.authenticatedPost(path, {})
+          : await this.authenticatedGet(path);
+        console.log(`[FevoOfferService] VA worked: ${method} ${path}`);
         return result;
       } catch (err: any) {
-        console.log(`[FevoOfferService] VA path failed: ${path} — ${err.message}`);
-        // Try next path
+        const status = err.message.match(/(\d{3})/)?.[1] || '???';
+        errors.push(`${method} ${path} → ${status}`);
       }
     }
 
-    throw new Error('Could not find vendor agreements endpoint');
+    console.error('[FevoOfferService] All VA paths failed:', errors);
+    throw new Error(`Could not find vendor agreements endpoint. Tried: ${errors.join('; ')}`);
   }
 
   /** Raw event overviews (no org filter) for debugging */
@@ -110,15 +116,15 @@ export class FevoOfferService {
   }
 
   async searchEvents(
-    orgId: string,
+    _orgId: string,
     query?: string,
     _fromDate?: string,
     _toDate?: string,
     page = 1,
     pageSize = 100,
   ): Promise<any> {
-    // The REST API does not reliably filter by organization_id as a query param.
-    // Instead, fetch events (optionally with text filter) and filter by org client-side.
+    // The REST API scopes results to the authenticated user's orgs.
+    // We don't filter by org — just return all events the user has access to.
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(pageSize),
@@ -129,41 +135,19 @@ export class FevoOfferService {
     const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
     const allEvents = result?.overviews || [];
 
-    // Filter to events belonging to the requested org
-    const orgEvents = allEvents.filter(
-      (e: any) => e.organization?.id === orgId || e.organization_id === orgId,
-    );
+    console.log(`[FevoOfferService] searchEvents: got ${allEvents.length} events`);
 
-    console.log(
-      `[FevoOfferService] searchEvents: ${allEvents.length} total events, ${orgEvents.length} for org ${orgId}`,
-    );
-
-    // If filtered by text and no org events, retry without text filter
-    if (orgEvents.length === 0 && query) {
+    // If text filter returned nothing, retry without it
+    if (allEvents.length === 0 && query) {
       console.log('[FevoOfferService] searchEvents: retrying without text filter...');
-      return this.searchEvents(orgId, undefined, undefined, undefined, 1, pageSize);
+      const fallbackParams = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      return this.authenticatedGet(`/api/manage/event/overviews?${fallbackParams}`);
     }
 
-    // If still no org events after scanning page 1, try pages 2-3
-    if (orgEvents.length === 0 && !query && page === 1) {
-      console.log('[FevoOfferService] searchEvents: no org events on page 1, scanning pages 2-3...');
-      const moreResults = await Promise.allSettled([
-        this.authenticatedGet(`/api/manage/event/overviews?page=2&pageSize=${pageSize}`),
-        this.authenticatedGet(`/api/manage/event/overviews?page=3&pageSize=${pageSize}`),
-      ]);
-      for (const r of moreResults) {
-        if (r.status === 'fulfilled') {
-          for (const e of r.value?.overviews || []) {
-            if (e.organization?.id === orgId || e.organization_id === orgId) {
-              orgEvents.push(e);
-            }
-          }
-        }
-      }
-      console.log(`[FevoOfferService] searchEvents: found ${orgEvents.length} org events after page scan`);
-    }
-
-    return { overviews: orgEvents, total: orgEvents.length };
+    return result;
   }
 
   async getManifest(eventId: string, saleType?: string): Promise<any> {
