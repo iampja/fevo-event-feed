@@ -111,10 +111,18 @@ export function useEventAgent() {
       addMessage({ sender: 'agent', text: '🔍 Searching for matching event...' });
       let eventId = fevoEventId;
       if (!eventId) {
-        const eventsResponse = await searchEvents(orgId!, eventData.name || undefined);
-        const events = eventsResponse?.overviews || eventsResponse?.events || eventsResponse?.data || eventsResponse;
+        // First try searching with the event name as filter
+        let eventsResponse = await searchEvents(orgId!, eventData.name || undefined);
+        let events = eventsResponse?.overviews || eventsResponse?.events || eventsResponse?.data || eventsResponse;
+
+        // If no results with filter, retry without filter to get all org events
+        if ((!Array.isArray(events) || events.length === 0) && eventData.name) {
+          eventsResponse = await searchEvents(orgId!);
+          events = eventsResponse?.overviews || eventsResponse?.events || eventsResponse?.data || eventsResponse;
+        }
+
         if (!Array.isArray(events) || events.length === 0) {
-          throw new Error('No matching events found in FEVO. Please verify the event exists.');
+          throw new Error('No events found for this organization in FEVO. Please verify the event exists.');
         }
         // Pick first event with outings or first available
         const bestEvent = events.find((e: any) => (e.outing_count || 0) > 0) || events[0];
@@ -671,19 +679,52 @@ export function useEventAgent() {
     sendMessageRef.current(text);
   }, []);
 
+  // --- Edit draft: return to agent screen with missing-info prompt ---
+  const editDraft = useCallback(() => {
+    setScreen('agent');
+    const missing: string[] = [];
+    if (!eventData.location) missing.push('location');
+    if (eventData.dates.length === 0) missing.push('dates');
+    if (!eventData.capacity) missing.push('capacity');
+    if (eventData.tickets.some((t) => t.price === null)) missing.push('pricing');
+
+    const actions: ActionButton[] = [];
+    if (missing.includes('dates')) actions.push({ label: '📅 Add Date', action: () => setDetail('date') });
+    if (missing.includes('location')) actions.push({ label: '📍 Add Location', action: () => setDetail('location') });
+    if (missing.includes('capacity')) actions.push({ label: '👥 Add Capacity', action: () => setDetail('capacity') });
+    if (missing.includes('pricing')) actions.push({ label: '💵 Add Pricing', action: () => setDetail('pricing') });
+    actions.push({ label: '🚀 Launch Now', action: () => launchEvent(), variant: 'primary' });
+
+    if (missing.length > 0) {
+      const fieldList = missing.map((f) => `<strong>${f}</strong>`).join(', ');
+      addMessage({
+        sender: 'agent',
+        text: `Let's fill in the missing details. You still need to set: ${fieldList}`,
+        widget: React.createElement(QuickActionButtons, { actions }),
+      });
+    } else {
+      addMessage({
+        sender: 'agent',
+        text: 'Your draft looks complete! What would you like to change?',
+        widget: React.createElement(QuickActionButtons, { actions }),
+      });
+    }
+  }, [eventData, addMessage, setDetail, launchEvent]);
+
   // --- Launch from draft screen ---
   const launchDraft = useCallback(() => {
     const missing: string[] = [];
     if (!eventData.location) missing.push('location');
     if (eventData.dates.length === 0) missing.push('dates');
     if (missing.length > 0) {
-      alert(`Before launching, please set: ${missing.join(', ')}`);
+      // Instead of alert, switch back to agent screen to fix missing fields
+      editDraft();
       return;
     }
     // Switch to agent screen to show progress, then launch via real API
     setScreen('agent');
     launchEvent();
-  }, [eventData, launchEvent]);
+  }, [eventData, launchEvent, editDraft]);
 
   return {
     messages,
@@ -696,5 +737,6 @@ export function useEventAgent() {
     setInputValue,
     sendMessage: () => sendMessage(),
     launchDraft,
+    editDraft,
   };
 }

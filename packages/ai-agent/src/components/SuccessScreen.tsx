@@ -7,21 +7,23 @@ interface SuccessScreenProps {
   userTier: UserTier;
   manageUrl?: string;
   onLaunchDraft?: () => void;
+  onEditDraft?: () => void;
 }
 
 const SuccessScreen: React.FC<SuccessScreenProps> = ({
   variant,
-  eventData,
+  eventData: _eventData,
   userTier,
   manageUrl,
   onLaunchDraft,
+  onEditDraft,
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const eventUrl = `fevo.com/events/${eventData.slug || 'my-event'}`;
+  const displayUrl = manageUrl || 'https://dev.gofevo.com/manage';
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(`https://${eventUrl}`);
+    navigator.clipboard.writeText(displayUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -71,7 +73,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
       {/* Event URL Bar */}
       <div className="flex items-center w-full max-w-md border-2 border-yellow rounded-btn overflow-hidden mb-8">
         <div className="flex-1 px-4 py-3 text-sm font-medium text-black bg-yellow-light truncate">
-          {eventUrl}
+          {displayUrl.replace(/^https?:\/\//, '')}
         </div>
         <button
           onClick={handleCopy}
@@ -92,13 +94,22 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
             View Dashboard
           </button>
         ) : (
-          <button
-            onClick={onLaunchDraft}
-            className="w-full py-4 bg-yellow rounded-btn text-base font-bold text-black
-              hover:bg-yellow-dark hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
-          >
-            🚀 Launch Event Now
-          </button>
+          <>
+            <button
+              onClick={onLaunchDraft}
+              className="w-full py-4 bg-yellow rounded-btn text-base font-bold text-black
+                hover:bg-yellow-dark hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
+            >
+              🚀 Launch Event Now
+            </button>
+            <button
+              onClick={onEditDraft}
+              className="w-full py-4 bg-white border-2 border-yellow rounded-btn text-base font-bold text-black
+                hover:bg-yellow-light transition-all duration-200"
+            >
+              ✏️ Edit Draft
+            </button>
+          </>
         )}
         <button
           onClick={handleCreateAnother}

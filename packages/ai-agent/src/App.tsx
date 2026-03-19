@@ -17,6 +17,7 @@ const App: React.FC = () => {
     setInputValue,
     sendMessage,
     launchDraft,
+    editDraft,
     manageUrl,
   } = useEventAgent();
 
@@ -42,6 +43,7 @@ const App: React.FC = () => {
           userTier={userTier}
           manageUrl={manageUrl}
           onLaunchDraft={launchDraft}
+          onEditDraft={editDraft}
         />
       )}
     </div>

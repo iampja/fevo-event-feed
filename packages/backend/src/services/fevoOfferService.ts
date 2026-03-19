@@ -102,7 +102,25 @@ export class FevoOfferService {
     if (query) params.set('filter', query);
     if (fromDate) params.set('fromDate', fromDate);
     if (toDate) params.set('toDate', toDate);
-    return this.authenticatedGet(`/api/manage/event/overviews?${params}`);
+
+    console.log(`[FevoOfferService] searchEvents: /api/manage/event/overviews?${params}`);
+    const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
+
+    // If filter returned no results, retry without filter
+    const events = result?.overviews || [];
+    if (events.length === 0 && query) {
+      console.log('[FevoOfferService] searchEvents: no results with filter, retrying without...');
+      const fallbackParams = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        organizationId: orgId,
+      });
+      if (fromDate) fallbackParams.set('fromDate', fromDate);
+      if (toDate) fallbackParams.set('toDate', toDate);
+      return this.authenticatedGet(`/api/manage/event/overviews?${fallbackParams}`);
+    }
+
+    return result;
   }
 
   async getManifest(eventId: string, saleType?: string): Promise<any> {
