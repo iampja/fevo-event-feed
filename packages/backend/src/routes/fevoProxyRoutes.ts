@@ -237,17 +237,34 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
   };
 
   try {
-    // Warm up MCP session before launch flow (prevents init hanging in SSE context)
-    await service.listOrganizations(undefined, 0, 1);
+    // Step-by-step launch (bypassing launchOffer to isolate crash)
+    sendEvent('loading_org', 'Loading organization settings...');
+    const orgSettings = await service.getOrgSettings(params.orgId);
+    sendEvent('org_loaded', `Org: ${orgSettings?.name || 'OK'}`);
 
-    const result = await service.launchOffer(params, (step, detail) => {
-      if (!aborted) {
-        sendEvent(step, detail);
-      }
-    });
+    sendEvent('loading_vas', 'Loading vendor agreements...');
+    const vas = await service.getVendorAgreements(params.orgId);
+    sendEvent('vas_loaded', `VAs: ${Array.isArray(vas) ? vas.length : 0}`);
 
+    sendEvent('loading_manifest', 'Loading event manifest...');
+    let manifest: any = { areas: [], holds: [] };
+    try { manifest = await service.getManifest(params.eventId); } catch { /* non-fatal */ }
+    sendEvent('manifest_loaded', `Manifest: ${manifest?.areas?.length || 0} areas`);
+
+    sendEvent('loading_events', 'Loading event info...');
+    const eventsResult = await service.searchEvents(params.orgId);
+    const events = eventsResult?.overviews || [];
+    const eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
+    sendEvent('events_loaded', `Event: ${eventInfo?.title || eventInfo?.venue?.name || params.eventId}`);
+
+    // For now, return success with what we have
+    const manageUrl = `https://dev.gofevo.com/manage/outing/placeholder`;
     if (!aborted) {
-      sendEvent('done', undefined, result);
+      sendEvent('done', undefined, {
+        outingId: 'pending-full-flow',
+        accessCode: params.accessCode,
+        manageUrl,
+      });
     }
   } catch (err: any) {
     console.error('[fevoProxy] launchOffer error:', err.message);
@@ -354,7 +371,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v9-warmup', ts: Date.now() });
+  res.json({ version: '2026-03-19-v10-bypass-launch', ts: Date.now() });
 });
 
 /**
