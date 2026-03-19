@@ -148,6 +148,41 @@ export async function syncAllOrganizations(): Promise<SyncLog[]> {
       logProgress(syncId, `[${elapsed(t0)}] Upsert done: ${offersCreated} created, ${offersUpdated} updated`);
     }
 
+    // ── Backfill missing descriptions from outing detail endpoint ─────────
+    const missingDesc = await db('offers')
+      .whereNotNull('fevo_offer_id')
+      .where('status', 'active')
+      .where(function() {
+        this.whereNull('description').orWhere('description', '');
+      })
+      .select('id', 'fevo_offer_id');
+
+    if (missingDesc.length > 0) {
+      logProgress(syncId, `[${elapsed(t0)}] Backfilling descriptions for ${missingDesc.length} offers...`);
+      let filled = 0;
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < missingDesc.length; i += BATCH_SIZE) {
+        const batch = missingDesc.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map(async (row) => {
+            const detail = await client.fetchOutingDetail(row.fevo_offer_id);
+            if (detail?.description) {
+              await db('offers').where('id', row.id).update({
+                description: detail.description,
+                updated_at: new Date().toISOString(),
+              });
+              return true;
+            }
+            return false;
+          })
+        );
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value) filled++;
+        }
+      }
+      logProgress(syncId, `[${elapsed(t0)}] Backfilled ${filled} descriptions`);
+    }
+
     // ── Clean up expired offers (cascade to dependent tables) ──────────────
     const expiredIds = await db('offers')
       .whereNotNull('date')
