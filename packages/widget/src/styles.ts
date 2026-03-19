@@ -168,6 +168,108 @@ export const WIDGET_STYLES = `
   margin: 0 0 20px 0;
 }
 
+/* ===== Promoted Section ===== */
+.fevo-ef-promoted {
+  margin-bottom: 32px;
+}
+
+.fevo-ef-promoted-section {
+  margin-bottom: 28px;
+}
+
+.fevo-ef-promoted-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.fevo-ef-promoted-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fevo-ef-promoted-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #000000;
+  background: #FFCC00;
+  border-radius: 999px;
+}
+
+.fevo-ef-promoted-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fevo-ef-text);
+  margin: 0;
+}
+
+.fevo-ef-promoted-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.fevo-ef-promoted-nav-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--fevo-ef-border);
+  border-radius: 50%;
+  background: var(--fevo-ef-card-bg);
+  color: var(--fevo-ef-text);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.fevo-ef-promoted-nav-btn:hover {
+  border-color: var(--fevo-ef-text);
+  background: var(--fevo-ef-text);
+  color: var(--fevo-ef-card-bg);
+}
+
+.fevo-ef-promoted-nav-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.fevo-ef-promoted-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.fevo-ef-promoted-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.fevo-ef-promoted-card-wrap {
+  flex: 0 0 320px;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.fevo-ef-promoted-card-wrap .fevo-ef-card {
+  height: 100%;
+}
+
+@media (max-width: 640px) {
+  .fevo-ef-promoted-card-wrap {
+    flex: 0 0 280px;
+  }
+}
+
 /* See More button */
 .fevo-ef-marketplace-see-more-row {
   display: flex;

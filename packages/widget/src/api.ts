@@ -104,6 +104,23 @@ export async function fetchGeographies(config: WidgetConfig): Promise<{ data: { 
   return response.json();
 }
 
+export type PromotedSection = {
+  id: string;
+  name: string;
+  slug: string;
+  offers: Offer[];
+};
+
+export async function fetchPromoted(config: WidgetConfig): Promise<{ data: PromotedSection[] }> {
+  const baseUrl = config.apiUrl || DEFAULT_API_URL;
+  const url = new URL(`${baseUrl}/promoted`, window.location.origin);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (config.apiKey) headers['X-API-Key'] = config.apiKey;
+  const response = await fetch(url.toString(), { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new ApiError(`API responded with status ${response.status}`, response.status);
+  return response.json();
+}
+
 export async function fetchOffer(config: WidgetConfig, offerId: string): Promise<{ data: Offer }> {
   const baseUrl = config.apiUrl || DEFAULT_API_URL;
   const url = new URL(`${baseUrl}/${offerId}`, window.location.origin);

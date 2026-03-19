@@ -37,7 +37,7 @@ export async function getSegmentById(id: string): Promise<Segment | null> {
 export async function createSegment(data: {
   name: string;
   slug: string;
-  type: 'theme' | 'geography' | 'partner' | 'custom';
+  type: 'theme' | 'geography' | 'partner' | 'promoted' | 'custom';
   rules?: Record<string, any>;
   is_curated?: boolean;
   created_by: string;
@@ -74,7 +74,7 @@ export async function createSegment(data: {
 export async function updateSegment(id: string, data: {
   name?: string;
   slug?: string;
-  type?: 'theme' | 'geography' | 'partner' | 'custom';
+  type?: 'theme' | 'geography' | 'partner' | 'promoted' | 'custom';
   rules?: Record<string, any>;
   is_curated?: boolean;
 }): Promise<Segment> {

@@ -174,6 +174,7 @@ export type SegmentType =
   | 'event_type'
   | 'creator'
   | 'partner'
+  | 'promoted'
   | 'custom';
 
 export interface Segment {

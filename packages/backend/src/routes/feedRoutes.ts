@@ -105,6 +105,62 @@ router.get('/segments/:slug', apiKeyAuth, async (req: Request, res: Response) =>
   }
 });
 
+// ── GET /promoted ───────────────────────────────────────────────────────────
+
+router.get('/promoted', apiKeyAuth, defaultRateLimiter, async (_req: Request, res: Response) => {
+  try {
+    // Find all segments with type = 'promoted'
+    const promotedSegments = await db('event_feed_segments')
+      .where('type', 'promoted')
+      .select('id', 'name', 'slug');
+
+    if (promotedSegments.length === 0) {
+      res.json({ data: [] });
+      return;
+    }
+
+    const segmentIds = promotedSegments.map((s: any) => s.id);
+
+    // Get all offer IDs linked to promoted segments
+    const offerLinks = await db('event_feed_segment_offers')
+      .whereIn('segment_id', segmentIds)
+      .select('segment_id', 'offer_id');
+
+    if (offerLinks.length === 0) {
+      res.json({ data: [] });
+      return;
+    }
+
+    const offerIds = [...new Set(offerLinks.map((l: any) => l.offer_id))];
+
+    // Fetch and transform those offers
+    const offers = await db('offers')
+      .whereIn('id', offerIds)
+      .where('status', 'active');
+
+    const transformed = await transformOffers(offers);
+
+    // Group by segment for the response
+    const segmentMap = new Map(promotedSegments.map((s: any) => [s.id, { ...s, offers: [] as any[] }]));
+    const offerMap = new Map(transformed.map((o: any) => [o.offer_id, o]));
+
+    for (const link of offerLinks) {
+      const seg = segmentMap.get(link.segment_id);
+      const offer = offerMap.get(link.offer_id);
+      if (seg && offer) {
+        seg.offers.push(offer);
+      }
+    }
+
+    const result = Array.from(segmentMap.values()).filter((s: any) => s.offers.length > 0);
+
+    res.json({ data: result });
+  } catch (err) {
+    console.error('Promoted feed error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ── GET /geographies ────────────────────────────────────────────────────────
 
 router.get('/geographies', apiKeyAuth, defaultRateLimiter, async (_req: Request, res: Response) => {

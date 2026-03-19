@@ -13,6 +13,7 @@ import { OfferDetailModal } from './OfferDetailModal';
 import { SearchBar } from './SearchBar';
 import { FilterBar } from './FilterBar';
 import { MarketplaceFilters } from './MarketplaceFilters';
+import { PromotedSection } from './PromotedSection';
 
 type MarketplacePageProps = {
   config: WidgetConfig;
@@ -139,6 +140,9 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
           </div>
         </div>
       </div>
+
+      {/* Promoted collections */}
+      <PromotedSection config={effectiveConfig} onCardClick={handleCardClick} />
 
       <div class="fevo-ef-marketplace-search-row">
         <SearchBar onSearch={handleSearch} />

@@ -368,7 +368,7 @@ router.get('/segments/:slug', async (req: Request, res: Response) => {
 const createSegmentSchema = z.object({
   name: z.string().min(1).max(255),
   slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
-  type: z.enum(['theme', 'geography', 'partner', 'custom']),
+  type: z.enum(['theme', 'geography', 'partner', 'promoted', 'custom']),
   rules: z.record(z.any()).optional(),
   is_curated: z.boolean().optional(),
 });
@@ -406,7 +406,7 @@ router.post('/segments', async (req: Request, res: Response) => {
 const updateSegmentSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/).optional(),
-  type: z.enum(['theme', 'geography', 'partner', 'custom']).optional(),
+  type: z.enum(['theme', 'geography', 'partner', 'promoted', 'custom']).optional(),
   rules: z.record(z.any()).optional(),
   is_curated: z.boolean().optional(),
 });
