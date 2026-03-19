@@ -127,10 +127,10 @@ export function MarketplacePage({ config }: MarketplacePageProps) {
         />
         <div class="fevo-ef-marketplace-hero-overlay" />
         <div class="fevo-ef-marketplace-hero-content">
-          <span class="fevo-ef-marketplace-hero-badge">Case Study</span>
-          <h1 class="fevo-ef-marketplace-hero-title">Unlocking New Fan Segments</h1>
+          <span class="fevo-ef-marketplace-hero-badge">Marketplace</span>
+          <h1 class="fevo-ef-marketplace-hero-title">Discover Live Events</h1>
           <p class="fevo-ef-marketplace-hero-subtitle">
-            Discover how teams and organizations use FEVO to drive group ticket sales and fan engagement.
+            Browse group experiences, find the best deals, and get tickets with friends.
           </p>
           <div class="fevo-ef-marketplace-hero-chevron">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
