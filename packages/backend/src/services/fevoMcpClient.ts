@@ -154,11 +154,11 @@ export class FevoMcpClient {
             return;
           }
 
-          // For notifications (no id), just drain and resolve
+          // For notifications (no id), destroy immediately and resolve
           if (!hasId) {
-            res.resume(); // Drain the stream
-            res.on('end', () => { clearTimeout(timer); resolve(null); });
-            res.on('error', () => { clearTimeout(timer); resolve(null); });
+            clearTimeout(timer);
+            res.destroy();
+            resolve(null);
             return;
           }
 
@@ -177,7 +177,7 @@ export class FevoMcpClient {
                   const parsed = JSON.parse(line.slice(6));
                   done = true;
                   clearTimeout(timer);
-                  res.resume(); // Drain remaining data
+                  res.destroy(); // Kill connection immediately — don't drain
                   resolve(parsed);
                   return;
                 } catch { /* not json yet */ }
