@@ -94,10 +94,11 @@ export class FevoOfferService {
     page = 1,
     pageSize = 100,
   ): Promise<any> {
+    // FEVO REST API uses snake_case params
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(pageSize),
-      organizationId: orgId,
+      organization_id: orgId,
     });
     if (query) params.set('filter', query);
     if (fromDate) params.set('fromDate', fromDate);
@@ -113,7 +114,7 @@ export class FevoOfferService {
       const fallbackParams = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
-        organizationId: orgId,
+        organization_id: orgId,
       });
       if (fromDate) fallbackParams.set('fromDate', fromDate);
       if (toDate) fallbackParams.set('toDate', toDate);
@@ -185,58 +186,78 @@ export class FevoOfferService {
   ): Promise<LaunchOfferResult> {
     const { orgId, eventId, title, description, accessCode, hasGroups } = params;
 
-    // Step 1: Get org settings, vendor agreements (parallel)
+    // Step 1: Get org settings + vendor agreements (parallel)
     onProgress('loading_org', 'Loading organization settings...');
-    const [orgSettings, vendorAgreements] = await Promise.all([
-      this.getOrgSettings(orgId),
-      this.getVendorAgreements(orgId),
-    ]);
+    let orgSettings: any;
+    let vendorAgreements: any;
+    try {
+      [orgSettings, vendorAgreements] = await Promise.all([
+        this.getOrgSettings(orgId),
+        this.getVendorAgreements(orgId),
+      ]);
+      console.log('[FevoOfferService] Org settings and VAs loaded successfully');
+    } catch (err: any) {
+      console.error('[FevoOfferService] Failed to load org settings/VAs:', err.message);
+      throw new Error(`Failed to load organization settings: ${err.message}`);
+    }
     onProgress('org_loaded', 'Organization settings loaded');
 
-    // Step 3: Get manifest
+    // Step 2: Get manifest
     onProgress('loading_manifest', 'Loading event manifest...');
-    const manifest = await this.getManifest(eventId);
+    let manifest: any;
+    try {
+      manifest = await this.getManifest(eventId);
+      console.log('[FevoOfferService] Manifest loaded:', JSON.stringify(manifest).slice(0, 200));
+    } catch (err: any) {
+      console.error('[FevoOfferService] Failed to load manifest:', err.message);
+      throw new Error(`Failed to load event manifest: ${err.message}`);
+    }
     onProgress('manifest_loaded', 'Manifest loaded');
 
-    // Step 4: Get group (if applicable)
+    // Step 3: Get group (if applicable)
     let group: any = null;
     if (hasGroups) {
       onProgress('loading_groups', 'Loading groups...');
-      const groupsData = await this.listGroups(orgId);
-      const groups = groupsData?.overviews || groupsData || [];
-      if (Array.isArray(groups) && groups.length > 0) {
-        group = await this.getGroupOverview(String(groups[0].id));
+      try {
+        const groupsData = await this.listGroups(orgId);
+        const groups = groupsData?.overviews || groupsData || [];
+        if (Array.isArray(groups) && groups.length > 0) {
+          group = await this.getGroupOverview(String(groups[0].id));
+        }
+      } catch (err: any) {
+        console.warn('[FevoOfferService] Groups load failed (non-fatal):', err.message);
       }
       onProgress('groups_loaded', group ? `Group loaded: ${group.name || group.id}` : 'No groups found');
     }
 
-    // Step 5: Pre-generate outing UUID
-    onProgress('generating_id', 'Generating offer ID...');
+    // Step 4: Pre-generate outing UUID
     const outingId = randomUUID();
     onProgress('id_generated', `Offer ID: ${outingId}`);
 
-    // Step 6: Build offer payload
-    onProgress('building_payload', 'Building offer payload...');
-    const offerPayload = this.buildOfferPayload({
-      outingId,
-      eventId,
-      orgId,
-      title,
-      description,
-      accessCode,
-      orgSettings,
-      vendorAgreements,
-      manifest,
-      group,
-    });
-    onProgress('payload_built', 'Offer payload ready');
-
-    // Step 7: Create offer via bulk endpoint
+    // Step 5: Build + create offer
     onProgress('creating_offer', 'Creating offer...');
-    await this.createOffer(offerPayload);
+    try {
+      const offerPayload = this.buildOfferPayload({
+        outingId,
+        eventId,
+        orgId,
+        title,
+        description,
+        accessCode,
+        orgSettings,
+        vendorAgreements,
+        manifest,
+        group,
+      });
+      console.log('[FevoOfferService] Offer payload built, submitting...');
+      await this.createOffer(offerPayload);
+    } catch (err: any) {
+      console.error('[FevoOfferService] Failed to create offer:', err.message);
+      throw new Error(`Failed to create offer: ${err.message}`);
+    }
     onProgress('offer_created', 'Offer creation initiated');
 
-    // Step 8: Poll for completion
+    // Step 6: Poll for completion
     onProgress('polling', 'Waiting for offer creation to complete...');
     const pollResult = await this.pollUntilComplete(60, 3000, onProgress);
     if (!pollResult.success) {
@@ -244,26 +265,33 @@ export class FevoOfferService {
     }
     onProgress('offer_complete', 'Offer creation complete');
 
-    // Step 9: Create item library (step 1: null ids)
-    onProgress('creating_item_library', 'Creating item library (step 1)...');
-    const itemLibraryPayload = this.buildItemLibraryPayload(manifest, null);
-    const itemLibraryResult = await this.createItemLibrary(outingId, itemLibraryPayload);
-    const itemLibraryId = itemLibraryResult?.id || itemLibraryResult?.item_library_id;
-    onProgress('item_library_created', `Item library created: ${itemLibraryId || 'unknown'}`);
+    // Step 7: Create item library (two-step upsert)
+    let itemLibraryId: string | null = null;
+    try {
+      onProgress('creating_item_library', 'Setting up inventory...');
+      const itemLibraryPayload = this.buildItemLibraryPayload(manifest, null);
+      const itemLibraryResult = await this.createItemLibrary(outingId, itemLibraryPayload);
+      itemLibraryId = itemLibraryResult?.id || itemLibraryResult?.item_library_id;
+      console.log('[FevoOfferService] Item library step 1 done, id:', itemLibraryId);
 
-    // Step 10: Create item library (step 2: upsert with returned ids)
-    if (itemLibraryId) {
-      onProgress('upserting_item_library', 'Upserting item library with IDs...');
-      const upsertPayload = this.buildItemLibraryPayload(manifest, itemLibraryId);
-      await this.createItemLibrary(outingId, upsertPayload);
-      onProgress('item_library_upserted', 'Item library upserted');
+      if (itemLibraryId) {
+        const upsertPayload = this.buildItemLibraryPayload(manifest, itemLibraryId);
+        await this.createItemLibrary(outingId, upsertPayload);
+        console.log('[FevoOfferService] Item library step 2 (upsert) done');
+      }
+    } catch (err: any) {
+      console.warn('[FevoOfferService] Item library creation failed (non-fatal):', err.message);
     }
 
-    // Step 11: Link item library to offer
+    // Step 8: Link item library to offer
     if (itemLibraryId) {
-      onProgress('linking_item_library', 'Linking item library to offer...');
-      await this.linkItemToOffer(outingId, itemLibraryId);
-      onProgress('item_library_linked', 'Item library linked to offer');
+      try {
+        onProgress('linking', 'Linking inventory to offer...');
+        await this.linkItemToOffer(outingId, itemLibraryId);
+        console.log('[FevoOfferService] Item library linked');
+      } catch (err: any) {
+        console.warn('[FevoOfferService] Item library link failed (non-fatal):', err.message);
+      }
     }
 
     const manageUrl = `${this.baseUrl}/manage/outing/${outingId}`;
@@ -421,7 +449,7 @@ export class FevoOfferService {
     const url = `${this.baseUrl}${path}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
 
     let response: Response;
     try {
@@ -474,7 +502,7 @@ export class FevoOfferService {
     const url = `${this.baseUrl}${path}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
 
     let response: Response;
     try {
@@ -529,7 +557,7 @@ export class FevoOfferService {
     const url = `${this.baseUrl}${path}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
 
     let response: Response;
     try {
