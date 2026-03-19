@@ -54,3 +54,14 @@ services:
     runtime: static
     buildCommand: npm install --include=dev && npm run build --workspace=packages/widget
     staticPublishPath: packages/widget/dist
+
+  # ── AI Agent (Static Site) ──────────────────────────────────────────────────
+  - type: web
+    name: fevo-ai-agent
+    runtime: static
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/ai-agent
+    staticPublishPath: packages/ai-agent/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

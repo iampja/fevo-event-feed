@@ -14,3 +14,6 @@ jobs:
         run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_WIDGET }}"
       - name: Deploy fevo-event-feed-admin
         run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_ADMIN }}"
+      - name: Deploy fevo-ai-agent
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_AGENT != '' }}
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_AGENT }}"

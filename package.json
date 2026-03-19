@@ -6,12 +6,14 @@
   "workspaces": [
     "packages/backend",
     "packages/admin-ui",
-    "packages/widget"
+    "packages/widget",
+    "packages/ai-agent"
   ],
   "scripts": {
     "dev:backend": "npm run dev --workspace=packages/backend",
     "dev:admin": "npm run dev --workspace=packages/admin-ui",
     "dev:widget": "npm run dev --workspace=packages/widget",
+    "dev:agent": "npm run dev --workspace=packages/ai-agent",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces"
