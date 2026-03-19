@@ -81,33 +81,26 @@ export class FevoOfferService {
   }
 
   async getVendorAgreements(orgId: string): Promise<any> {
-    // Try multiple endpoint paths and methods — the exact API varies
-    const attempts: Array<{ method: 'GET' | 'POST'; path: string }> = [
-      { method: 'GET', path: `/api/manage/vendoragreement/${encodeURIComponent(orgId)}` },
-      { method: 'GET', path: `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}` },
-      { method: 'GET', path: `/api/manage/vendor-agreement/${encodeURIComponent(orgId)}` },
-      { method: 'POST', path: `/api/manage/vendoragreement/overviews?organizationId=${encodeURIComponent(orgId)}` },
-      { method: 'GET', path: `/api/manage/organization/${encodeURIComponent(orgId)}/vendoragreement` },
-      { method: 'GET', path: `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements` },
+    // The VA REST endpoint is not discoverable via standard paths.
+    // The MCP server uses an internal route. Try known paths, return [] if all fail.
+    const paths = [
+      `/api/manage/vendoragreement/${encodeURIComponent(orgId)}`,
+      `/api/manage/vendoragreement?organizationId=${encodeURIComponent(orgId)}`,
+      `/api/manage/organization/${encodeURIComponent(orgId)}/vendor-agreements`,
     ];
 
-    const errors: string[] = [];
-    for (const { method, path } of attempts) {
+    for (const path of paths) {
       try {
-        console.log(`[FevoOfferService] Trying VA: ${method} ${path}`);
-        const result = method === 'POST'
-          ? await this.authenticatedPost(path, {})
-          : await this.authenticatedGet(path);
-        console.log(`[FevoOfferService] VA worked: ${method} ${path}`);
+        const result = await this.authenticatedGet(path);
+        console.log(`[FevoOfferService] VA path worked: ${path}`);
         return result;
-      } catch (err: any) {
-        const status = err.message.match(/(\d{3})/)?.[1] || '???';
-        errors.push(`${method} ${path} → ${status}`);
+      } catch {
+        // Try next
       }
     }
 
-    console.error('[FevoOfferService] All VA paths failed:', errors);
-    throw new Error(`Could not find vendor agreements endpoint. Tried: ${errors.join('; ')}`);
+    console.warn('[FevoOfferService] All VA paths failed, returning empty (will use org defaults)');
+    return [];
   }
 
   /** Raw event overviews (no org filter) for debugging */
@@ -116,38 +109,48 @@ export class FevoOfferService {
   }
 
   async searchEvents(
-    _orgId: string,
+    orgId: string,
     query?: string,
     _fromDate?: string,
     _toDate?: string,
-    page = 1,
+    _page = 1,
     pageSize = 100,
   ): Promise<any> {
-    // The REST API scopes results to the authenticated user's orgs.
-    // We don't filter by org — just return all events the user has access to.
-    const params = new URLSearchParams({
-      page: String(page),
-      pageSize: String(pageSize),
-    });
-    if (query) params.set('filter', query);
+    // Fetch events and filter by organization.id (REST API returns all orgs' events).
+    // Events don't have a `title` field — they have `venue.name` and `organization.name`.
+    const allOrgEvents: any[] = [];
 
-    console.log(`[FevoOfferService] searchEvents: /api/manage/event/overviews?${params}`);
-    const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
-    const allEvents = result?.overviews || [];
-
-    console.log(`[FevoOfferService] searchEvents: got ${allEvents.length} events`);
-
-    // If text filter returned nothing, retry without it
-    if (allEvents.length === 0 && query) {
-      console.log('[FevoOfferService] searchEvents: retrying without text filter...');
-      const fallbackParams = new URLSearchParams({
+    // Scan up to 3 pages to find events for this org
+    for (let page = 1; page <= 3; page++) {
+      const params = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
       });
-      return this.authenticatedGet(`/api/manage/event/overviews?${fallbackParams}`);
+      if (query && page === 1) params.set('filter', query);
+
+      console.log(`[FevoOfferService] searchEvents page ${page}: /api/manage/event/overviews?${params}`);
+      const result = await this.authenticatedGet(`/api/manage/event/overviews?${params}`);
+      const events = result?.overviews || [];
+
+      for (const e of events) {
+        if (e.organization?.id === orgId) {
+          allOrgEvents.push(e);
+        }
+      }
+
+      console.log(`[FevoOfferService] Page ${page}: ${events.length} total, ${allOrgEvents.length} matching org`);
+
+      // Stop if we found events or ran out of results
+      if (allOrgEvents.length > 0 || events.length < pageSize) break;
     }
 
-    return result;
+    // If text filter found nothing for this org, retry without filter
+    if (allOrgEvents.length === 0 && query) {
+      console.log('[FevoOfferService] searchEvents: retrying without text filter...');
+      return this.searchEvents(orgId, undefined);
+    }
+
+    return { overviews: allOrgEvents, total: allOrgEvents.length };
   }
 
   async getManifest(eventId: string, saleType?: string): Promise<any> {
@@ -228,15 +231,14 @@ export class FevoOfferService {
     }
     onProgress('org_loaded', 'Organization settings loaded');
 
-    // Step 2: Get manifest
+    // Step 2: Get manifest (non-fatal — many events don't have one)
     onProgress('loading_manifest', 'Loading event manifest...');
-    let manifest: any;
+    let manifest: any = { areas: [], holds: [] };
     try {
       manifest = await this.getManifest(eventId);
       console.log('[FevoOfferService] Manifest loaded:', JSON.stringify(manifest).slice(0, 200));
     } catch (err: any) {
-      console.error('[FevoOfferService] Failed to load manifest:', err.message);
-      throw new Error(`Failed to load event manifest: ${err.message}`);
+      console.warn('[FevoOfferService] Manifest not available (non-fatal):', err.message);
     }
     onProgress('manifest_loaded', 'Manifest loaded');
 

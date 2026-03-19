@@ -128,7 +128,7 @@ export function useEventAgent() {
         const bestEvent = events.find((e: any) => (e.outing_count || 0) > 0) || events[0];
         eventId = bestEvent.id;
         setFevoEventId(eventId);
-        const eventTitle = bestEvent.title || bestEvent.name || bestEvent.event_title || eventId;
+        const eventTitle = bestEvent.title || bestEvent.name || bestEvent.venue?.name || bestEvent.organization?.name || eventId;
         addMessage({ sender: 'agent', text: `✓ Found event: <strong>${eventTitle}</strong>` });
       }
 
