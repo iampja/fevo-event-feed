@@ -188,6 +188,9 @@ export class FevoOfferService {
   ): Promise<LaunchOfferResult> {
     const { orgId, eventId, title, description, accessCode, hasGroups } = params;
 
+    // Force fresh MCP session for the entire launch flow
+    this.mcp.resetSession();
+
     // Step 1: Get org settings then vendor agreements (sequential — MCP doesn't support concurrent requests per session)
     onProgress('loading_org', 'Loading organization settings...');
     let orgSettings: any;

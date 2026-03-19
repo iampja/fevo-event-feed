@@ -2,71 +2,94 @@
  * FEVO MCP Client
  *
  * Calls FEVO MCP server tools via JSON-RPC over HTTP.
- * Uses Node.js native https module with fresh sessions per call batch
- * to avoid session corruption from abrupt connection closes.
+ * Uses Node.js native https module for reliable SSE stream handling.
  */
 
-import https from 'https';
-import { URL } from 'url';
+import * as https from 'https';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 export class FevoMcpClient {
   private mcpUrl: string;
+  private parsedHost: string;
+  private parsedPath: string;
+  private sessionId: string | null = null;
+  private initialized = false;
+  private initPromise: Promise<void> | null = null;
+  private nextId = 1;
 
   constructor(baseUrl: string) {
     this.mcpUrl = `${baseUrl}/mcp`;
+    // Pre-parse URL to avoid using URL constructor
+    const match = this.mcpUrl.match(/^https:\/\/([^/]+)(\/.*)?$/);
+    this.parsedHost = match ? match[1] : 'dev.gofevo.com';
+    this.parsedPath = match ? (match[2] || '/mcp') : '/mcp';
   }
 
-  /**
-   * Call an MCP tool. Each call gets a FRESH session (initialize → call).
-   * This avoids session state corruption from prior calls.
-   */
   async callTool(toolName: string, args: Record<string, any>): Promise<any> {
-    console.log(`[FevoMcpClient] Calling tool: ${toolName}`);
-
-    // Fresh session for every call — avoids stale/corrupted sessions
-    const { sessionId } = await this.initSession();
-
-    const response = await this.sendJsonRpc(sessionId, {
-      jsonrpc: '2.0',
-      id: 2,
-      method: 'tools/call',
-      params: { name: toolName, arguments: args },
-    });
-
-    if (!response) {
-      throw new Error(`MCP tool ${toolName}: no response`);
+    // Ensure initialized (with mutex for concurrent calls)
+    if (!this.initialized) {
+      if (!this.initPromise) {
+        this.initPromise = this.doInit().then(() => {
+          this.initialized = true;
+          this.initPromise = null;
+        }).catch((err) => {
+          this.initPromise = null;
+          throw err;
+        });
+      }
+      await this.initPromise;
     }
-    if (response.error) {
-      throw new Error(`MCP tool ${toolName}: ${response.error.message || JSON.stringify(response.error)}`);
+
+    console.log(`[FevoMcpClient] ${toolName} (session: ${this.sessionId?.slice(0, 8)}...)`);
+
+    let response: any;
+    try {
+      response = await this.httpPost({
+        jsonrpc: '2.0',
+        id: this.nextId++,
+        method: 'tools/call',
+        params: { name: toolName, arguments: args },
+      });
+    } catch (err: any) {
+      // Retry once with fresh session
+      console.warn(`[FevoMcpClient] ${toolName} failed: ${err.message}, retrying...`);
+      this.resetSession();
+      await this.doInit();
+      this.initialized = true;
+      response = await this.httpPost({
+        jsonrpc: '2.0',
+        id: this.nextId++,
+        method: 'tools/call',
+        params: { name: toolName, arguments: args },
+      });
     }
+
+    if (!response) throw new Error(`MCP ${toolName}: no response`);
+    if (response.error) throw new Error(`MCP ${toolName}: ${response.error.message || JSON.stringify(response.error)}`);
 
     const text = response.result?.content?.[0]?.text;
-    if (!text) {
-      throw new Error(`MCP tool ${toolName}: no text content`);
-    }
+    if (!text) throw new Error(`MCP ${toolName}: no text content`);
 
-    console.log(`[FevoMcpClient] Tool ${toolName} OK (${text.length} chars)`);
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
+    console.log(`[FevoMcpClient] ${toolName} OK (${text.length} chars)`);
+    try { return JSON.parse(text); } catch { return text; }
   }
 
-  // Kept for API compatibility
-  resetSession(): void {}
+  /** Force a fresh MCP session on the next call */
+  resetSession(): void {
+    this.sessionId = null;
+    this.initialized = false;
+    this.initPromise = null;
+    this.nextId = 1;
+  }
 
   // ── Private ─────────────────────────────────────────────────────────────────
 
-  private async initSession(): Promise<{ sessionId: string }> {
-    // Step 1: Initialize
-    const initResp = await this.sendJsonRpc(null, {
+  private async doInit(): Promise<void> {
+    const resp = await this.httpPost({
       jsonrpc: '2.0',
-      id: 1,
+      id: this.nextId++,
       method: 'initialize',
       params: {
         protocolVersion: '2024-11-05',
@@ -74,33 +97,21 @@ export class FevoMcpClient {
         clientInfo: { name: 'fevo-event-feed-backend', version: '1.0' },
       },
     });
+    if (!resp?.result) throw new Error('MCP init failed');
+    console.log(`[FevoMcpClient] Session: ${this.sessionId?.slice(0, 8)}`);
 
-    if (!initResp?.__sessionId) {
-      throw new Error('MCP initialization failed: no session ID');
-    }
-
-    const sessionId = initResp.__sessionId;
-
-    // Step 2: Send initialized notification
-    await this.sendJsonRpc(sessionId, {
+    // Send initialized notification (don't await response parsing)
+    await this.httpPost({
       jsonrpc: '2.0',
       method: 'notifications/initialized',
       params: {},
-    });
-
-    return { sessionId };
+    }).catch(() => {});
   }
 
-  /**
-   * Send a JSON-RPC message to the MCP server via HTTPS POST.
-   * Reads the SSE response stream chunk-by-chunk and returns the
-   * first valid JSON-RPC data event. Attaches __sessionId to the
-   * parsed result for session tracking.
-   */
-  private sendJsonRpc(sessionId: string | null, body: any): Promise<any> {
+  private httpPost(body: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      const parsed = new URL(this.mcpUrl);
       const postData = JSON.stringify(body);
+      const hasId = 'id' in body; // Notifications don't have id
 
       const headers: Record<string, string | number> = {
         'Content-Type': 'application/json',
@@ -108,84 +119,93 @@ export class FevoMcpClient {
         Accept: 'text/event-stream, application/json',
         'User-Agent': BROWSER_UA,
       };
-      if (sessionId) {
-        headers['Mcp-Session-Id'] = sessionId;
+      if (this.sessionId) {
+        headers['Mcp-Session-Id'] = this.sessionId;
       }
-
-      const options: https.RequestOptions = {
-        hostname: parsed.hostname,
-        port: parsed.port || 443,
-        path: parsed.pathname + parsed.search,
-        method: 'POST',
-        headers,
-      };
 
       const timer = setTimeout(() => {
         req.destroy();
-        reject(new Error('MCP request timed out (60s)'));
-      }, 60_000);
+        reject(new Error(`MCP timeout (30s) for ${body.method}`));
+      }, 30_000);
 
-      const req = https.request(options, (res) => {
-        // Capture session ID from response
-        const newSession = res.headers['mcp-session-id'];
-        const respSessionId = Array.isArray(newSession) ? newSession[0] : newSession || sessionId;
+      const req = https.request(
+        {
+          hostname: this.parsedHost,
+          port: 443,
+          path: this.parsedPath,
+          method: 'POST',
+          headers,
+        },
+        (res) => {
+          // Track session
+          const sid = res.headers['mcp-session-id'];
+          if (sid) this.sessionId = Array.isArray(sid) ? sid[0] : sid;
 
-        if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-          let errorBody = '';
-          res.on('data', (chunk) => { errorBody += chunk.toString(); });
-          res.on('end', () => {
-            clearTimeout(timer);
-            reject(new Error(`MCP HTTP ${res.statusCode}: ${errorBody.slice(0, 300)}`));
-          });
-          res.on('error', () => {
-            clearTimeout(timer);
-            reject(new Error(`MCP HTTP ${res.statusCode}`));
-          });
-          return;
-        }
+          // Handle errors
+          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+            let body = '';
+            res.on('data', (c) => { body += c; });
+            res.on('end', () => {
+              clearTimeout(timer);
+              if (res.statusCode === 403 || res.statusCode === 401) this.resetSession();
+              reject(new Error(`MCP HTTP ${res.statusCode}: ${body.slice(0, 200)}`));
+            });
+            res.on('error', () => { clearTimeout(timer); reject(new Error(`MCP HTTP ${res.statusCode}`)); });
+            return;
+          }
 
-        let buffer = '';
-        let resolved = false;
+          // For notifications (no id), just drain and resolve
+          if (!hasId) {
+            res.resume(); // Drain the stream
+            res.on('end', () => { clearTimeout(timer); resolve(null); });
+            res.on('error', () => { clearTimeout(timer); resolve(null); });
+            return;
+          }
 
-        res.on('data', (chunk) => {
-          if (resolved) return;
-          buffer += chunk.toString();
+          // For requests with id, parse SSE data events
+          let buf = '';
+          let done = false;
 
-          // Look for SSE "data: " lines with valid JSON
-          const lines = buffer.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const result = JSON.parse(line.slice(6));
-                resolved = true;
-                clearTimeout(timer);
-                // Attach session ID to result for tracking
-                result.__sessionId = respSessionId;
-                // Let the response drain naturally instead of destroying
-                res.resume();
-                resolve(result);
-                return;
-              } catch {
-                // Not valid JSON, keep reading
+          res.on('data', (chunk: Buffer) => {
+            if (done) return;
+            buf += chunk.toString();
+
+            const lines = buf.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const parsed = JSON.parse(line.slice(6));
+                  done = true;
+                  clearTimeout(timer);
+                  res.resume(); // Drain remaining data
+                  resolve(parsed);
+                  return;
+                } catch { /* not json yet */ }
               }
             }
-          }
-          buffer = lines[lines.length - 1] || '';
-        });
+            // Keep last potentially-incomplete line
+            buf = lines[lines.length - 1] || '';
+          });
 
-        res.on('end', () => {
-          clearTimeout(timer);
-          if (!resolved) {
-            // For notifications, there may be no data events
-            resolve({ __sessionId: respSessionId });
-          }
-        });
+          res.on('end', () => {
+            clearTimeout(timer);
+            if (!done) {
+              // Final attempt to parse
+              for (const line of buf.split('\n')) {
+                if (line.startsWith('data: ')) {
+                  try { resolve(JSON.parse(line.slice(6))); return; } catch { /* */ }
+                }
+              }
+              resolve(null);
+            }
+          });
 
-        res.on('error', (err) => {
-          clearTimeout(timer);
-          if (!resolved) reject(err);
-        });
-      });
+          res.on('error', (err) => {
+            clearTimeout(timer);
+            if (!done) reject(err);
+          });
+        },
+      );
 
       req.on('error', (err) => {
         clearTimeout(timer);
