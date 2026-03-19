@@ -13,6 +13,7 @@ export class FevoMcpClient {
   private mcpUrl: string;
   private sessionId: string | null = null;
   private initialized = false;
+  private initPromise: Promise<void> | null = null;
   private nextId = 1;
 
   constructor(baseUrl: string) {
@@ -27,14 +28,33 @@ export class FevoMcpClient {
    */
   async callTool(toolName: string, args: Record<string, any>): Promise<any> {
     if (!this.initialized) {
-      await this.initialize();
+      // Mutex: only one initialize at a time
+      if (!this.initPromise) {
+        this.initPromise = this.initialize().finally(() => {
+          this.initPromise = null;
+        });
+      }
+      await this.initPromise;
     }
 
-    const reqId = this.nextId++;
-    const response = await this.jsonRpcRequest(reqId, 'tools/call', {
-      name: toolName,
-      arguments: args,
-    });
+    let response: any;
+    try {
+      const reqId = this.nextId++;
+      response = await this.jsonRpcRequest(reqId, 'tools/call', {
+        name: toolName,
+        arguments: args,
+      });
+    } catch (err: any) {
+      // Session might have expired — reset and retry once
+      console.warn(`[FevoMcpClient] Tool ${toolName} failed, retrying with fresh session:`, err.message);
+      this.resetSession();
+      await this.initialize();
+      const reqId = this.nextId++;
+      response = await this.jsonRpcRequest(reqId, 'tools/call', {
+        name: toolName,
+        arguments: args,
+      });
+    }
 
     if (!response) {
       throw new Error(`MCP tool ${toolName}: no response`);
@@ -68,6 +88,7 @@ export class FevoMcpClient {
   resetSession(): void {
     this.sessionId = null;
     this.initialized = false;
+    this.initPromise = null;
     this.nextId = 1;
   }
 

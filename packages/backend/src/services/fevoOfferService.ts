@@ -188,16 +188,16 @@ export class FevoOfferService {
   ): Promise<LaunchOfferResult> {
     const { orgId, eventId, title, description, accessCode, hasGroups } = params;
 
-    // Step 1: Get org settings + vendor agreements (parallel)
+    // Step 1: Get org settings then vendor agreements (sequential — MCP doesn't support concurrent requests per session)
     onProgress('loading_org', 'Loading organization settings...');
     let orgSettings: any;
     let vendorAgreements: any[] = [];
     try {
-      [orgSettings, vendorAgreements] = await Promise.all([
-        this.getOrgSettings(orgId),
-        this.getVendorAgreements(orgId),
-      ]);
-      console.log(`[FevoOfferService] Org settings loaded, ${vendorAgreements?.length || 0} VAs`);
+      orgSettings = await this.getOrgSettings(orgId);
+      console.log('[FevoOfferService] Org settings loaded');
+      onProgress('loading_vas', 'Loading vendor agreements...');
+      vendorAgreements = await this.getVendorAgreements(orgId);
+      console.log(`[FevoOfferService] ${vendorAgreements?.length || 0} VAs loaded`);
     } catch (err: any) {
       console.error('[FevoOfferService] Failed to load org settings/VAs:', err.message);
       throw new Error(`Failed to load organization settings: ${err.message}`);
