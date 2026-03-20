@@ -273,13 +273,15 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     sendEvent('creating_offer', 'Creating offer in FEVO...');
     const { randomUUID } = await import('crypto');
     const outingId = randomUUID();
+    // Make access code unique by appending timestamp suffix
+    const uniqueAccessCode = `${params.accessCode}-${Date.now().toString(36)}`;
     const offerPayload = service.buildOfferPayloadPublic({
       outingId,
       eventId: params.eventId,
       orgId: params.orgId,
       title: params.title,
       description: params.description,
-      accessCode: params.accessCode,
+      accessCode: uniqueAccessCode,
       orgSettings,
       vendorAgreements: vendorAgreements || [],
       manifest,
@@ -334,7 +336,7 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
       } catch { /* non-fatal */ }
     }
 
-    const manageUrl = `https://dev.gofevo.com/${params.accessCode}`;
+    const manageUrl = `https://dev.gofevo.com/${uniqueAccessCode}`;
     sendEvent('done', undefined, { outingId, accessCode: params.accessCode, manageUrl });
     clearInterval(keepalive);
     res.end();
@@ -444,7 +446,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v23-fix-dates', ts: Date.now() });
+  res.json({ version: '2026-03-19-v24-unique-codes', ts: Date.now() });
 });
 
 /**
