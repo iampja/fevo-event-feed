@@ -336,19 +336,24 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     }
 
     const manageUrl = `https://dev.gofevo.com/manage/outing/${outingId}`;
-    console.log(`[fevoProxy] launch done, outingId=${outingId}, sending done event`);
-    // Small delay to let any pending I/O settle before writing final event
-    await new Promise((r) => setTimeout(r, 100));
-    if (!aborted) {
-      const donePayload = JSON.stringify({
-        step: 'done',
-        result: { outingId, accessCode: params.accessCode, manageUrl },
-      });
-      res.write(`data: ${donePayload}\n\n`);
-      console.log('[fevoProxy] done event written, ending response');
-    }
-    clearInterval(keepalive);
-    res.end();
+    console.log(`[fevoProxy] launch done, outingId=${outingId}`);
+    // Use setTimeout to break out of the current execution context
+    // and let any pending I/O from req.destroy() settle
+    await new Promise<void>((r) => {
+      setTimeout(() => {
+        if (!aborted) {
+          const donePayload = JSON.stringify({
+            step: 'done',
+            result: { outingId, accessCode: params.accessCode, manageUrl },
+          });
+          console.log('[fevoProxy] writing done event now');
+          res.write(`data: ${donePayload}\n\n`);
+        }
+        clearInterval(keepalive);
+        res.end();
+        r();
+      }, 500);
+    });
     return;
   } catch (err: any) {
     console.error('[fevoProxy] launchOffer error:', err.message);
@@ -455,7 +460,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v18-explicit-done', ts: Date.now() });
+  res.json({ version: '2026-03-19-v19-deferred-done', ts: Date.now() });
 });
 
 /**

@@ -127,10 +127,17 @@ export class FevoMcpClient {
         }
       }, 30_000);
 
+      let currentRes: any = null; // Reference to response for cleanup
+
       const doResolve = (value: any) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        // Swallow any errors from response before destroying
+        if (currentRes) {
+          currentRes.removeAllListeners('error');
+          currentRes.on('error', () => {});
+        }
         // Abort the request to close the socket — stops the MCP SSE stream
         // from keeping the event loop busy
         req.destroy();
@@ -153,6 +160,7 @@ export class FevoMcpClient {
           headers,
         },
         (res) => {
+          currentRes = res;
           // Track session
           const sid = res.headers['mcp-session-id'];
           if (sid) this.sessionId = Array.isArray(sid) ? sid[0] : sid;
