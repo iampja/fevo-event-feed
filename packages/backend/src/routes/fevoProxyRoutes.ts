@@ -237,12 +237,107 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
   };
 
   try {
-    const result = await service.launchOffer(params, (step, detail) => {
-      if (!aborted) sendEvent(step, detail);
-    });
+    // Inline the launch flow (calling service.launchOffer() hangs for unknown reasons,
+    // but calling service methods directly from the route handler works fine)
+    sendEvent('loading_org', 'Loading organization settings...');
+    const orgSettings = await service.getOrgSettings(params.orgId);
+    sendEvent('org_loaded', `Org: ${orgSettings?.name || 'OK'}`);
 
+    sendEvent('loading_vas', 'Loading vendor agreements...');
+    const vendorAgreements = await service.getVendorAgreements(params.orgId);
+    sendEvent('vas_loaded', `VAs: ${Array.isArray(vendorAgreements) ? vendorAgreements.length : 0}`);
+
+    sendEvent('loading_manifest', 'Loading event manifest...');
+    let manifest: any = { areas: [], holds: [] };
+    try { manifest = await service.getManifest(params.eventId); } catch { /* non-fatal */ }
+    sendEvent('manifest_loaded', `Manifest: ${manifest?.areas?.length || 0} areas`);
+
+    sendEvent('loading_event', 'Loading event details...');
+    const eventsResult = await service.searchEvents(params.orgId);
+    const events = eventsResult?.overviews || [];
+    const eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
+    sendEvent('event_loaded', eventInfo ? `Event: ${eventInfo.title || eventInfo.venue?.name || params.eventId}` : 'Event loaded');
+
+    sendEvent('loading_template', 'Looking for template offer...');
+    let templateOffer: any = null;
+    try {
+      const eventOffers = await service.listEventOffers(params.eventId);
+      const offerList = Array.isArray(eventOffers) ? eventOffers : [];
+      if (offerList.length > 0) {
+        templateOffer = await service.getOfferDetails(offerList[0].id);
+      }
+    } catch { /* non-fatal */ }
+    sendEvent('template_loaded', templateOffer ? `Template: ${templateOffer.title}` : 'No template');
+
+    // Build and create offer
+    sendEvent('creating_offer', 'Creating offer in FEVO...');
+    const { randomUUID } = await import('crypto');
+    const outingId = randomUUID();
+    const offerPayload = service.buildOfferPayloadPublic({
+      outingId,
+      eventId: params.eventId,
+      orgId: params.orgId,
+      title: params.title,
+      description: params.description,
+      accessCode: params.accessCode,
+      orgSettings,
+      vendorAgreements: vendorAgreements || [],
+      manifest,
+      group: null,
+      eventInfo,
+      templateOffer,
+    });
+    await service.createOffer(offerPayload);
+    sendEvent('offer_created', 'Offer creation initiated');
+
+    // Poll for completion
+    sendEvent('polling', 'Waiting for offer to be ready...');
+    let pollSuccess = false;
+    let pollMessage: string | null = null;
+    for (let attempt = 1; attempt <= 40; attempt++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const poll = await service.pollOfferComplete();
+        if (poll.success) {
+          pollSuccess = true;
+          pollMessage = poll.message;
+          break;
+        }
+        if (!aborted) sendEvent('polling', `Attempt ${attempt}/40...`);
+      } catch { /* retry */ }
+    }
+
+    if (!pollSuccess) throw new Error('Offer creation timed out');
+    if (pollMessage) throw new Error(`Offer creation error: ${pollMessage}`);
+    sendEvent('offer_complete', 'Offer created successfully');
+
+    // Item library (if manifest has areas)
+    let itemLibraryId: string | null = null;
+    if (manifest?.areas?.length > 0) {
+      try {
+        sendEvent('creating_item_library', 'Setting up inventory...');
+        const itemPayload = service.buildItemLibraryPayloadPublic(manifest, orgSettings, vendorAgreements, null);
+        const step1 = await service.createItemLibrary(outingId, itemPayload);
+        itemLibraryId = step1?.id;
+        const returnedItems = step1?.items || [];
+        if (itemLibraryId && returnedItems.length > 0) {
+          const upsertPayload = service.buildItemLibraryUpsertPayloadPublic(itemPayload, itemLibraryId, returnedItems);
+          await service.createItemLibrary(outingId, upsertPayload);
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    // Link item library
+    if (itemLibraryId) {
+      try {
+        sendEvent('linking', 'Linking inventory to offer...');
+        await service.linkItemToOffer(outingId, itemLibraryId);
+      } catch { /* non-fatal */ }
+    }
+
+    const manageUrl = `https://dev.gofevo.com/manage/outing/${outingId}`;
     if (!aborted) {
-      sendEvent('done', undefined, result);
+      sendEvent('done', undefined, { outingId, accessCode: params.accessCode, manageUrl });
     }
   } catch (err: any) {
     console.error('[fevoProxy] launchOffer error:', err.message);
@@ -349,7 +444,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v14-safe-drain', ts: Date.now() });
+  res.json({ version: '2026-03-19-v15-inline-launch', ts: Date.now() });
 });
 
 /**

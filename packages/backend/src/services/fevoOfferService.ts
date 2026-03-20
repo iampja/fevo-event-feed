@@ -351,6 +351,25 @@ export class FevoOfferService {
     return { outingId, accessCode, manageUrl };
   }
 
+  // ── Public build helpers (used by route handler for inline launch) ────
+
+  buildOfferPayloadPublic(opts: {
+    outingId: string; eventId: string; orgId: string; title: string;
+    description: string; accessCode: string; orgSettings: any;
+    vendorAgreements: any[]; manifest: any; group: any;
+    eventInfo: any; templateOffer: any;
+  }): any {
+    return this.buildOfferPayload(opts);
+  }
+
+  buildItemLibraryPayloadPublic(manifest: any, orgSettings: any, vendorAgreements: any[], itemLibraryId: string | null): any {
+    return this.buildItemLibraryPayload(manifest, orgSettings, vendorAgreements, itemLibraryId);
+  }
+
+  buildItemLibraryUpsertPayloadPublic(originalPayload: any, itemLibraryId: string, returnedItems: any[]): any {
+    return this.buildItemLibraryUpsertPayload(originalPayload, itemLibraryId, returnedItems);
+  }
+
   // ── Private helpers ────────────────────────────────────────────────────
 
   private async pollUntilComplete(
