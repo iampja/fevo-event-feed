@@ -122,8 +122,11 @@ export function useEventAgent() {
         if (!Array.isArray(events) || events.length === 0) {
           throw new Error('No events found for this organization in FEVO. Please verify the event exists.');
         }
-        // Pick first event with outings or first available
-        const bestEvent = events.find((e: any) => (e.outing_count || 0) > 0) || events[0];
+        // Prefer current-season or TBA events (future dates), then events with outings
+        const bestEvent =
+          events.find((e: any) => e.current_season || e.is_date_time_tba) ||
+          events.find((e: any) => (e.outing_count || 0) > 0) ||
+          events[0];
         eventId = bestEvent.id;
         setFevoEventId(eventId);
         const eventTitle = bestEvent.title || bestEvent.name || bestEvent.venue?.name || bestEvent.organization?.name || eventId;

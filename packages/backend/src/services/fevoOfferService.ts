@@ -523,13 +523,14 @@ export class FevoOfferService {
   private buildEventObject(eventId: string, eventInfo: any, orgSettings: any, ticketingProvider: number): any {
     const dt = eventInfo?.date_time || {};
     const tz = dt.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York';
+    const isTba = eventInfo?.is_date_time_tba ?? false;
 
-    // Use event date if available, but ensure it's not in the distant past for display
+    // For TBA events, use the event's original date_time as-is (year 9999 etc.)
+    // For non-TBA events with past dates, override to 30 days from now
     let year = dt.year ?? new Date().getFullYear();
     let month = dt.month ?? new Date().getMonth() + 1;
     let day = dt.day ?? new Date().getDate();
-    // If event date is in the past, use 30 days from now for the offer
-    if (year && month && day) {
+    if (!isTba && year && month && day) {
       const eventDate = new Date(year, month - 1, day);
       if (eventDate < new Date()) {
         const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -564,7 +565,7 @@ export class FevoOfferService {
         name: eventInfo?.venue?.name ?? 'Venue',
         timezone: eventInfo?.venue?.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York',
       },
-      is_date_time_tba: eventInfo?.is_date_time_tba ?? false,
+      is_date_time_tba: isTba,
       organization: { id: eventInfo?.organization?.id ?? orgSettings?.id ?? '' },
       merchandise_media: null,
       merchandise_image: null,
@@ -575,8 +576,23 @@ export class FevoOfferService {
     const dt = eventInfo?.date_time || {};
     const tz = dt.timezone ?? 'America/New_York';
     const offset = dt.offset ?? '-05:00:00';
+    const isTba = eventInfo?.is_date_time_tba ?? false;
 
-    // Use event date if in the future, otherwise 30 days from now
+    // For TBA events, use the event's date_time as-is (year 9999)
+    if (isTba) {
+      return {
+        year: dt.year ?? 9999,
+        month: dt.month ?? 12,
+        day: dt.day ?? 31,
+        hour: dt.hour ?? 23,
+        minute: dt.minute ?? 59,
+        second: 0,
+        offset,
+        timezone: tz,
+      };
+    }
+
+    // For non-TBA events: use event date if in the future, otherwise 30 days from now
     let deadlineDate: Date;
     if (dt.year && dt.month && dt.day) {
       const eventDate = new Date(dt.year, dt.month - 1, dt.day);
