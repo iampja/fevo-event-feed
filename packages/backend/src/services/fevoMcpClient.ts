@@ -160,10 +160,12 @@ export class FevoMcpClient {
             return;
           }
 
-          // For notifications (no id), destroy immediately and resolve
+          // For notifications (no id), just resolve immediately
           if (!hasId) {
             clearTimeout(timer);
-            res.destroy();
+            res.removeAllListeners();
+            res.on('error', () => {}); // Swallow errors
+            res.resume(); // Drain in background
             resolve(null);
             return;
           }
@@ -183,8 +185,13 @@ export class FevoMcpClient {
                   const parsed = JSON.parse(line.slice(6));
                   done = true;
                   clearTimeout(timer);
-                  console.log(`[FevoMcpClient:httpPost] PARSED ${method} ${toolName}, destroying connection`);
-                  res.destroy(); // Kill connection immediately — don't drain
+                  console.log(`[FevoMcpClient:httpPost] PARSED ${method} ${toolName}`);
+                  // Stop listening, drain remaining data safely
+                  res.removeAllListeners();
+                  res.on('error', () => {}); // Swallow errors
+                  res.resume(); // Drain in background
+                  // Force-kill after 2s to avoid blocking event loop
+                  setTimeout(() => { try { res.destroy(); } catch {} }, 2000);
                   resolve(parsed);
                   return;
                 } catch { /* not json yet */ }

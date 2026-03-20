@@ -11,6 +11,14 @@ import { startFeedRefreshJob, stopFeedRefreshJob } from './jobs/feedRefresh';
 import { startAutoSyncJob, stopAutoSyncJob } from './jobs/autoSync';
 import { buildFeedIndex } from './services/feedService';
 
+// Prevent unhandled errors from crashing the server
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[FATAL] Unhandled rejection:', reason?.message || reason);
+});
+
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
