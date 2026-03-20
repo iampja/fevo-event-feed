@@ -308,8 +308,7 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     }
 
     if (!pollSuccess) throw new Error('Offer creation timed out');
-    if (pollMessage) throw new Error(`Offer creation error: ${pollMessage}`);
-    sendEvent('offer_complete', 'Offer created successfully');
+    sendEvent('offer_complete', `Offer created successfully${pollMessage ? ` (${pollMessage})` : ''}`);
 
     // Item library (if manifest has areas)
     let itemLibraryId: string | null = null;
@@ -336,6 +335,7 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     }
 
     const manageUrl = `https://dev.gofevo.com/manage/outing/${outingId}`;
+    sendEvent('finalizing', `Outing ${outingId.slice(0, 8)}... ready`);
     console.log(`[fevoProxy] launch done, outingId=${outingId}`);
     // Use setTimeout to break out of the current execution context
     // and let any pending I/O from req.destroy() settle
@@ -460,7 +460,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v19-deferred-done', ts: Date.now() });
+  res.json({ version: '2026-03-19-v20-fix-poll-msg', ts: Date.now() });
 });
 
 /**
