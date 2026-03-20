@@ -322,13 +322,8 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     const holdCount = manifest?.holds?.length || 0;
     sendEvent('manifest_loaded', `Manifest: ${areaCount} areas, ${holdCount} holds`);
 
-    // Validate: manifest must have inventory (areas or holds)
-    if (areaCount === 0 && holdCount === 0) {
-      sendEvent('error', `No inventory configured for event "${eventInfo.title}". Ticket areas and holds must be set up in the FEVO admin before offers can be created.`);
-      clearInterval(keepalive);
-      res.end();
-      return;
-    }
+    // Note: empty manifest (0 areas, 0 holds) is OK for non-integrated events.
+    // Offers can still be created — inventory is managed at the offer/item-library level.
 
     sendEvent('loading_template', 'Looking for template offer...');
     let templateOffer: any = null;
