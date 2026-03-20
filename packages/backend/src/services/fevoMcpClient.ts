@@ -30,6 +30,7 @@ export class FevoMcpClient {
   async callTool(toolName: string, args: Record<string, any>): Promise<any> {
     // Ensure initialized (with mutex for concurrent calls)
     if (!this.initialized) {
+      console.log(`[FevoMcpClient] ${toolName}: not initialized, initializing...`);
       if (!this.initPromise) {
         this.initPromise = this.doInit().then(() => {
           this.initialized = true;
@@ -40,9 +41,10 @@ export class FevoMcpClient {
         });
       }
       await this.initPromise;
+      console.log(`[FevoMcpClient] ${toolName}: initialized OK`);
     }
 
-    console.log(`[FevoMcpClient] ${toolName} (session: ${this.sessionId?.slice(0, 8)}...)`);
+    console.log(`[FevoMcpClient] ${toolName} (session: ${this.sessionId?.slice(0, 8)}..., id: ${this.nextId})`);
 
     let response: any;
     try {
@@ -109,6 +111,9 @@ export class FevoMcpClient {
   }
 
   private httpPost(body: any): Promise<any> {
+    const method = body.method || 'tools/call';
+    const toolName = body.params?.name || '';
+    console.log(`[FevoMcpClient:httpPost] START ${method} ${toolName} (hasSession: ${!!this.sessionId})`);
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify(body);
       const hasId = 'id' in body; // Notifications don't have id
@@ -137,6 +142,7 @@ export class FevoMcpClient {
           headers,
         },
         (res) => {
+          console.log(`[FevoMcpClient:httpPost] RESPONSE ${method} ${toolName} status=${res.statusCode}`);
           // Track session
           const sid = res.headers['mcp-session-id'];
           if (sid) this.sessionId = Array.isArray(sid) ? sid[0] : sid;
@@ -177,6 +183,7 @@ export class FevoMcpClient {
                   const parsed = JSON.parse(line.slice(6));
                   done = true;
                   clearTimeout(timer);
+                  console.log(`[FevoMcpClient:httpPost] PARSED ${method} ${toolName}, destroying connection`);
                   res.destroy(); // Kill connection immediately — don't drain
                   resolve(parsed);
                   return;

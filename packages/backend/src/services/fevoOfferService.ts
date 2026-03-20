@@ -59,7 +59,10 @@ export class FevoOfferService {
   // ── Token helper ────────────────────────────────────────────────────────
 
   private async getToken(): Promise<string> {
-    return this.tokenManager.getAccessToken();
+    console.log('[FevoOfferService] getToken called');
+    const token = await this.tokenManager.getAccessToken();
+    console.log(`[FevoOfferService] getToken returned (${token ? token.length + ' chars' : 'null'})`);
+    return token;
   }
 
   // ── Read operations (all via MCP) ───────────────────────────────────────
@@ -187,15 +190,18 @@ export class FevoOfferService {
     onProgress: ProgressCallback,
   ): Promise<LaunchOfferResult> {
     const { orgId, eventId, title, description, accessCode, hasGroups } = params;
+    console.log(`[FevoOfferService] launchOffer START orgId=${orgId} eventId=${eventId}`);
 
-    // Step 1: Get org settings then vendor agreements (sequential — MCP doesn't support concurrent requests per session)
+    // Step 1: Get org settings then vendor agreements
     onProgress('loading_org', 'Loading organization settings...');
     let orgSettings: any;
     let vendorAgreements: any[] = [];
     try {
+      console.log('[FevoOfferService] calling getOrgSettings...');
       orgSettings = await this.getOrgSettings(orgId);
       console.log('[FevoOfferService] Org settings loaded');
       onProgress('loading_vas', 'Loading vendor agreements...');
+      console.log('[FevoOfferService] calling getVendorAgreements...');
       vendorAgreements = await this.getVendorAgreements(orgId);
       console.log(`[FevoOfferService] ${vendorAgreements?.length || 0} VAs loaded`);
     } catch (err: any) {
