@@ -359,11 +359,14 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     await service.createOffer(offerPayload);
     sendEvent('offer_created', 'Offer creation initiated');
 
-    // Poll for completion
+    // Poll for completion (max 20 attempts = 60s, then proceed anyway —
+    // the offer is usually created even when poll_offer_complete gets stuck)
     sendEvent('polling', 'Waiting for offer to be ready...');
     let pollSuccess = false;
     let pollMessage: string | null = null;
-    for (let attempt = 1; attempt <= 40; attempt++) {
+    const MAX_POLL = 20;
+    for (let attempt = 1; attempt <= MAX_POLL; attempt++) {
+      if (aborted) break;
       await new Promise((r) => setTimeout(r, 3000));
       try {
         const poll = await service.pollOfferComplete();
@@ -372,12 +375,37 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
           pollMessage = poll.message;
           break;
         }
-        if (!aborted) sendEvent('polling', `Attempt ${attempt}/40...`);
+        sendEvent('polling', `Attempt ${attempt}/${MAX_POLL}...`);
       } catch { /* retry */ }
     }
 
-    if (!pollSuccess) throw new Error('Offer creation timed out');
-    sendEvent('offer_complete', `Offer created successfully${pollMessage ? ` (${pollMessage})` : ''}`);
+    if (pollSuccess && pollMessage) {
+      // success:true + message means error
+      sendEvent('error', `Offer creation failed: ${pollMessage}`);
+      clearInterval(keepalive);
+      res.end();
+      return;
+    }
+
+    if (!pollSuccess) {
+      // Timed out but proceed anyway — check if offer was created
+      console.warn('[launch] poll_offer_complete timed out, proceeding to check if offer exists');
+      sendEvent('polling', 'Poll timed out — checking if offer was created...');
+      try {
+        const offers = await service.listEventOffers(params.eventId);
+        const offerList = Array.isArray(offers) ? offers : [];
+        const found = offerList.find((o: any) => o.access_code === uniqueAccessCode);
+        if (found) {
+          sendEvent('offer_complete', `Offer created (found via fallback check)`);
+        } else {
+          sendEvent('offer_complete', `Offer may have been created (poll timed out but no error returned)`);
+        }
+      } catch {
+        sendEvent('offer_complete', 'Poll timed out — proceeding with item library');
+      }
+    } else {
+      sendEvent('offer_complete', 'Offer created successfully');
+    }
 
     // Item library — always create one (even for empty manifests on non-integrated events)
     let itemLibraryId: string | null = null;
