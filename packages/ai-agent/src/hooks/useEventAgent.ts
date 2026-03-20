@@ -21,14 +21,12 @@ export function useEventAgent() {
   const [messageCount, setMessageCount] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [fevoOutingId, setFevoOutingId] = useState<string | null>(null);
+  const [fevoManageUrl, setFevoManageUrl] = useState<string | null>(null);
   const [fevoOrgId, setFevoOrgId] = useState<string | null>(null);
   const [fevoEventId, setFevoEventId] = useState<string | null>(null);
   const launchAbortRef = useRef<(() => void) | null>(null);
-  const manageUrl = fevoOutingId
-    ? `https://dev.gofevo.com/manage/outing/${fevoOutingId}`
-    : eventData.slug
-      ? `https://dev.gofevo.com/manage/offer/${eventData.slug}`
-      : 'https://dev.gofevo.com/manage';
+  const manageUrl = fevoManageUrl
+    || (fevoOutingId ? `https://dev.gofevo.com/${eventData.slug || fevoOutingId}` : 'https://dev.gofevo.com/manage');
 
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -161,9 +159,10 @@ export function useEventAgent() {
         // onDone
         (result) => {
           setFevoOutingId(result.outingId);
+          if (result.manageUrl) setFevoManageUrl(result.manageUrl);
           addMessage({
             sender: 'agent',
-            text: `✅ Event launched successfully! Outing ID: <strong>${result.outingId}</strong>`,
+            text: `✅ Event launched successfully!`,
           });
           addTimer(() => {
             setScreen('success');

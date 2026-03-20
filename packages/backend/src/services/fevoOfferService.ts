@@ -346,7 +346,7 @@ export class FevoOfferService {
       }
     }
 
-    const manageUrl = `${this.baseUrl}/manage/outing/${outingId}`;
+    const manageUrl = `${this.baseUrl}/${accessCode}`;
 
     return { outingId, accessCode, manageUrl };
   }
