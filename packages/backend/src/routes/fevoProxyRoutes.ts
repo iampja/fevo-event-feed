@@ -82,15 +82,28 @@ router.get('/organizations/:orgId/vendor-agreements', async (req: Request, res: 
 });
 
 /**
+ * Check if an event has valid dates (not in the past, or is TBA/current_season)
+ */
+function isEventDateValid(event: any): boolean {
+  if (event.is_date_time_tba || event.current_season) return true;
+  const dt = event.date_time;
+  if (!dt?.year || !dt?.month || !dt?.day) return true; // No date = allow
+  return new Date(dt.year, dt.month - 1, dt.day) >= new Date();
+}
+
+/**
  * GET /organizations/:orgId/events
- * Query params: query, fromDate, toDate, page, pageSize
+ * Query params: query, fromDate, toDate, page, pageSize, validOnly
+ *
+ * When validOnly=true (default), filters out past-dated events and annotates
+ * each event with a `_valid` flag and `_invalidReason` if applicable.
  */
 router.get('/organizations/:orgId/events', async (req: Request, res: Response) => {
   const service = getService(res);
   if (!service) return;
 
   try {
-    const { query, fromDate, toDate, page, pageSize } = req.query;
+    const { query, fromDate, toDate, page, pageSize, validOnly } = req.query;
     const data = await service.searchEvents(
       req.params.orgId,
       query as string | undefined,
@@ -99,7 +112,31 @@ router.get('/organizations/:orgId/events', async (req: Request, res: Response) =
       page ? Number(page) : undefined,
       pageSize ? Number(pageSize) : undefined,
     );
-    res.json(data);
+
+    const events = data?.overviews || [];
+
+    // Annotate events with validity flags
+    const annotated = events.map((e: any) => {
+      const dateValid = isEventDateValid(e);
+      const reasons: string[] = [];
+      if (!dateValid) reasons.push('Event date is in the past');
+      return {
+        ...e,
+        _valid: reasons.length === 0,
+        _invalidReasons: reasons.length > 0 ? reasons : undefined,
+      };
+    });
+
+    // Filter to valid-only by default (pass validOnly=false to get all)
+    const shouldFilter = validOnly !== 'false';
+    const filtered = shouldFilter ? annotated.filter((e: any) => e._valid) : annotated;
+
+    res.json({
+      overviews: filtered,
+      total: filtered.length,
+      _totalBeforeFilter: events.length,
+      _filteredOut: events.length - filtered.length,
+    });
   } catch (err: any) {
     console.error('[fevoProxy] searchEvents error:', err.message);
     res.status(502).json({ error: 'Failed to search events', detail: err.message });
@@ -247,31 +284,51 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     const vendorAgreements = await service.getVendorAgreements(params.orgId);
     sendEvent('vas_loaded', `VAs: ${Array.isArray(vendorAgreements) ? vendorAgreements.length : 0}`);
 
-    sendEvent('loading_manifest', 'Loading event manifest...');
-    let manifest: any = { areas: [], holds: [] };
-    try { manifest = await service.getManifest(params.eventId); } catch { /* non-fatal */ }
-    sendEvent('manifest_loaded', `Manifest: ${manifest?.areas?.length || 0} areas`);
-
+    // Validate event first (may change params.eventId if selected event is invalid)
     sendEvent('loading_event', 'Loading event details...');
     const eventsResult = await service.searchEvents(params.orgId);
     const events = eventsResult?.overviews || [];
     let eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
 
-    // If the selected event has past dates, prefer a TBA/current-season event instead
-    if (eventInfo && !eventInfo.is_date_time_tba && !eventInfo.current_season) {
-      const dt = eventInfo.date_time;
-      const isPast = dt?.year && dt?.month && dt?.day &&
-        new Date(dt.year, dt.month - 1, dt.day) < new Date();
-      if (isPast) {
-        const betterEvent = events.find((e: any) => e.current_season || e.is_date_time_tba);
-        if (betterEvent) {
-          console.log(`[launch] Overriding past event "${eventInfo.title}" → "${betterEvent.title}" (TBA/current)`);
-          eventInfo = betterEvent;
-          params.eventId = betterEvent.id;
-        }
+    // Validate: event must exist
+    if (!eventInfo) {
+      sendEvent('error', 'No events found for this organization. An event must be created in the FEVO admin before offers can be built.');
+      clearInterval(keepalive);
+      res.end();
+      return;
+    }
+
+    // Validate: event date must not be in the past (unless TBA/current_season)
+    if (!isEventDateValid(eventInfo)) {
+      const betterEvent = events.find((e: any) => isEventDateValid(e));
+      if (betterEvent) {
+        console.log(`[launch] Overriding past event "${eventInfo.title}" → "${betterEvent.title}" (valid date)`);
+        eventInfo = betterEvent;
+        params.eventId = betterEvent.id;
+      } else {
+        sendEvent('error', `All events for this organization have past dates. Please create or update an event with future dates in the FEVO admin (dev.fevo-enterprise.com).`);
+        clearInterval(keepalive);
+        res.end();
+        return;
       }
     }
-    sendEvent('event_loaded', eventInfo ? `Event: ${eventInfo.title || eventInfo.venue?.name || params.eventId}` : 'Event loaded');
+    sendEvent('event_loaded', `Event: ${eventInfo.title || eventInfo.venue?.name || params.eventId}`);
+
+    // Load manifest (uses validated eventId)
+    sendEvent('loading_manifest', 'Loading event manifest...');
+    let manifest: any = { areas: [], holds: [] };
+    try { manifest = await service.getManifest(params.eventId); } catch { /* non-fatal */ }
+    const areaCount = manifest?.areas?.length || 0;
+    const holdCount = manifest?.holds?.length || 0;
+    sendEvent('manifest_loaded', `Manifest: ${areaCount} areas, ${holdCount} holds`);
+
+    // Validate: manifest must have inventory (areas or holds)
+    if (areaCount === 0 && holdCount === 0) {
+      sendEvent('error', `No inventory configured for event "${eventInfo.title}". Ticket areas and holds must be set up in the FEVO admin before offers can be created.`);
+      clearInterval(keepalive);
+      res.end();
+      return;
+    }
 
     sendEvent('loading_template', 'Looking for template offer...');
     let templateOffer: any = null;

@@ -89,7 +89,7 @@ export function useEventAgent() {
     setIsTyping(true);
 
     try {
-      // Step 1: Get organization
+      // Step 1: Get organization (prefer orgs with active events)
       addMessage({ sender: 'agent', text: '🔍 Searching for your organization...' });
       let orgId = fevoOrgId;
       if (!orgId) {
@@ -98,14 +98,18 @@ export function useEventAgent() {
         if (!Array.isArray(orgs) || orgs.length === 0) {
           throw new Error('No organizations found. Please check your FEVO account setup.');
         }
-        // Pick first org with active events
-        const activeOrg = orgs.find((o: any) => (o.active_events || 0) > 0) || orgs[0];
+        // Pick first org with active events and active outings
+        const activeOrg =
+          orgs.find((o: any) => (o.active_events || 0) > 0 && (o.active_outings || 0) > 0) ||
+          orgs.find((o: any) => (o.active_events || 0) > 0) ||
+          orgs[0];
         orgId = activeOrg.id;
         setFevoOrgId(orgId);
-        addMessage({ sender: 'agent', text: `✓ Found org: <strong>${activeOrg.name}</strong>` });
+        const eventCount = activeOrg.active_events || 0;
+        addMessage({ sender: 'agent', text: `✓ Found org: <strong>${activeOrg.name}</strong> (${eventCount} active event${eventCount !== 1 ? 's' : ''})` });
       }
 
-      // Step 2: Search for matching event
+      // Step 2: Search for valid events (backend filters out past-dated events by default)
       addMessage({ sender: 'agent', text: '🔍 Searching for matching event...' });
       let eventId = fevoEventId;
       if (!eventId) {
@@ -120,17 +124,29 @@ export function useEventAgent() {
         }
 
         if (!Array.isArray(events) || events.length === 0) {
-          throw new Error('No events found for this organization in FEVO. Please verify the event exists.');
+          // Check if events were filtered out
+          const filteredOut = eventsResponse?._filteredOut || 0;
+          if (filteredOut > 0) {
+            throw new Error(
+              `Found ${filteredOut} event(s) but all have past dates. Events need future dates or TBA status to create offers. Please update event dates in the FEVO admin.`
+            );
+          }
+          throw new Error('No events found for this organization in FEVO. Please create an event in the FEVO admin first.');
         }
-        // Prefer current-season or TBA events (future dates), then events with outings
+
+        // Only consider valid events: TBA, current_season, or explicitly marked valid
+        const validEvents = events.filter((e: any) => e._valid !== false);
         const bestEvent =
-          events.find((e: any) => e.current_season || e.is_date_time_tba) ||
-          events.find((e: any) => (e.outing_count || 0) > 0) ||
-          events[0];
+          validEvents.find((e: any) => e.current_season || e.is_date_time_tba) ||
+          validEvents.find((e: any) => (e.outing_count || 0) > 0) ||
+          validEvents[0] ||
+          events[0]; // Ultimate fallback (backend will do final validation)
+
         eventId = bestEvent.id;
         setFevoEventId(eventId);
         const eventTitle = bestEvent.title || bestEvent.name || bestEvent.venue?.name || bestEvent.organization?.name || eventId;
-        addMessage({ sender: 'agent', text: `✓ Found event: <strong>${eventTitle}</strong>` });
+        const dateInfo = bestEvent.is_date_time_tba ? ' (TBA)' : bestEvent.current_season ? ' (current season)' : '';
+        addMessage({ sender: 'agent', text: `✓ Found event: <strong>${eventTitle}</strong>${dateInfo}` });
       }
 
       // Step 3: Launch offer via SSE
