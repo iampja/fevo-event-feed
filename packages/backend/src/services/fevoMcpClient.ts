@@ -160,22 +160,27 @@ export class FevoMcpClient {
             return;
           }
 
-          // For notifications (no id), just resolve immediately
+          // For notifications (no id), just drain and resolve
           if (!hasId) {
             clearTimeout(timer);
-            res.removeAllListeners();
-            res.on('error', () => {}); // Swallow errors
-            res.resume(); // Drain in background
+            res.resume();
             resolve(null);
             return;
           }
 
           // For requests with id, parse SSE data events
           let buf = '';
-          let done = false;
+          let resolved = false;
+
+          const finish = (value: any) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timer);
+            resolve(value);
+          };
 
           res.on('data', (chunk: Buffer) => {
-            if (done) return;
+            if (resolved) return;
             buf += chunk.toString();
 
             const lines = buf.split('\n');
@@ -183,16 +188,8 @@ export class FevoMcpClient {
               if (line.startsWith('data: ')) {
                 try {
                   const parsed = JSON.parse(line.slice(6));
-                  done = true;
-                  clearTimeout(timer);
                   console.log(`[FevoMcpClient:httpPost] PARSED ${method} ${toolName}`);
-                  // Stop listening, drain remaining data safely
-                  res.removeAllListeners();
-                  res.on('error', () => {}); // Swallow errors
-                  res.resume(); // Drain in background
-                  // Force-kill after 2s to avoid blocking event loop
-                  setTimeout(() => { try { res.destroy(); } catch {} }, 2000);
-                  resolve(parsed);
+                  finish(parsed);
                   return;
                 } catch { /* not json yet */ }
               }
@@ -202,21 +199,21 @@ export class FevoMcpClient {
           });
 
           res.on('end', () => {
-            clearTimeout(timer);
-            if (!done) {
-              // Final attempt to parse
-              for (const line of buf.split('\n')) {
-                if (line.startsWith('data: ')) {
-                  try { resolve(JSON.parse(line.slice(6))); return; } catch { /* */ }
-                }
+            if (resolved) return;
+            // Final attempt to parse
+            for (const line of buf.split('\n')) {
+              if (line.startsWith('data: ')) {
+                try { finish(JSON.parse(line.slice(6))); return; } catch { /* */ }
               }
-              resolve(null);
             }
+            finish(null);
           });
 
           res.on('error', (err) => {
-            clearTimeout(timer);
-            if (!done) reject(err);
+            if (!resolved) {
+              clearTimeout(timer);
+              reject(err);
+            }
           });
         },
       );
