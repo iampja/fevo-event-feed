@@ -21,16 +21,13 @@ export class FevoMcpClient {
 
   constructor(baseUrl: string) {
     this.mcpUrl = `${baseUrl}/mcp`;
-    // Pre-parse URL to avoid using URL constructor
     const match = this.mcpUrl.match(/^https:\/\/([^/]+)(\/.*)?$/);
     this.parsedHost = match ? match[1] : 'dev.gofevo.com';
     this.parsedPath = match ? (match[2] || '/mcp') : '/mcp';
   }
 
   async callTool(toolName: string, args: Record<string, any>): Promise<any> {
-    // Ensure initialized (with mutex for concurrent calls)
     if (!this.initialized) {
-      console.log(`[FevoMcpClient] ${toolName}: not initialized, initializing...`);
       if (!this.initPromise) {
         this.initPromise = this.doInit().then(() => {
           this.initialized = true;
@@ -41,10 +38,9 @@ export class FevoMcpClient {
         });
       }
       await this.initPromise;
-      console.log(`[FevoMcpClient] ${toolName}: initialized OK`);
     }
 
-    console.log(`[FevoMcpClient] ${toolName} (session: ${this.sessionId?.slice(0, 8)}..., id: ${this.nextId})`);
+    console.log(`[FevoMcpClient] ${toolName} (session: ${this.sessionId?.slice(0, 8)}...)`);
 
     let response: any;
     try {
@@ -55,7 +51,6 @@ export class FevoMcpClient {
         params: { name: toolName, arguments: args },
       });
     } catch (err: any) {
-      // Retry once with fresh session
       console.warn(`[FevoMcpClient] ${toolName} failed: ${err.message}, retrying...`);
       this.resetSession();
       await this.doInit();
@@ -78,7 +73,6 @@ export class FevoMcpClient {
     try { return JSON.parse(text); } catch { return text; }
   }
 
-  /** Force a fresh MCP session on the next call */
   resetSession(): void {
     this.sessionId = null;
     this.initialized = false;
@@ -102,7 +96,6 @@ export class FevoMcpClient {
     if (!resp?.result) throw new Error('MCP init failed');
     console.log(`[FevoMcpClient] Session: ${this.sessionId?.slice(0, 8)}`);
 
-    // Send initialized notification (don't await response parsing)
     await this.httpPost({
       jsonrpc: '2.0',
       method: 'notifications/initialized',
@@ -111,12 +104,10 @@ export class FevoMcpClient {
   }
 
   private httpPost(body: any): Promise<any> {
-    const method = body.method || 'tools/call';
-    const toolName = body.params?.name || '';
-    console.log(`[FevoMcpClient:httpPost] START ${method} ${toolName} (hasSession: ${!!this.sessionId})`);
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify(body);
-      const hasId = 'id' in body; // Notifications don't have id
+      const hasId = 'id' in body;
+      let settled = false;
 
       const headers: Record<string, string | number> = {
         'Content-Type': 'application/json',
@@ -129,9 +120,29 @@ export class FevoMcpClient {
       }
 
       const timer = setTimeout(() => {
-        req.destroy();
-        reject(new Error(`MCP timeout (30s) for ${body.method}`));
+        if (!settled) {
+          settled = true;
+          req.destroy();
+          reject(new Error(`MCP timeout (30s) for ${body.method}`));
+        }
       }, 30_000);
+
+      const doResolve = (value: any) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        // Abort the request to close the socket — stops the MCP SSE stream
+        // from keeping the event loop busy
+        req.destroy();
+        resolve(value);
+      };
+
+      const doReject = (err: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      };
 
       const req = https.request(
         {
@@ -142,45 +153,33 @@ export class FevoMcpClient {
           headers,
         },
         (res) => {
-          console.log(`[FevoMcpClient:httpPost] RESPONSE ${method} ${toolName} status=${res.statusCode}`);
           // Track session
           const sid = res.headers['mcp-session-id'];
           if (sid) this.sessionId = Array.isArray(sid) ? sid[0] : sid;
 
-          // Handle errors
+          // Handle HTTP errors
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            let body = '';
-            res.on('data', (c) => { body += c; });
+            let errBody = '';
+            res.on('data', (c) => { errBody += c; });
             res.on('end', () => {
-              clearTimeout(timer);
               if (res.statusCode === 403 || res.statusCode === 401) this.resetSession();
-              reject(new Error(`MCP HTTP ${res.statusCode}: ${body.slice(0, 200)}`));
+              doReject(new Error(`MCP HTTP ${res.statusCode}: ${errBody.slice(0, 200)}`));
             });
-            res.on('error', () => { clearTimeout(timer); reject(new Error(`MCP HTTP ${res.statusCode}`)); });
+            res.on('error', () => doReject(new Error(`MCP HTTP ${res.statusCode}`)));
             return;
           }
 
-          // For notifications (no id), just drain and resolve
+          // For notifications (no id), resolve immediately
           if (!hasId) {
-            clearTimeout(timer);
-            res.resume();
-            resolve(null);
+            doResolve(null);
             return;
           }
 
-          // For requests with id, parse SSE data events
+          // For requests with id, parse the first SSE data event
           let buf = '';
-          let resolved = false;
-
-          const finish = (value: any) => {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timer);
-            resolve(value);
-          };
 
           res.on('data', (chunk: Buffer) => {
-            if (resolved) return;
+            if (settled) return;
             buf += chunk.toString();
 
             const lines = buf.split('\n');
@@ -188,39 +187,34 @@ export class FevoMcpClient {
               if (line.startsWith('data: ')) {
                 try {
                   const parsed = JSON.parse(line.slice(6));
-                  console.log(`[FevoMcpClient:httpPost] PARSED ${method} ${toolName}`);
-                  finish(parsed);
+                  doResolve(parsed);
                   return;
-                } catch { /* not json yet */ }
+                } catch { /* incomplete JSON, keep reading */ }
               }
             }
-            // Keep last potentially-incomplete line
             buf = lines[lines.length - 1] || '';
           });
 
           res.on('end', () => {
-            if (resolved) return;
-            // Final attempt to parse
+            if (settled) return;
             for (const line of buf.split('\n')) {
               if (line.startsWith('data: ')) {
-                try { finish(JSON.parse(line.slice(6))); return; } catch { /* */ }
+                try { doResolve(JSON.parse(line.slice(6))); return; } catch { /* */ }
               }
             }
-            finish(null);
+            doResolve(null);
           });
 
-          res.on('error', (err) => {
-            if (!resolved) {
-              clearTimeout(timer);
-              reject(err);
-            }
-          });
+          res.on('error', (err) => doReject(err));
         },
       );
 
       req.on('error', (err) => {
-        clearTimeout(timer);
-        reject(err);
+        // Only reject if we haven't settled yet — req.destroy() in doResolve
+        // triggers this, but we've already resolved so we ignore it
+        if (!settled) {
+          doReject(err);
+        }
       });
 
       req.write(postData);
