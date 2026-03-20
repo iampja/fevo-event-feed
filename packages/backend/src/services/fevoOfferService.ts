@@ -433,24 +433,10 @@ export class FevoOfferService {
     // Determine deadline from event date_time
     const deadline = this.buildDeadline(eventInfo);
 
-    // Start with template if available, then override specific fields
-    let offer: any;
-    if (templateOffer) {
-      offer = { ...templateOffer };
-      // Override with our values
-      offer.id = outingId;
-      offer.is_create = true;
-      offer.title = title;
-      offer.description = description;
-      offer.access_code = accessCode;
-      offer.event = eventObj;
-      offer.deadline = deadline;
-      offer.offer_vendor_agreement = clonedVAs;
-      offer.deliveries = deliveries;
-      if (group) offer.group = group;
-    } else {
-      // Build from scratch using org defaults
-      offer = {
+    // Always build from scratch — using a template copies too much state
+    // (group assignments, Costco reason codes, restrict_offer, discount lists, etc.)
+    // that corrupts the new offer.
+    const offer: any = {
         id: outingId,
         is_create: true,
         title,
@@ -515,9 +501,42 @@ export class FevoOfferService {
         deliveries,
         group: group || null,
       };
-    }
 
     return { offers: [offer], tiers: [] };
+  }
+
+  /**
+   * Build a minimal item library for non-integrated events (no manifest).
+   * Creates a single "Open Inventory" item so tickets can be sold.
+   */
+  buildEmptyManifestItemLibrary(orgSettings: any, vendorAgreements: any[]): any {
+    const ticketingProvider = orgSettings?.ticketing_provider_config?.ticketing_provider ?? orgSettings?.ticketing_provider ?? 0;
+    const ticketingProviderName = TICKETING_PROVIDER_MAP[ticketingProvider] || 'None';
+
+    // Find best VA
+    let bestVaId = '';
+    const customVa = (vendorAgreements || []).find((va: any) => va.type === 5);
+    const openVa = (vendorAgreements || []).find((va: any) => va.type === 2);
+    bestVaId = customVa?.id || openVa?.id || (vendorAgreements?.[0]?.id ?? '');
+
+    return {
+      id: null,
+      name: 'Inventory',
+      items: [{
+        id: null,
+        name: 'Open Inventory',
+        sort_order: 0,
+        timestamp: Date.now(),
+        costco_context: { program_id: '', program_title: '' },
+        data: {
+          TicketingProvider: ticketingProviderName,
+          RateLimitSetting: 0,
+          EntityType: 'Outing',
+          AreaBuyers: [],
+          Holds: [],
+        },
+      }],
+    };
   }
 
   private buildEventObject(eventId: string, eventInfo: any, orgSettings: any, ticketingProvider: number): any {

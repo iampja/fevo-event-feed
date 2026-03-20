@@ -379,20 +379,22 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     if (!pollSuccess) throw new Error('Offer creation timed out');
     sendEvent('offer_complete', `Offer created successfully${pollMessage ? ` (${pollMessage})` : ''}`);
 
-    // Item library (if manifest has areas)
+    // Item library — always create one (even for empty manifests on non-integrated events)
     let itemLibraryId: string | null = null;
-    if (manifest?.areas?.length > 0) {
-      try {
-        sendEvent('creating_item_library', 'Setting up inventory...');
-        const itemPayload = service.buildItemLibraryPayloadPublic(manifest, orgSettings, vendorAgreements, null);
-        const step1 = await service.createItemLibrary(outingId, itemPayload);
-        itemLibraryId = step1?.id;
-        const returnedItems = step1?.items || [];
-        if (itemLibraryId && returnedItems.length > 0) {
-          const upsertPayload = service.buildItemLibraryUpsertPayloadPublic(itemPayload, itemLibraryId, returnedItems);
-          await service.createItemLibrary(outingId, upsertPayload);
-        }
-      } catch { /* non-fatal */ }
+    try {
+      sendEvent('creating_item_library', 'Setting up inventory...');
+      const itemPayload = (manifest?.areas?.length > 0)
+        ? service.buildItemLibraryPayloadPublic(manifest, orgSettings, vendorAgreements, null)
+        : service.buildEmptyManifestItemLibrary(orgSettings, vendorAgreements);
+      const step1 = await service.createItemLibrary(outingId, itemPayload);
+      itemLibraryId = step1?.id;
+      const returnedItems = step1?.items || [];
+      if (itemLibraryId && returnedItems.length > 0) {
+        const upsertPayload = service.buildItemLibraryUpsertPayloadPublic(itemPayload, itemLibraryId, returnedItems);
+        await service.createItemLibrary(outingId, upsertPayload);
+      }
+    } catch (err: any) {
+      console.warn('[fevoProxy] Item library creation failed:', err.message);
     }
 
     // Link item library
