@@ -255,7 +255,22 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
     sendEvent('loading_event', 'Loading event details...');
     const eventsResult = await service.searchEvents(params.orgId);
     const events = eventsResult?.overviews || [];
-    const eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
+    let eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
+
+    // If the selected event has past dates, prefer a TBA/current-season event instead
+    if (eventInfo && !eventInfo.is_date_time_tba && !eventInfo.current_season) {
+      const dt = eventInfo.date_time;
+      const isPast = dt?.year && dt?.month && dt?.day &&
+        new Date(dt.year, dt.month - 1, dt.day) < new Date();
+      if (isPast) {
+        const betterEvent = events.find((e: any) => e.current_season || e.is_date_time_tba);
+        if (betterEvent) {
+          console.log(`[launch] Overriding past event "${eventInfo.title}" → "${betterEvent.title}" (TBA/current)`);
+          eventInfo = betterEvent;
+          params.eventId = betterEvent.id;
+        }
+      }
+    }
     sendEvent('event_loaded', eventInfo ? `Event: ${eventInfo.title || eventInfo.venue?.name || params.eventId}` : 'Event loaded');
 
     sendEvent('loading_template', 'Looking for template offer...');
@@ -446,7 +461,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v25-prefer-tba-events', ts: Date.now() });
+  res.json({ version: '2026-03-19-v26-backend-event-override', ts: Date.now() });
 });
 
 /**
