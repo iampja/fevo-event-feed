@@ -522,6 +522,23 @@ export class FevoOfferService {
 
   private buildEventObject(eventId: string, eventInfo: any, orgSettings: any, ticketingProvider: number): any {
     const dt = eventInfo?.date_time || {};
+    const tz = dt.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York';
+
+    // Use event date if available, but ensure it's not in the distant past for display
+    let year = dt.year ?? new Date().getFullYear();
+    let month = dt.month ?? new Date().getMonth() + 1;
+    let day = dt.day ?? new Date().getDate();
+    // If event date is in the past, use 30 days from now for the offer
+    if (year && month && day) {
+      const eventDate = new Date(year, month - 1, day);
+      if (eventDate < new Date()) {
+        const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        year = futureDate.getFullYear();
+        month = futureDate.getMonth() + 1;
+        day = futureDate.getDate();
+      }
+    }
+
     return {
       id: eventId,
       title: eventInfo?.title || eventInfo?.venue?.name || 'Event',
@@ -530,10 +547,10 @@ export class FevoOfferService {
         minute: dt.minute ?? 0,
         second: dt.second ?? 0,
         offset: dt.offset ?? '-05:00:00',
-        timezone: dt.timezone ?? eventInfo?.timezone ?? orgSettings?.timezone_default ?? 'America/New_York',
-        year: dt.year ?? new Date().getFullYear(),
-        month: dt.month ?? new Date().getMonth() + 1,
-        day: dt.day ?? new Date().getDate(),
+        timezone: tz,
+        year,
+        month,
+        day,
       },
       ticketing_provider_config: {
         ticketing_provider: ticketingProvider,
@@ -556,15 +573,31 @@ export class FevoOfferService {
 
   private buildDeadline(eventInfo: any): any {
     const dt = eventInfo?.date_time || {};
+    const tz = dt.timezone ?? 'America/New_York';
+    const offset = dt.offset ?? '-05:00:00';
+
+    // Use event date if in the future, otherwise 30 days from now
+    let deadlineDate: Date;
+    if (dt.year && dt.month && dt.day) {
+      const eventDate = new Date(dt.year, dt.month - 1, dt.day);
+      if (eventDate > new Date()) {
+        deadlineDate = eventDate;
+      } else {
+        deadlineDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      }
+    } else {
+      deadlineDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    }
+
     return {
-      year: dt.year ?? new Date().getFullYear(),
-      month: dt.month ?? new Date().getMonth() + 1,
-      day: dt.day ?? new Date().getDate(),
+      year: deadlineDate.getFullYear(),
+      month: deadlineDate.getMonth() + 1,
+      day: deadlineDate.getDate(),
       hour: dt.hour ?? 19,
       minute: dt.minute ?? 0,
       second: 0,
-      offset: dt.offset ?? '-05:00:00',
-      timezone: dt.timezone ?? 'America/New_York',
+      offset,
+      timezone: tz,
     };
   }
 

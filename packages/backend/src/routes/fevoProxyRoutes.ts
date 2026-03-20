@@ -444,7 +444,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v22-fix-url', ts: Date.now() });
+  res.json({ version: '2026-03-19-v23-fix-dates', ts: Date.now() });
 });
 
 /**
