@@ -237,39 +237,13 @@ router.post('/offers/launch', async (req: Request, res: Response) => {
   };
 
   try {
-    // Step-by-step launch with explicit stream end
-    sendEvent('loading_org', 'Loading organization settings...');
-    const orgSettings = await service.getOrgSettings(params.orgId);
-    sendEvent('org_loaded', `Org: ${orgSettings?.name || 'OK'}`);
-
-    sendEvent('loading_vas', 'Loading vendor agreements...');
-    const vas = await service.getVendorAgreements(params.orgId);
-    sendEvent('vas_loaded', `VAs: ${Array.isArray(vas) ? vas.length : 0}`);
-
-    sendEvent('loading_manifest', 'Loading event manifest...');
-    let manifest: any = { areas: [], holds: [] };
-    try { manifest = await service.getManifest(params.eventId); } catch { /* non-fatal */ }
-    sendEvent('manifest_loaded', `Manifest: ${manifest?.areas?.length || 0} areas`);
-
-    sendEvent('loading_events', 'Loading event info...');
-    const eventsResult = await service.searchEvents(params.orgId);
-    const events = eventsResult?.overviews || [];
-    const eventInfo = events.find((e: any) => e.id === params.eventId) || events[0];
-    sendEvent('events_loaded', `Event: ${eventInfo?.title || eventInfo?.venue?.name || params.eventId}`);
-
-    sendEvent('pre_done', 'About to send done...');
-
-    const manageUrl = `https://dev.gofevo.com/manage/outing/placeholder`;
-    const donePayload = JSON.stringify({
-      step: 'done',
-      result: { outingId: 'pending', accessCode: params.accessCode, manageUrl },
+    const result = await service.launchOffer(params, (step, detail) => {
+      if (!aborted) sendEvent(step, detail);
     });
-    res.write(`data: ${donePayload}\n\n`);
 
-    // End the response explicitly
-    clearInterval(keepalive);
-    res.end();
-    return; // Skip the finally block
+    if (!aborted) {
+      sendEvent('done', undefined, result);
+    }
   } catch (err: any) {
     console.error('[fevoProxy] launchOffer error:', err.message);
     if (!aborted) {
@@ -375,7 +349,7 @@ router.get('/debug', async (_req: Request, res: Response) => {
  * Returns the deployed code version for debugging deploy issues
  */
 router.get('/version', (_req: Request, res: Response) => {
-  res.json({ version: '2026-03-19-v11-destroy-not-resume', ts: Date.now() });
+  res.json({ version: '2026-03-19-v12-real-launch', ts: Date.now() });
 });
 
 /**
